@@ -1,0 +1,540 @@
+{
+ "id": "sg-ethnicity",
+ "title": "Ethnie des résidents (par statut et âge) ; nationalités des non-résidents par pass",
+ "assumption": true,
+ "sources": [
+  {
+   "org": "DOS",
+   "title": "General Household Survey 2025: Resident Population by Age Group, Ethnic Group, Sex and Residential Status (C020001)",
+   "year": 2025,
+   "url": "https://tablebuilder.singstat.gov.sg/table/CT/C020001"
+  },
+  {
+   "org": "MOM",
+   "title": "Written answer on Dependant Pass holders (nationalities not published)",
+   "year": 2021,
+   "url": "https://www.mom.gov.sg/newsroom/parliament-questions-and-replies/2021/0405-written-answer-by-minister-for-manpower-josephine-teo-on-dependent-pass-holders"
+  }
+ ],
+ "referenceYear": 2025,
+ "justification": "Résidents : effectifs officiels par ethnie, statut et âge (C020001). Non-résidents : MOM ne publie pas les nationalités ; parts par pass et rattachement aux catégories ethniques de Singapour en hypothèse (docs/research/socle-sg.md § 3.2), avec un seul repère quasi officiel : 26 % d'Indiens parmi les EP en 2020.",
+ "data": {
+  "labels": {
+   "chinese": "Chinese",
+   "malay": "Malay",
+   "indian": "Indian",
+   "others": "Others (Eurasian, Filipino, Caucasian, etc.)"
+  },
+  "residents": {
+   "citizen": [
+    {
+     "from": 18,
+     "to": 19,
+     "shares": {
+      "chinese": 0.707,
+      "malay": 0.1716,
+      "indian": 0.0937,
+      "others": 0.0277
+     }
+    },
+    {
+     "from": 20,
+     "to": 24,
+     "shares": {
+      "chinese": 0.6947,
+      "malay": 0.1852,
+      "indian": 0.0966,
+      "others": 0.0235
+     }
+    },
+    {
+     "from": 25,
+     "to": 29,
+     "shares": {
+      "chinese": 0.7036,
+      "malay": 0.1882,
+      "indian": 0.0864,
+      "others": 0.0218
+     }
+    },
+    {
+     "from": 30,
+     "to": 34,
+     "shares": {
+      "chinese": 0.7171,
+      "malay": 0.1859,
+      "indian": 0.0802,
+      "others": 0.0168
+     }
+    },
+    {
+     "from": 35,
+     "to": 39,
+     "shares": {
+      "chinese": 0.7311,
+      "malay": 0.1732,
+      "indian": 0.0772,
+      "others": 0.0185
+     }
+    },
+    {
+     "from": 40,
+     "to": 44,
+     "shares": {
+      "chinese": 0.7556,
+      "malay": 0.1487,
+      "indian": 0.0766,
+      "others": 0.0191
+     }
+    },
+    {
+     "from": 45,
+     "to": 49,
+     "shares": {
+      "chinese": 0.7941,
+      "malay": 0.1135,
+      "indian": 0.0761,
+      "others": 0.0163
+     }
+    },
+    {
+     "from": 50,
+     "to": 54,
+     "shares": {
+      "chinese": 0.7904,
+      "malay": 0.1158,
+      "indian": 0.078,
+      "others": 0.0158
+     }
+    },
+    {
+     "from": 55,
+     "to": 59,
+     "shares": {
+      "chinese": 0.7706,
+      "malay": 0.1346,
+      "indian": 0.0804,
+      "others": 0.0144
+     }
+    },
+    {
+     "from": 60,
+     "to": 64,
+     "shares": {
+      "chinese": 0.769,
+      "malay": 0.1441,
+      "indian": 0.0757,
+      "others": 0.0113
+     }
+    },
+    {
+     "from": 65,
+     "to": 69,
+     "shares": {
+      "chinese": 0.7988,
+      "malay": 0.1232,
+      "indian": 0.0684,
+      "others": 0.0097
+     }
+    },
+    {
+     "from": 70,
+     "to": 74,
+     "shares": {
+      "chinese": 0.8284,
+      "malay": 0.103,
+      "indian": 0.0602,
+      "others": 0.0084
+     }
+    },
+    {
+     "from": 75,
+     "to": 79,
+     "shares": {
+      "chinese": 0.852,
+      "malay": 0.0838,
+      "indian": 0.0556,
+      "others": 0.0087
+     }
+    }
+   ],
+   "pr": [
+    {
+     "from": 18,
+     "to": 19,
+     "shares": {
+      "chinese": 0.387,
+      "malay": 0.0159,
+      "indian": 0.413,
+      "others": 0.1841
+     }
+    },
+    {
+     "from": 20,
+     "to": 24,
+     "shares": {
+      "chinese": 0.5207,
+      "malay": 0.019,
+      "indian": 0.2655,
+      "others": 0.1948
+     }
+    },
+    {
+     "from": 25,
+     "to": 29,
+     "shares": {
+      "chinese": 0.8045,
+      "malay": 0.0214,
+      "indian": 0.0918,
+      "others": 0.0823
+     }
+    },
+    {
+     "from": 30,
+     "to": 34,
+     "shares": {
+      "chinese": 0.8275,
+      "malay": 0.0215,
+      "indian": 0.0678,
+      "others": 0.0832
+     }
+    },
+    {
+     "from": 35,
+     "to": 39,
+     "shares": {
+      "chinese": 0.7514,
+      "malay": 0.0244,
+      "indian": 0.1073,
+      "others": 0.1169
+     }
+    },
+    {
+     "from": 40,
+     "to": 44,
+     "shares": {
+      "chinese": 0.6208,
+      "malay": 0.0303,
+      "indian": 0.1978,
+      "others": 0.1512
+     }
+    },
+    {
+     "from": 45,
+     "to": 49,
+     "shares": {
+      "chinese": 0.5512,
+      "malay": 0.0381,
+      "indian": 0.2389,
+      "others": 0.1718
+     }
+    },
+    {
+     "from": 50,
+     "to": 54,
+     "shares": {
+      "chinese": 0.5542,
+      "malay": 0.0377,
+      "indian": 0.2105,
+      "others": 0.1976
+     }
+    },
+    {
+     "from": 55,
+     "to": 59,
+     "shares": {
+      "chinese": 0.5961,
+      "malay": 0.0375,
+      "indian": 0.1649,
+      "others": 0.2015
+     }
+    },
+    {
+     "from": 60,
+     "to": 64,
+     "shares": {
+      "chinese": 0.6592,
+      "malay": 0.0304,
+      "indian": 0.1229,
+      "others": 0.1874
+     }
+    },
+    {
+     "from": 65,
+     "to": 69,
+     "shares": {
+      "chinese": 0.6797,
+      "malay": 0.0443,
+      "indian": 0.1067,
+      "others": 0.1693
+     }
+    },
+    {
+     "from": 70,
+     "to": 74,
+     "shares": {
+      "chinese": 0.6961,
+      "malay": 0.0674,
+      "indian": 0.0942,
+      "others": 0.1423
+     }
+    },
+    {
+     "from": 75,
+     "to": 79,
+     "shares": {
+      "chinese": 0.6922,
+      "malay": 0.0872,
+      "indian": 0.0923,
+      "others": 0.1282
+     }
+    }
+   ]
+  },
+  "nationalities": [
+   {
+    "code": "india",
+    "label": "India",
+    "ethnicity": {
+     "indian": 1
+    },
+    "names": "india_pro",
+    "namesByPass": {
+     "wp_cmp": "india_wp",
+     "wp_other": "india_wp",
+     "mdw": "india_wp"
+    }
+   },
+   {
+    "code": "china",
+    "label": "China",
+    "ethnicity": {
+     "chinese": 1
+    },
+    "names": "china"
+   },
+   {
+    "code": "malaysia",
+    "label": "Malaysia",
+    "ethnicity": {
+     "chinese": 0.65,
+     "malay": 0.2,
+     "indian": 0.15
+    },
+    "ethnicityByPass": {
+     "wp_cmp": {
+      "chinese": 0.4,
+      "malay": 0.45,
+      "indian": 0.15
+     },
+     "wp_other": {
+      "chinese": 0.4,
+      "malay": 0.45,
+      "indian": 0.15
+     },
+     "mdw": {
+      "chinese": 0.4,
+      "malay": 0.45,
+      "indian": 0.15
+     }
+    },
+    "names": "chinese",
+    "namesByEthnicity": {
+     "chinese": "chinese",
+     "malay": "malay",
+     "indian": "indian"
+    }
+   },
+   {
+    "code": "bangladesh",
+    "label": "Bangladesh",
+    "ethnicity": {
+     "indian": 1
+    },
+    "names": "bangladesh"
+   },
+   {
+    "code": "myanmar",
+    "label": "Myanmar",
+    "ethnicity": {
+     "chinese": 0.1,
+     "indian": 0.05,
+     "others": 0.85
+    },
+    "names": "myanmar"
+   },
+   {
+    "code": "philippines",
+    "label": "Philippines",
+    "ethnicity": {
+     "others": 1
+    },
+    "names": "philippines"
+   },
+   {
+    "code": "indonesia",
+    "label": "Indonesia",
+    "ethnicity": {
+     "chinese": 0.4,
+     "malay": 0.55,
+     "others": 0.05
+    },
+    "ethnicityByPass": {
+     "mdw": {
+      "chinese": 0.02,
+      "malay": 0.9,
+      "others": 0.08
+     },
+     "wp_cmp": {
+      "chinese": 0.02,
+      "malay": 0.9,
+      "others": 0.08
+     },
+     "wp_other": {
+      "chinese": 0.02,
+      "malay": 0.9,
+      "others": 0.08
+     }
+    },
+    "names": "indonesia"
+   },
+   {
+    "code": "other_asia",
+    "label": "Thailand or another Asian country",
+    "labelByEthnicity": {
+     "indian": "Sri Lanka"
+    },
+    "ethnicity": {
+     "indian": 0.3,
+     "others": 0.7
+    },
+    "names": "thailand",
+    "namesByEthnicity": {
+     "indian": "india_pro"
+    }
+   },
+   {
+    "code": "vietnam",
+    "label": "Vietnam",
+    "ethnicity": {
+     "others": 1
+    },
+    "names": "vietnam"
+   },
+   {
+    "code": "east_asia",
+    "label": "Japan or South Korea",
+    "labelByEthnicity": {
+     "chinese": "Taiwan or Hong Kong"
+    },
+    "ethnicity": {
+     "chinese": 0.35,
+     "others": 0.65
+    },
+    "names": "east_asia",
+    "namesByEthnicity": {
+     "chinese": "china"
+    }
+   },
+   {
+    "code": "western",
+    "label": "United Kingdom, Europe, North America or Oceania",
+    "ethnicity": {
+     "others": 1
+    },
+    "names": "western"
+   },
+   {
+    "code": "other",
+    "label": "another country",
+    "ethnicity": {
+     "others": 1
+    },
+    "names": "western"
+   }
+  ],
+  "byPass": {
+   "ep": {
+    "india": 26,
+    "china": 22,
+    "malaysia": 10,
+    "myanmar": 1,
+    "philippines": 6,
+    "indonesia": 2,
+    "other_asia": 1,
+    "vietnam": 1,
+    "east_asia": 7,
+    "western": 20,
+    "other": 4
+   },
+   "spass": {
+    "india": 15,
+    "china": 28,
+    "malaysia": 20,
+    "bangladesh": 2,
+    "myanmar": 5,
+    "philippines": 20,
+    "indonesia": 3,
+    "other_asia": 2,
+    "vietnam": 2,
+    "east_asia": 1,
+    "western": 1,
+    "other": 1
+   },
+   "wp_cmp": {
+    "india": 30,
+    "china": 15,
+    "malaysia": 3,
+    "bangladesh": 36,
+    "myanmar": 10,
+    "philippines": 1,
+    "other_asia": 5
+   },
+   "wp_other": {
+    "india": 8,
+    "china": 20,
+    "malaysia": 45,
+    "bangladesh": 5,
+    "myanmar": 8,
+    "philippines": 7,
+    "indonesia": 2,
+    "other_asia": 5
+   },
+   "mdw": {
+    "india": 1,
+    "malaysia": 1,
+    "myanmar": 15,
+    "philippines": 35,
+    "indonesia": 46,
+    "other_asia": 2
+   },
+   "dependant": {
+    "india": 24,
+    "china": 24,
+    "malaysia": 10,
+    "bangladesh": 1,
+    "myanmar": 2,
+    "philippines": 6,
+    "indonesia": 4,
+    "other_asia": 1,
+    "vietnam": 5,
+    "east_asia": 6,
+    "western": 14,
+    "other": 3
+   },
+   "student": {
+    "india": 14,
+    "china": 35,
+    "malaysia": 8,
+    "myanmar": 6,
+    "philippines": 2,
+    "indonesia": 8,
+    "other_asia": 1,
+    "vietnam": 8,
+    "east_asia": 6,
+    "western": 7,
+    "other": 5
+   }
+  }
+ }
+}

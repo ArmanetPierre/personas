@@ -1,0 +1,28 @@
+{
+  "id": "meal-planner-dietitian-booking",
+  "name": "Menu Malin",
+  "pitch": "Menu Malin est une application qui prépare les repas de la semaine pour tout le foyer. Vous indiquez le nombre de personnes, vos goûts, vos contraintes (sans porc, végétarien, allergies), le temps que vous voulez passer en cuisine et votre budget. L'application propose sept dîners, des recettes pas à pas et une liste de courses rangée par rayon. Les menus et la liste de courses sont gratuits, et vous pouvez demander une mise en relation avec un diététicien diplômé près de chez vous ou en visio. Vous ne payez que lorsque la mise en relation est acceptée des deux côtés : 15 € par mise en relation, qui ouvre la messagerie avec ce diététicien. Pas d'abonnement. L'application vient de sortir : elle compte pour l'instant quelques centaines d'utilisateurs, surtout dans les grandes villes.",
+  "targetAudience": "Actifs de 25 à 50 ans, souvent avec enfants, qui cuisinent tous les soirs et manquent de temps pour prévoir les repas et les courses.",
+  "businessModel": "Paiement à l'usage : 15 € par mise en relation acceptée des deux côtés avec un diététicien, sans abonnement.",
+  "price": {
+    "amountEur": 15,
+    "period": "connection"
+  },
+  "freeOffer": "Menus, liste de courses et demandes de mise en relation gratuits ; on ne paie qu'une mise en relation acceptée des deux côtés.",
+  "competitors": [
+    "Jow",
+    "Marmiton",
+    "Les box repas (HelloFresh, Quitoque)",
+    "Les applications de drive des supermarchés",
+    "Les comptes de recettes sur Instagram et TikTok"
+  ],
+  "alternatives": [
+    "Improviser chaque soir avec ce qu'il y a dans le frigo",
+    "Les recettes habituelles de la famille"
+  ],
+  "priceTiers": [
+    5,
+    15,
+    30
+  ]
+}

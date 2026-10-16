@@ -1,0 +1,145 @@
+{
+ "id": "household",
+ "title": "Mode de cohabitation par âge et sexe (population ciblée)",
+ "assumption": true,
+ "sources": [
+  {
+   "org": "INSEE",
+   "title": "Ménages et familles en 2022 et en séries longues — Insee Résultats, tableau SL_PERS1 « Population selon le sexe, l'âge et le mode de cohabitation », France métropolitaine",
+   "year": 2025,
+   "url": "https://www.insee.fr/fr/statistiques/8613715?sommaire=8613956"
+  }
+ ],
+ "referenceYear": 2022,
+ "notes": "Recensement 2022. Les personnes hors logement ordinaire (foyers, internats, Ehpad, casernes…) sont exclues et les parts renormalisées. « with_parents » = enfant d'une famille (y compris adulte vivant chez un parent âgé) ; « other » = hors famille dans un ménage complexe (colocation, hébergé…). Nombre d'enfants au foyer : APPROX d'après la répartition des familles avec enfants de moins de 25 ans (≈ 45 % un enfant, 38 % deux, 17 % trois ou plus, ordre de grandeur INSEE, non relu ligne à ligne). Âges des enfants : modélisés depuis l'âge du parent (âge moyen à la naissance ≈ 29-31 ans pour les mères), hypothèse.",
+ "data": {
+  "bands": [
+   {
+    "from": 25,
+    "to": 29,
+    "M": {
+     "with_parents": 0.12,
+     "couple_no_child": 0.2756,
+     "couple_with_children": 0.1223,
+     "single_parent": 0.0051,
+     "alone": 0.3652,
+     "other": 0.1119
+    },
+    "F": {
+     "with_parents": 0.07,
+     "couple_no_child": 0.2969,
+     "couple_with_children": 0.1857,
+     "single_parent": 0.0497,
+     "alone": 0.31,
+     "other": 0.0878
+    }
+   },
+   {
+    "from": 30,
+    "to": 39,
+    "M": {
+     "with_parents": 0.0804,
+     "couple_no_child": 0.164,
+     "couple_with_children": 0.5071,
+     "single_parent": 0.0214,
+     "alone": 0.2006,
+     "other": 0.0265
+    },
+    "F": {
+     "with_parents": 0.0322,
+     "couple_no_child": 0.1279,
+     "couple_with_children": 0.5851,
+     "single_parent": 0.1219,
+     "alone": 0.1188,
+     "other": 0.0141
+    }
+   },
+   {
+    "from": 40,
+    "to": 49,
+    "M": {
+     "with_parents": 0.0406,
+     "couple_no_child": 0.0963,
+     "couple_with_children": 0.6156,
+     "single_parent": 0.0467,
+     "alone": 0.1856,
+     "other": 0.0152
+    },
+    "F": {
+     "with_parents": 0.0151,
+     "couple_no_child": 0.0955,
+     "couple_with_children": 0.598,
+     "single_parent": 0.1789,
+     "alone": 0.1025,
+     "other": 0.0101
+    }
+   },
+   {
+    "from": 50,
+    "to": 59,
+    "M": {
+     "with_parents": 0.0294,
+     "couple_no_child": 0.2979,
+     "couple_with_children": 0.3972,
+     "single_parent": 0.0426,
+     "alone": 0.2138,
+     "other": 0.0193
+    },
+    "F": {
+     "with_parents": 0.0141,
+     "couple_no_child": 0.3464,
+     "couple_with_children": 0.3021,
+     "single_parent": 0.1259,
+     "alone": 0.1944,
+     "other": 0.0171
+    }
+   },
+   {
+    "from": 60,
+    "to": 69,
+    "M": {
+     "with_parents": 0.0122,
+     "couple_no_child": 0.5836,
+     "couple_with_children": 0.1439,
+     "single_parent": 0.0193,
+     "alone": 0.2188,
+     "other": 0.0223
+    },
+    "F": {
+     "with_parents": 0.0081,
+     "couple_no_child": 0.5454,
+     "couple_with_children": 0.0776,
+     "single_parent": 0.0494,
+     "alone": 0.2944,
+     "other": 0.0252
+    }
+   },
+   {
+    "from": 70,
+    "to": 79,
+    "M": {
+     "with_parents": 0.002,
+     "couple_no_child": 0.6965,
+     "couple_with_children": 0.0652,
+     "single_parent": 0.0122,
+     "alone": 0.2047,
+     "other": 0.0193
+    },
+    "F": {
+     "with_parents": 0.002,
+     "couple_no_child": 0.5158,
+     "couple_with_children": 0.0316,
+     "single_parent": 0.0367,
+     "alone": 0.3863,
+     "other": 0.0275
+    }
+   }
+  ],
+  "children": {
+   "one": 0.45,
+   "two": 0.38,
+   "threePlus": 0.17
+  }
+ },
+ "justification": "Reprend la table INSEE du pack fr (recensement 2022, SL_PERS1), sauf pour 25-29 ans : la tranche publiée est 18-29 ans, où 34 % des femmes et 44 % des hommes vivent chez leurs parents, ce qui surestime fortement la cohabitation de jeunes actifs qualifiés de 25-29 ans. Hypothèse : 12 % des hommes et 7 % des femmes de 25-29 ans de cette population vivent chez leurs parents (ordre de grandeur des 25-29 ans en emploi), les autres modes étant remis à l'échelle."
+}

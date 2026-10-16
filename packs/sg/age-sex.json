@@ -1,0 +1,103 @@
+{
+ "id": "sg-age-sex",
+ "title": "Population adulte de 18 à 79 ans par sexe et tranche d'âge (résidents et non-résidents)",
+ "assumption": true,
+ "sources": [
+  {
+   "org": "DOS",
+   "title": "General Household Survey 2025: Resident Population by Age Group, Ethnic Group, Sex and Residential Status (C020001)",
+   "year": 2025,
+   "url": "https://tablebuilder.singstat.gov.sg/table/CT/C020001"
+  },
+  {
+   "org": "DOS",
+   "title": "Share Of Non-Resident Population By Pass Types, At End June (M810791)",
+   "year": 2026,
+   "url": "https://tablebuilder.singstat.gov.sg/table/TS/M810791"
+  }
+ ],
+ "referenceYear": 2026,
+ "justification": "Somme des statuts de residency.json (résidents officiels, non-résidents par hypothèse) : sert à la validation des marges et au tableau de bord.",
+ "data": {
+  "bands": [
+   {
+    "from": 18,
+    "to": 19,
+    "M": 76624,
+    "F": 57344
+   },
+   {
+    "from": 20,
+    "to": 24,
+    "M": 189493,
+    "F": 150830
+   },
+   {
+    "from": 25,
+    "to": 29,
+    "M": 327057,
+    "F": 239023
+   },
+   {
+    "from": 30,
+    "to": 34,
+    "M": 378790,
+    "F": 315164
+   },
+   {
+    "from": 35,
+    "to": 39,
+    "M": 343852,
+    "F": 317860
+   },
+   {
+    "from": 40,
+    "to": 44,
+    "M": 290574,
+    "F": 283957
+   },
+   {
+    "from": 45,
+    "to": 49,
+    "M": 238816,
+    "F": 236784
+   },
+   {
+    "from": 50,
+    "to": 54,
+    "M": 202021,
+    "F": 201707
+   },
+   {
+    "from": 55,
+    "to": 59,
+    "M": 171160,
+    "F": 171132
+   },
+   {
+    "from": 60,
+    "to": 64,
+    "M": 157796,
+    "F": 161043
+   },
+   {
+    "from": 65,
+    "to": 69,
+    "M": 139378,
+    "F": 145129
+   },
+   {
+    "from": 70,
+    "to": 74,
+    "M": 105068,
+    "F": 113578
+   },
+   {
+    "from": 75,
+    "to": 79,
+    "M": 71194,
+    "F": 83643
+   }
+  ]
+ }
+}

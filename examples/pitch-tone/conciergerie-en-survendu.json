@@ -1,0 +1,32 @@
+{
+  "id": "tone-conciergerie-en-survendu",
+  "name": "Conciergerie express",
+  "pitch": "Conciergerie express is the revolution that will change your daily life! The most exceptional concierge service ever imagined: dry cleaning, shoe repair, parcels, errands… we take care of everything for you, at home or at the office, with our elite couriers. The simplest app on the market, loved by everyone who has tried it. For only €19 a month, four visits included (€6 per extra visit): an unbeatable price to finally enjoy your free time again. Don't miss the best idea of the year, in Paris and the inner suburbs!",
+  "targetAudience": "Professionals aged 25 to 35 in the Paris region, with no time for small chores.",
+  "businessModel": "Monthly subscription at €19 (4 visits included), extra visits at €6.",
+  "price": {
+    "amountEur": 19,
+    "period": "month"
+  },
+  "freeOffer": null,
+  "competitors": [
+    "Corporate concierge services",
+    "Home dry-cleaning services",
+    "Grocery and delivery apps"
+  ],
+  "alternatives": [
+    "Doing it yourself on Saturday",
+    "Asking a relative or friend",
+    "Parcel pickup points near the office"
+  ],
+  "priceTiers": [
+    9,
+    19,
+    29
+  ],
+  "target": {
+    "socle": "fr",
+    "eligibility": "age >= 25 and age <= 35 and region == IDF and pcs == 3 and activity_status == employed",
+    "n": 60
+  }
+}

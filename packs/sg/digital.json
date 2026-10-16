@@ -1,0 +1,85 @@
+{
+ "id": "sg-digital",
+ "title": "Équipement et usages numériques par âge (adultes)",
+ "assumption": true,
+ "sources": [
+  {
+   "org": "IMDA via DOS",
+   "title": "Annual Survey on Infocomm Usage in Households and by Individuals (M920301, M920311, M920321, M920341)",
+   "year": 2024,
+   "url": "https://tablebuilder.singstat.gov.sg/table/TS/M920341"
+  },
+  {
+   "org": "Reuters Institute",
+   "title": "Digital News Report 2026: Singapore",
+   "year": 2026,
+   "url": "https://reutersinstitute.politics.ox.ac.uk/digital-news-report/2026/singapore"
+  }
+ ],
+ "referenceYear": 2024,
+ "justification": "Smartphone par âge (IMDA 2024 : 99,8 % des 18-39 ans, 99,5 % des 40-59 ans, 88,9 % des 60 ans et plus, découpé 94 % / 82 %), accès internet des ménages 98,5 % (93,9 % des ménages de seniors), ordinateur portable dans 81 % et tablette dans 69 % des ménages : passage à l'individu et au découpage par âge en hypothèse. Réseaux sociaux (Facebook, Instagram, TikTok) par âge : hypothèse (Reuters 2025 ne donne que des taux tous âges : Facebook 58 %, Instagram 54 %, TikTok 37 %).",
+ "data": {
+  "bands": [
+   {
+    "from": 18,
+    "to": 29,
+    "smartphone": 0.998,
+    "computer": 0.85,
+    "tablet": 0.55,
+    "internet": 0.99,
+    "socialDaily": 0.8,
+    "socialAny": 0.95
+   },
+   {
+    "from": 30,
+    "to": 39,
+    "smartphone": 0.998,
+    "computer": 0.86,
+    "tablet": 0.62,
+    "internet": 0.99,
+    "socialDaily": 0.7,
+    "socialAny": 0.92
+   },
+   {
+    "from": 40,
+    "to": 49,
+    "smartphone": 0.995,
+    "computer": 0.83,
+    "tablet": 0.66,
+    "internet": 0.99,
+    "socialDaily": 0.62,
+    "socialAny": 0.88
+   },
+   {
+    "from": 50,
+    "to": 59,
+    "smartphone": 0.995,
+    "computer": 0.76,
+    "tablet": 0.56,
+    "internet": 0.985,
+    "socialDaily": 0.52,
+    "socialAny": 0.8
+   },
+   {
+    "from": 60,
+    "to": 69,
+    "smartphone": 0.94,
+    "computer": 0.58,
+    "tablet": 0.45,
+    "internet": 0.96,
+    "socialDaily": 0.4,
+    "socialAny": 0.65
+   },
+   {
+    "from": 70,
+    "to": 79,
+    "smartphone": 0.82,
+    "computer": 0.38,
+    "tablet": 0.3,
+    "internet": 0.92,
+    "socialDaily": 0.25,
+    "socialAny": 0.45
+   }
+  ]
+ }
+}

@@ -1,0 +1,144 @@
+{
+ "id": "town-size",
+ "title": "Taille d'agglomération de résidence, par région (population ciblée)",
+ "assumption": true,
+ "justification": "Les emplois du numérique sont très concentrés dans les grandes agglomérations (Paris : 261 000 salariés des secteurs du numérique, Rhône 67 500, Haute-Garonne 51 700…, INSEE 2022), mais aucune ventilation par taille d'unité urbaine n'est publiée. Les parts du pack fr (unités urbaines 2020, par région) sont repondérées : ×0,3 en rural, ×0,45 sous 20 000 hab., ×0,75 de 20 000 à 99 999, ×1 de 100 000 à 199 999, ×1,7 au-delà et dans l'agglomération parisienne, puis renormalisées.",
+ "sources": [
+  {
+   "org": "INSEE",
+   "title": "Base des unités urbaines 2020 (géographie au 1er janvier 2025)",
+   "year": 2025,
+   "url": "https://www.insee.fr/fr/information/4802589"
+  },
+  {
+   "org": "INSEE",
+   "title": "Populations légales 2023 — fichier d'ensemble des communes",
+   "year": 2025,
+   "url": "https://www.insee.fr/fr/statistiques/8680726"
+  },
+  {
+   "org": "INSEE",
+   "title": "Localisation des emplois des secteurs du numérique, Insee Références, édition 2025",
+   "year": 2025,
+   "url": "https://www.insee.fr/fr/statistiques/8616857"
+  }
+ ],
+ "referenceYear": 2023,
+ "notes": "Le télétravail (74 % des professionnels du numérique en ont pratiqué en 4 semaines, INSEE) laisse une part réelle en petites villes et en rural.",
+ "data": {
+  "labels": {
+   "rural": "Commune rurale",
+   "uu_lt20k": "Petite ville (moins de 20 000 hab.)",
+   "uu_20k_100k": "Ville moyenne (20 000 à 99 999 hab.)",
+   "uu_100k_200k": "Agglomération de 100 000 à 199 999 hab.",
+   "uu_200k_2m": "Grande agglomération (200 000 à 2 millions d'hab.)",
+   "uu_paris": "Agglomération parisienne"
+  },
+  "byRegion": {
+   "ARA": {
+    "rural": 0.0681,
+    "uu_lt20k": 0.0809,
+    "uu_20k_100k": 0.1424,
+    "uu_100k_200k": 0.0926,
+    "uu_200k_2m": 0.616,
+    "uu_paris": 0.0
+   },
+   "BFC": {
+    "rural": 0.2124,
+    "uu_lt20k": 0.1425,
+    "uu_20k_100k": 0.2445,
+    "uu_100k_200k": 0.1481,
+    "uu_200k_2m": 0.2526,
+    "uu_paris": 0.0
+   },
+   "BRE": {
+    "rural": 0.1226,
+    "uu_lt20k": 0.2086,
+    "uu_20k_100k": 0.2005,
+    "uu_100k_200k": 0.0521,
+    "uu_200k_2m": 0.4163,
+    "uu_paris": 0.0
+   },
+   "CVL": {
+    "rural": 0.1267,
+    "uu_lt20k": 0.1387,
+    "uu_20k_100k": 0.1722,
+    "uu_100k_200k": 0.0,
+    "uu_200k_2m": 0.5624,
+    "uu_paris": 0.0
+   },
+   "COR": {
+    "rural": 0.1488,
+    "uu_lt20k": 0.164,
+    "uu_20k_100k": 0.6873,
+    "uu_100k_200k": 0.0,
+    "uu_200k_2m": 0.0,
+    "uu_paris": 0.0
+   },
+   "GES": {
+    "rural": 0.1004,
+    "uu_lt20k": 0.1186,
+    "uu_20k_100k": 0.158,
+    "uu_100k_200k": 0.06,
+    "uu_200k_2m": 0.563,
+    "uu_paris": 0.0
+   },
+   "HDF": {
+    "rural": 0.0633,
+    "uu_lt20k": 0.0718,
+    "uu_20k_100k": 0.1227,
+    "uu_100k_200k": 0.0953,
+    "uu_200k_2m": 0.6469,
+    "uu_paris": 0.0
+   },
+   "NOR": {
+    "rural": 0.1337,
+    "uu_lt20k": 0.1283,
+    "uu_20k_100k": 0.1388,
+    "uu_100k_200k": 0.0,
+    "uu_200k_2m": 0.5992,
+    "uu_paris": 0.0
+   },
+   "NAQ": {
+    "rural": 0.1202,
+    "uu_lt20k": 0.1151,
+    "uu_20k_100k": 0.128,
+    "uu_100k_200k": 0.1165,
+    "uu_200k_2m": 0.5201,
+    "uu_paris": 0.0
+   },
+   "OCC": {
+    "rural": 0.0834,
+    "uu_lt20k": 0.1326,
+    "uu_20k_100k": 0.1609,
+    "uu_100k_200k": 0.0358,
+    "uu_200k_2m": 0.5873,
+    "uu_paris": 0.0
+   },
+   "PDL": {
+    "rural": 0.0843,
+    "uu_lt20k": 0.1548,
+    "uu_20k_100k": 0.107,
+    "uu_100k_200k": 0.0593,
+    "uu_200k_2m": 0.5945,
+    "uu_paris": 0.0
+   },
+   "PAC": {
+    "rural": 0.0119,
+    "uu_lt20k": 0.0482,
+    "uu_20k_100k": 0.0523,
+    "uu_100k_200k": 0.0,
+    "uu_200k_2m": 0.8876,
+    "uu_paris": 0.0
+   },
+   "IDF": {
+    "rural": 0.0068,
+    "uu_lt20k": 0.0143,
+    "uu_20k_100k": 0.0153,
+    "uu_100k_200k": 0.0,
+    "uu_200k_2m": 0.0,
+    "uu_paris": 0.9637
+   }
+  }
+ }
+}

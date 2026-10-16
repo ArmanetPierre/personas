@@ -1,0 +1,365 @@
+import type { CliMessages } from "./messages.fr";
+
+/**
+ * Messages console de la CLI en anglais. Typé par la référence française : une clé manquante,
+ * en trop ou d'une autre signature est une erreur de typecheck.
+ */
+
+type NarrativesRun = { alreadyDone: number; reused: number; written: number; calls: number; usage: { inputTokens: number; outputTokens: number }; durationMs: number };
+const narrativesHead = (r: NarrativesRun) =>
+  `Narratives: ${r.alreadyDone} already written, ${r.reused} reused from twins, ${r.written} written (${r.calls} call(s), ` +
+  `${r.usage.inputTokens} input tokens, ${r.usage.outputTokens} output, ${(r.durationMs / 1000).toFixed(0)} s)`;
+
+export const en: CliMessages = {
+  common: {
+    pct: "%",
+    decimalComma: false,
+    projectNotFound: (id) => `Project not found: ${id}`,
+    projectNotFoundAnywhere: (id) => `Project not found: ${id} (neither a file nor an id in the database).`,
+    noResponses: (id) => `No responses for study ${id}.`,
+    json: (path) => `JSON: ${path}`,
+    callsTokens: (calls, input, output) => `Calls: ${calls}; tokens ${input} input, ${output} output.`,
+    filter: (source) => `Filter: ${source ?? "(none: general population)"}`,
+    draftStatus: (id, status, progress) => `Draft ${id}: ${status} — ${progress}`,
+    error: (e) => `Error: ${e}`,
+    none: "none",
+  },
+  calibrationFit: {
+    usage:
+      "Usage: npm run calibration:fit -- [--truth calibration/truth.json] [--write] [--out calibration/payment-v3.json]\n" +
+      "  Fill in studyId (a finished v3 study) and realPayShare for each product in truth.json, then run again.\n" +
+      "  Without --write: shows the fit without writing anything.",
+    fileNotFound: (f) => `File not found: ${f}`,
+    skipped: (product, noStudy) => `- ${product}: skipped (${noStudy ? "no study" : "no real value"})`,
+    notV3: (product, study, version) => `${product}: study ${study} uses protocol v${version}; the conversion is fitted on v3 studies.`,
+    noLowTier: (product, study) => `${product}: no tier below the displayed price in ${study}.`,
+    point: (product, study, n, price, yes) => `- ${product}: ${study}, n = ${n}, yes at ${price}: ${yes}`,
+    refused: (reason, version, status) => `Fit refused: ${reason}\nParameters unchanged (${version}, ${status}).`,
+    ready: (next, json) => `\nFit ${next} ready (not written):\n${json}\nWrite it: npm run calibration:fit -- --write`,
+    written: (out, next) => `Written: ${out} (${next}, calibrated).`,
+  },
+  engineCheck: {
+    usage: (backends) => `Usage: npm run engine:check [-- --backend <${backends}>]`,
+    unknownBackend: (b, expected) => `Unknown backend: ${b} (expected: ${expected})`,
+    header: (name, model, concurrency) => `\n=== ${name} (model ${model}, concurrency ${concurrency}) ===`,
+    availability: (ok, detail) => `Availability: ${ok ? "OK" : "FAILED"} — ${detail}`,
+    latency: (s) => `Latency: ${s} s`,
+    model: (m) => `Model: ${m}`,
+    tokens: (input, output, cacheRead, costUsd) =>
+      `Tokens: ${input} input, ${output} output` +
+      (cacheRead ? ` (${cacheRead} of them read from cache)` : "") +
+      (costUsd ? ` — indicative cost $${costUsd.toFixed(4)} (covered by the subscription)` : ""),
+    attempts: (n) => `Attempts: ${n}`,
+    result: "Result:",
+    requestFailed: (msg) => `Request: FAILED — ${msg}`,
+  },
+  migrate: {
+    applied: (path) => `Migrations applied to ${path}`,
+    tables: (list) => `Tables: ${list}`,
+  },
+  moduleAccept: {
+    usage: "Usage: npm run module:accept -- --draft <draftId> [--replace]",
+    accepted: (id, file) => `Module ${id} validated: ${file}`,
+  },
+  modulePreview: {
+    usage: "Usage: npm run module:preview -- --draft <draftId> | --module <id> [--n 10000] [--sample 5] [--json]",
+    header: (id, socle, n) => `# Preview of ${id} on ${socle}, ${n} virtual personas`,
+    margin: (label, attribute, type, applicable) => `\n${label} (${attribute}, ${type}, applies to ${applicable})`,
+    helpers: "\nReady-made filters:",
+    helper: (name, rate, expression) => `  ${name}: ${rate}% — ${expression}`,
+    alerts: "\nAlerts:",
+  },
+  modulePropose: {
+    usage:
+      'Usage: npm run module:propose -- --description "<domain>" [--id <module-id>] [--project <id|file>] [--socle fr] [--draft <draftId>] [--no-research]\n' +
+      "  --draft: resumes (or names) a draft; its state is tracked in modules/_drafts/<draftId>/meta.json.",
+    usageLine: (calls, input, output, s) => `Calls: ${calls}; tokens: ${input} input, ${output} output; ${s} s`,
+  },
+  moduleRevise: {
+    usage:
+      'Usage: npm run module:revise -- --draft <draftId> --instruction "<change>" [--research]\n  --research: targeted web search (WebSearch, WebFetch only), merged into research.json, before the revision.',
+    total: (calls, input, output) => `Draft total: ${calls} call(s), ${input} input tokens, ${output} output.`,
+  },
+  personasGenerate: {
+    usage: "Usage: npm run personas:generate -- [--count 1000] [--seed 42] [--pack fr] [--reset]",
+    badArgs: "--count must be an integer ≥ 1 and --seed an integer.",
+    reset: (removed, version, seed) => `--reset: ${removed} persona(s) deleted (pack ${version}, seed ${seed}).`,
+    alreadyDone: (existing, version, seed) => `Already done: ${existing} personas present for pack ${version} and seed ${seed}. Nothing to do.`,
+    tooMany: (existing, version, seed, count) =>
+      `The database already holds ${existing} personas for pack ${version} and seed ${seed} (more than --count ${count}). ` +
+      "Run again with --reset to start from scratch.",
+    done: (n, start, version, seed, ms, total) =>
+      `${n} personas drawn and inserted${start ? ` (on top of the ${start} existing ones)` : ""} — ` +
+      `pack ${version}, seed ${seed}, ${ms} ms. Total for this draw: ${total}.`,
+    next: "Next steps: npm run personas:validate, then npm run personas:narrate -- --limit N",
+    failed: (msg) => `Failed: ${msg}`,
+  },
+  personasMigrateModules: {
+    usage: "Usage: npm run personas:migrate-modules -- [--pack fr-tech-founders] [--dry-run]",
+    noModules: (version) => `Pack ${version} enables no module: nothing to migrate.`,
+    result: (version, total, migrated, dryRun, already, mismatches) =>
+      `${version}: ${total} personas; ${migrated} ${dryRun ? "to migrate" : "migrated"}, ${already} already in module format, ${mismatches} mismatch(es).`,
+  },
+  personasNarrate: {
+    usage:
+      "Usage: npm run personas:narrate -- [--pack fr] [--limit N] [--batch-size 10] [--backend claude-cli]\n" +
+      "       npm run personas:narrate -- --regenerate --before 2026-10-13T08:00:00Z [--limit N]\n" +
+      "  --regenerate: also rewrites narratives dated before --before (narrative_at, ISO 8601 UTC).\n" +
+      "  The old narrative stays in place until the new one is validated; running again with the same --before resumes.",
+    backendRefused: (b) => `Backend refused: ${b} (claude-cli or ollama).`,
+    regenerateNeedsBefore: "--regenerate requires --before <ISO date> (e.g. 2026-10-13T08:00:00Z) to stay resumable.",
+    allDone: "All personas already have a narrative.",
+    start: (n, batchSize, backend, model, concurrency) => `${n} narrative(s) to write, batches of ${batchSize}, backend ${backend} (${model}), concurrency ${concurrency}.`,
+    summary: (written, total, s, batches, failedBatches, rejected) =>
+      `\n${written}/${total} narratives written in ${s} s, ${batches} call(s)` +
+      (failedBatches ? `, ${failedBatches} failed call(s)` : "") +
+      (rejected ? `, ${rejected} narrative(s) requested again` : "") +
+      ".",
+    tokens: (input, cacheRead, output, costUsd) =>
+      `Tokens: ${input} input (${cacheRead} of them read from cache), ${output} output` +
+      (costUsd ? `; indicative cost $${costUsd.toFixed(3)} (covered by the subscription)` : "") +
+      ".",
+    average: (s, tokens) => `Average: ${s} s and ${tokens} output tokens per narrative (concurrency included).`,
+    wholeBase: (n) => `\nWhole database (${n} narratives): `,
+    aborted: (reason) => `\nStopped on usage limit: ${reason}`,
+    stillMissing: (n) => `\n${n} persona(s) without a narrative after one retry (will be retried on the next run):`,
+    missingLine: (id, issues) => `- ${id}: ${issues.join("; ") || "failed"}`,
+    more: (n) => `… and ${n} more.`,
+  },
+  personasShow: {
+    usage:
+      "Usage: npm run personas:show -- --sample 5 [--all] [--salt N] [--pack fr-tech-founders]   (by default, only personas with a narrative)\n" +
+      "       npm run personas:show -- --id fr-2026.1-s42-0001 [--id …]",
+    notFound: (id) => `Persona not found: ${id}`,
+    emptyBase: "Empty database.",
+    noNarrative: "No persona with a narrative (add --all, or run personas:narrate).",
+    sample: (salt) => `(sample --salt ${salt})`,
+  },
+  personasValidate: {
+    usage:
+      "Usage: npm run personas:validate -- [--pack fr] [--seed 42]\n" +
+      "       npm run personas:validate -- --pack fr-2026.2 --modules numerique,entrepreneuriat --virtual 20000 [--seed 42]\n" +
+      "  --virtual N: validates N virtual personas drawn on the fly (v2 base + modules), without the database.",
+    none: (version) => `No persona for pack ${version}. Run npm run personas:generate first.`,
+    header: (version, modules, n, virtual) => `# Margin validation — pack ${version}${modules ? ` + ${modules}` : ""}, ${n}${virtual ? " virtual" : ""} personas`,
+  },
+  populationDraw: {
+    usage:
+      "Usage: npm run population:draw -- --target target.yaml [--n 300] [--seed 42] [--persist]\n" +
+      "       npm run population:draw -- --project <id | project file> [--group target|control] [--n 300] [--drafts]\n" +
+      "  --drafts: allows module drafts (modules/_drafts), read-only, to preview a target.\n" +
+      'Target (YAML/JSON): { socle: fr, modules: [numerique, entrepreneuriat], eligibility: "age >= 25 and …", quotas: {…} }',
+    noGroup: (group, src) => `No “${group}” block in project ${src}.`,
+    draftsNoPersist: "--drafts is for previews only: no --persist with unvalidated modules.",
+    draftsAllowed: (list) => `Drafts allowed (read-only): ${list || "none"}`,
+    nRequired: "Sample size required: --n or `n` in the target.",
+    socle: (version, modules) => `Base ${version}; modules: ${modules || "none"}`,
+    retained: (n, draws, ms) => `${n} personas kept out of ${draws} virtual draws (${ms} ms)`,
+    rate: (rate, lo, hi, eligible) => `Eligibility rate: ${rate} [95% CI ${lo}; ${hi}] (${eligible} eligible)`,
+    quota: (s) => `⚠ quota: ${s}`,
+    age: (d) => `Age: ${d}`,
+    sexRegion: (sex, region) => `Sex: ${sex}; region: ${region}`,
+    pcsActivity: (pcs, activity) => `PCS: ${pcs}; activity: ${activity}`,
+    segment: (label, d) => `${label}: ${d}`,
+    cache: (inserted, updated, reused) => `Cache: ${inserted} added, ${updated} completed, ${reused} already present.`,
+  },
+  projectCreate: {
+    usage: "Usage: npm run project:create -- --file examples/meal-planner.json [--update]",
+    saved: (updated, id) => `Project ${updated ? "saved" : "created"}: ${id}`,
+    tiers: (list) => `  Gabor-Granger tiers: ${list}`,
+  },
+  projectList: {
+    none: "No project. Create one: npm run project:create -- --file <file>",
+    row: (id, name, price, created) => `${id}  ${name}  ${price}  (created ${created})`,
+  },
+  projectNeutralizePitch: {
+    usage: "Usage: npm run project:neutralize-pitch -- --project <id|file.json|yaml> [--out proposal.json]",
+    header: (id, toneBefore, toneAfter, lexBefore, lexAfter) => `Project ${id} — tone ${toneBefore} → ${toneAfter}/100 (lexical score ${lexBefore} → ${lexAfter})`,
+    unchanged: "Pitch already factual: no change proposed.",
+    passages: (n) => `\nPassages found (${n}):`,
+    passage: (category, text, replacement, reason) => `  [${category}] “${text}” → ${replacement ? `“${replacement}”` : "(removed)"}\n      ${reason}`,
+    originalNeutral: (original, neutral) => `\nOriginal:\n  ${original}\n\nProposed neutral version:\n  ${neutral}`,
+    facts: (ok, repaired, numbersMissing, numbersAdded, namesMissing, factsMissing) =>
+      `\nFacts preserved: ${ok ? "OK" : "GAPS"}${repaired ? " (after one repair)" : ""}` +
+      (ok ? "" : ` — missing numbers ${numbersMissing}, added ${numbersAdded}, missing names ${namesMissing}, missing facts ${factsMissing}`),
+    missingInfo: (lines) => `Information missing from the original (for the founder to add, not invented):\n${lines}`,
+    proposal: (out) => `\nProposal (not applied): ${out}`,
+  },
+  projectSuggestProtocol: {
+    usage: "Usage: npm run project:suggest-protocol -- --project <id|file.json|yaml> [--out proposal.json]",
+    header: (id, name) => `Project ${id} — ${name}`,
+    evidence: (n, studies) => `Objections from ${n} responses (${studies}).`,
+    noEvidence: "No existing study: proposal based on the pitch alone.",
+    productType: (type) => `\nProduct type: ${type}`,
+    behaviors: "Behaviours:",
+    objections: "Objections:",
+    relevance: "Relevance:",
+    rationale: (r) => `\nRationale: ${r}`,
+    fixes: (list) => `Automatic fixes: ${list.join("; ")}`,
+    proposal: (out, yaml) => `\nProposal (not applied): ${out}\nBlock to copy into the project file: ${yaml}`,
+    tokens: (input, output) => `Tokens: ${input} input, ${output} output.`,
+  },
+  studyCompare: {
+    usage: "Usage: npm run study:compare -- --studies st-ref,st-v1,st-v2 [--group target] [--normalize monthly-eur] [--json] [--out file.json]",
+    unknownNormalize: (v) => `Unknown normalisation: ${v} (monthly-eur)`,
+  },
+  studyCreate: {
+    usage:
+      "Usage: npm run study:create -- --project <id> --n 200 [--seed 7] [--backend claude-cli|ollama] [--model <m>]\n" +
+      "         [--quotas '{\"ageBand\":{\"18-29\":0.25,\"30-44\":0.25,\"45-59\":0.25,\"60-79\":0.25}}']\n" +
+      "       npm run study:create -- --project <id> --population fr-tech-founders-2026.1 --n 200 \\\n" +
+      "         --control-population fr-2026.1 --control-n 50 [--control-quotas '<json>'] --seed 7\n" +
+      "       npm run study:create -- --project <id> --same-sample-as <study> [--same-sample-group target] [--n 10] --backend ollama\n" +
+      "       npm run study:create -- --project examples/project.json [--n 50] [--control-n 20] [--seed 42] [--no-narrate]\n" +
+      "         (file or id of a project that declares `target` / `control`: conditional targeting, personas drawn on demand,\n" +
+      "          missing narratives written via claude-cli unless --no-narrate)\n" +
+      "Multi-role project (`roles` block): one group per role, each with its target; sizes per role: --role-n coach=20,member=40\n" +
+      "Protocol: --protocol 3 (default, neutral pitch required; --force to override) or --protocol 2 (frozen protocol of existing studies).\n" +
+      "Quota dimensions: ageBand, sex, pcs (1-6, none), livingStandard (Q1-Q5), techAdoption, townSize, activityStatus, region.",
+    unknownProtocol: (p) => `Unknown protocol: ${p} (--protocol 2 or 3).`,
+    backendRefused: (b) => `Backend refused: ${b} (claude-cli or ollama; never the paid API).`,
+    loaded: (id, file) => `Project ${id} loaded from ${file}.`,
+    nRequired: "Sample size required (--n), or a project with a `target` block.",
+    sizesRequired: "Sample sizes required: --n for the target, --control-n for the control group.",
+    created: (id, name) => `Study created: ${id} — ${name}`,
+    population: (group, n, packVersion, quotas) => `  ${group}: ${n} personas from ${packVersion}${quotas ? " (quotas)" : ""}`,
+    protocol: (protocol, version) => `  Protocol ${protocol} v${version}`,
+    sample: (size, seed, backend, model, from) => `  ${size} personas, seed ${seed}, ${backend} / ${model}` + (from ? `, sample reused from ${from}` : ""),
+    shortfalls: (list) => `  ⚠ Quotas not met:\n  - ${list.join("\n  - ")}`,
+    narrateBackendRefused: (b) => `Narrative backend refused: ${b}`,
+    narratives: (r) =>
+      narrativesHead(r) +
+      (r.missing.length ? `; ${r.missing.length} missing, run again to resume` : "") +
+      (r.aborted ? `; stopped on usage limit: ${r.aborted}` : "") +
+      ".",
+    launch: (id) => `Run: npm run study:run -- --study ${id}`,
+  },
+  studyDrivers: {
+    usage: "Usage: npm run study:drivers -- --study <id> [--top 10] [--json] [--out file.json]",
+    header: (id, name, group, n) => `Engagement drivers — study ${id} (${name})${group ? `, group “${group}”` : ""}, n = ${n}`,
+  },
+  studyList: {
+    none: "No study.",
+    sampleOf: (id) => `  (sample from ${id})`,
+  },
+  studyRecode: {
+    usage: "Usage: npm run study:recode -- --study <id> --taxonomy <proposal.json|yaml> [--key name] [--group target] [--batch-size 40]",
+    header: (id, key, n) => `Study ${id} — taxonomy “${key}” (${n} categories)`,
+    run: (objections, responses, calls, input, output) =>
+      `${objections} objection(s) from ${responses} response(s) to reclassify; ${calls} call(s), ${input} input tokens, ${output} output.`,
+    usageLimit: (s) => `⏸ Usage limit: ${s}\nResume later with the same command.`,
+    noneRecoded: "No recoded response.",
+    title: (group, n) => `\nReclassified objections${group ? ` (group “${group}”)` : ""}, n = ${n} (share of respondents citing the category)`,
+    example: (ex) => `      “${ex}”`,
+    oldCategories: (list) => `\nPrevious categories: ${list}`,
+    whence: "Where the new categories come from (number of objections):",
+  },
+  studyRecommend: {
+    usage:
+      "Usage: npm run study:recommend -- --study <id> [--force]\n" +
+      "       npm run study:recommend -- --study <id> --create <recId> --confirm   (creates the variant and the study, without running it)",
+    needConfirm: "Add --confirm: the project variant and the study will be created (the study is not run).",
+    projectCreated: (id, file) => `Project created: ${id}${file ? ` (${file})` : ""}`,
+    studyCreated: (id) => `Study created, not run: ${id}\nRun: npm run study:run -- --study ${id}`,
+    findings: "Findings",
+    recommendations: "\nRecommendations",
+    caveats: "\nCaveats",
+    evidence: (metric, value, source) => `      · ${metric}: ${value}  [${source}]`,
+    recommendation: (i, kind, title, confidence, id) => `  ${i}. [${kind}] ${title} (confidence ${confidence}) — id ${id}`,
+    nextStudy: (sample, n, control, calls, minutes, eligibility) =>
+      `     → Next study (${sample}, n = ${n}${control ? ` + ${control} controls` : ""}, ≈ ${calls} calls, ≈ ${minutes} min${eligibility !== null ? `, eligibility ${eligibility}%` : ""})`,
+    nextStudyDetail: (hypothesis, success, patch) => `       Hypothesis: ${hypothesis}\n       Success if: ${success}\n       Patch: ${patch}`,
+    create: (studyId, recId) => `       Create: npm run study:recommend -- --study ${studyId} --create ${recId} --confirm`,
+    verification: (valid, checked, repaired, dropped, droppedNext) =>
+      `\nVerification: ${valid}/${checked} valid pieces of evidence${repaired ? " after one repair" : ""}; ${dropped} removed; ${droppedNext} next stud${droppedNext === 1 ? "y" : "ies"} discarded.`,
+    dropped: (where, source, value, reason) => `  - removed: ${where} [${source}] “${value}”: ${reason}`,
+    droppedNext: (recommendation, reason) => `  - discarded: ${recommendation}: ${reason}`,
+  },
+  studyRun: {
+    usage: "Usage: npm run study:run -- --study <id> [--concurrency N]",
+    backendRefused: (b) => `Backend refused: ${b}`,
+    unavailable: (backend, detail, hint) => `${backend} unavailable: ${detail}${hint ? `\n→ ${hint}` : ""}`,
+    header: (id, name) => `Study ${id} — ${name}`,
+    engine: (backend, model, concurrency) => `${backend} / ${model}, concurrency ${concurrency}`,
+    narratives: (r) => narrativesHead(r) + (r.missing.length ? `; ${r.missing.length} without a narrative (profile card only)` : "") + ".",
+    narrativesAborted: (reason, id) => `Usage limit reached while writing narratives: ${reason}\nRun again later: npm run study:run -- --study ${id}`,
+    written: (written, s, already, total) => `\n${written} response(s) written in ${s} s (${already} already done, ${total} in total).`,
+    tokens: (input, cacheRead, output, perResponse, costUsd) =>
+      `Tokens: ${input} input (${cacheRead} of them from cache), ${output} output; ` +
+      `${perResponse} s per response (concurrency included)` +
+      (costUsd ? `; indicative cost $${costUsd.toFixed(3)} (covered by the subscription)` : "") +
+      ".",
+    quota: (s) => `\n⏸ Quota reached: ${s}`,
+    quotaResume: (id) => `Responses obtained so far are saved. Resume after the quota resets:\n  npm run study:run -- --study ${id}`,
+    aborted: (reason, id) => `\n✖ Study stopped: ${reason}\nFix the cause, then run again: npm run study:run -- --study ${id}`,
+    failed: (n, id) => `\n${n} failure(s); run again to retry them: npm run study:run -- --study ${id}`,
+    complete: (id) => `\nStudy complete. Summary: npm run study:summary -- --study ${id}`,
+  },
+  studySummary: {
+    usage: "Usage: npm run study:summary -- --study <id> [--json] [--out file.json]",
+    noResponses: (id) => `No responses for study ${id}: run study:run.`,
+  },
+  targetPreview: {
+    usage:
+      "Usage: npm run target:preview -- --project <id | file> [--group target|control] [--n 200] [--sample 10] [--seed 42]\n" +
+      "                                [--triage] [--threshold 0.5] [--alert 0.1] [--drafts] [--json]\n" +
+      "  --triage: relevance pre-screen by the local Qwen (2 calls per persona, concurrency 2, cached).\n" +
+      "  --drafts: allows module drafts (read-only).",
+    header: (group, name) => `\n# Preview of target “${group}” of project ${name}`,
+    socle: (socle, modules, seed) => `Base ${socle}; modules: ${modules || "none"}; seed ${seed}`,
+    draws: (n, draws) => `${n} personas out of ${draws} virtual draws`,
+    rate: (rate, lo, hi) => `Eligibility rate: ${rate} [95% CI ${lo}; ${hi}]`,
+    quota: (s) => `quota: ${s}`,
+    distributions: "\n## Sample distributions",
+    distribution: (label, inFilter, multi, values, more) => `- ${label}${inFilter ? " [filter]" : ""}${multi ? " (multiple allowed)" : ""}: ${values}${more ? ", …" : ""}`,
+    cards: (n) => `\n## ${n} profile cards, as the protocol will see them`,
+    triage: (model) => `\n## Relevance pre-screen (${model})`,
+    alert: "⚠ ALERT: ",
+    argmax: (concerned, marginal, notConcerned, flagged, threshold) =>
+      `Most likely label: concerned ${concerned}, marginal ${marginal}, not concerned ${notConcerned}; ` +
+      `${flagged} personas with P(not concerned) ≥ ${threshold} (to review)`,
+    profiles: "Typical profiles of the “not concerned”:",
+    criterion: (label, value) => `${label} = ${value}`,
+    criteriaJoin: " and ",
+    profile: (criteria, n, rate, lift, inReview, examples) =>
+      `- ${criteria}: ${n} personas, ≈ ${rate} not concerned (× ${lift}), ${inReview} among the cards to review; e.g. ${examples}`,
+    review: (n) => `Cards to review (${n}, the most likely not concerned):`,
+    reviewLine: (id, p, lines) => `- ${id} (P = ${p}): ${lines.join("; ")}`,
+    calls: (calls, cached, s, failed) => `Qwen calls: ${calls} (+ ${cached} cached), ${s} s${failed ? `; ${failed} personas failed` : ""}`,
+    duration: (s) => `\nTotal time: ${s} s`,
+  },
+  targetSuggest: {
+    usage:
+      "Usage: npm run target:suggest -- --project <id | file> [--triage] [--no-preview] [--n 200] [--seed 42] [--out file.yaml] [--json]\n" +
+      "  Writes the proposal to <project>.target-suggestion.yaml (or data/suggestions/<id>.target-suggestion.yaml).",
+    header: (name, model) => `\n# Target proposal for ${name} (${model})`,
+    usageConditions: "\nUsage conditions:",
+    condition: (condition, attribute, why) => `- ${condition} → ${attribute || "(no attribute)"}: ${why}`,
+    variants: "\nVariants:",
+    modulesFilter: (modules, filter) => `Modules: ${modules || "none"}\nFilter: ${filter}`,
+    quotas: (json) => `Quotas: ${json}`,
+    justification: (criterion, why) => `  · ${criterion}: ${why}`,
+    errors: (list) => `⚠ ${list.join("; ")}`,
+    eligibility: (rate, lo, hi, draws) => `Eligibility: ${rate} [95% CI ${lo}; ${hi}] (${draws} draws)`,
+    triage: (message) => `Pre-screen: ${message}`,
+    missingModules: "\nMissing modules:",
+    missingModule: (id, description, attributes, why) => `- ${id}: ${description}\n  attributes: ${attributes.join("; ")}\n  why: ${why}`,
+    note: (n) => `Note: ${n}`,
+    claude: (calls, repairs, s) => `\nClaude: ${calls} call(s), ${repairs} repair(s); duration ${s} s`,
+    written: (path) => `Proposal written to ${path} (nothing is applied to the project).`,
+  },
+  triageValidate: {
+    usage: "Usage: npm run triage:validate -- --studies a,b [--portrait] [--limit N] [--out file.json]",
+    references: (n, studies, portrait) => `${n} reference responses (${studies}); profile card ${portrait ? "and portrait" : "only"}.`,
+    calls: (calls, cached, s, failed) => `Calls: ${calls} (+ ${cached} cached), ${s} s; failures: ${failed}`,
+    failure: (id, error) => `  failed ${id}: ${error}`,
+    thresholds: "\nThreshold τ on P(not concerned) — overall:",
+    thresholdsHeader: "τ     NC recall  precision  FP rate  ref share  est share",
+    agreement: (exact, qwk, mean) => `\nExact agreement ${exact}, quadratic kappa ${qwk}; mean P(NC) ${mean}`,
+    confusion: "Confusion (rows: Claude; columns: Qwen):",
+    byGroup: "\nBy study and group: share of “not concerned” (Claude / mean of Qwen P(NC)), AUC, then at threshold 0.3:",
+    group: (key, n, ref, est, auc, recall, falseNc, exact, qwk) =>
+      `  ${key} n=${n}  ref ${ref}  est ${est}  ` + `AUC ${auc}  recall ${recall}  FP rate ${falseNc}  exact ${exact}  qwk ${qwk}`,
+    detail: (out) => `\nDetail: ${out}`,
+  },
+};

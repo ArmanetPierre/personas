@@ -1,0 +1,28 @@
+# Démonstration du format de prix : mensuel ou annuel au choix, en USD, avec un seuil gratuit.
+# Projet fictif. Le payeur réel est le responsable d'équipe (voir examples/team-schedule.yaml, multi-rôles) :
+# ici, la persona répond pour elle-même.
+id: demo-pricing-team-schedule
+name: Créneau
+pitch: >-
+  Créneau est une application de planning pour les petites équipes en horaires décalés (commerce, restauration,
+  aide à domicile) : le responsable prépare le planning de la semaine, les membres de l'équipe le consultent sur
+  leur téléphone, indiquent leurs disponibilités et s'échangent des créneaux. L'application est gratuite pour les
+  membres. Le responsable la paie s'il veut plus de 2 équipes ou plus de 30 membres.
+targetAudience: Responsables de petites équipes en horaires décalés.
+businessModel: Freemium payé par le responsable seul ; Premium Équipe à 9,99 $/mois ou 99 $/an.
+price:
+  currency: USD
+  offers:
+    - id: mensuel
+      amount: 9.99
+      unit: month
+    - id: annuel
+      amount: 99
+      unit: year
+  reference: mensuel
+  tiers: [4.99, 9.99, 14.99]
+  freemium:
+    free: jusqu'à 2 équipes ou 30 membres ; toujours gratuit pour les membres
+    paid: Premium Équipe (équipes illimitées, statistiques d'heures, export paie, modèles de planning)
+competitors: [Skello, Combo, groupes WhatsApp]
+alternatives: [un tableur partagé, un planning papier affiché en salle de pause]

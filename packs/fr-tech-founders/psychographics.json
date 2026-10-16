@@ -1,0 +1,147 @@
+{
+ "id": "psychographics",
+ "title": "Traits psychographiques (population ciblée : latente techno décalée)",
+ "assumption": true,
+ "justification": "Reprend la table du pack fr, avec deux réglages propres à des professionnels du numérique : latente techno décalée de +1 écart-type (ils sont bien plus à l'aise que la moyenne ; hypothèse) et équipement corrélé au seul résidu individuel de la latente, pour que la part revenu, élevée dans cette population, ne décale pas les taux d'équipement cibles. Aucune statistique officielle ne mesure ces traits sur la population française. Les paramètres traduisent des relations documentées : (1) la diffusion des innovations suit les parts de Rogers 2,5/13,5/34/34/16 % ; (2) l'usage et l'équipement numériques baissent nettement avec l'âge et montent avec le revenu et le diplôme (Baromètre du numérique) ; (3) la sensibilité au prix baisse avec le niveau de vie et monte quand le budget est contraint ; (4) la défiance envers les nouveautés et la publicité est majoritaire en France et un peu plus forte chez les plus âgés et les moins à l'aise avec le numérique. Les poids sont des choix de modélisation, à recalibrer à l'étape 6 (calibration sur des produits au résultat connu). Tonalité des récits (révision du 13/10/2026) : le réalisme pessimiste porte sur l'acte d'achat (budget, inertie, alternatives), pas sur l'humeur. La plupart des Français se disent satisfaits de leur vie (note moyenne 7,2/10 en 2023, INSEE, enquête SRCV), et la satisfaction monte avec le niveau de vie (6,5 pour le quart le plus modeste, 7,6 pour le quart le plus aisé). Les poids visent environ 40 % de tonalités positives, 35 % neutres et 25 % négatives, modulées par les attributs : profil techno (enthousiaste, curieux), niveau de vie (à l'aise, serein), emploi et enfants (occupé), scepticisme (méfiant), tension budgétaire (fatigué).",
+ "sources": [
+  {
+   "org": "Everett M. Rogers",
+   "title": "Diffusion of Innovations (5e édition), Free Press",
+   "year": 2003,
+   "url": "https://en.wikipedia.org/wiki/Diffusion_of_innovations",
+   "detail": "parts des catégories d'adoptants"
+  },
+  {
+   "org": "CREDOC pour l'Arcep, l'Arcom, le CGE et l'ANCT",
+   "title": "Baromètre du numérique",
+   "year": 2025,
+   "url": "https://www.arcep.fr/la-regulation/grands-dossiers-thematiques-transverses/la-fracture-numerique/barometre-du-numerique.html",
+   "detail": "gradients d'équipement et d'usage par âge et revenu"
+  },
+  {
+   "org": "INSEE",
+   "title": "Insee Focus : satisfaction dans la vie (enquête SRCV), note moyenne de 7,2/10 en 2023",
+   "year": 2025,
+   "url": "https://www.insee.fr/fr/statistiques/8352111"
+  }
+ ],
+ "notes": "Modèle : une variable latente techno ~ N(0,1) = ageWeight × (pivotAge − âge)/ageScale + incomeWeight × ln(niveau de vie / médiane)/incomeScale + bruit ; les catégories de Rogers sont des seuils de cette latente. L'équipement est corrélé (equipmentCorrelation) à la part de la latente indépendante de l'âge, ce qui préserve les taux d'équipement par âge de digital.json. Sensibilité au prix = sigmoïde(intercept + income × ln(niveau de vie/médiane) + strain × tension budgétaire + bruit). Scepticisme = sigmoïde(intercept + age × âge centré-réduit − tech × latente + bruit). Tonalités : poids de base, modulés dans le code par le scepticisme, la tension budgétaire, le profil d'adoption et le niveau de vie. Les tonalités portent une valence (positive, neutre, négative) et un modulateur optionnel appliqué dans sampler.ts : tech (× 1,6 pour innovateurs et adopteurs précoces, × 0,8 sinon), income (× 0,6 + 0,4 × min(2, niveau de vie/médiane)), busy (× 1,8 en emploi avec enfants, × 1 en emploi, × 0,4 sinon), skepticism (× 0,4 + 1,6 × scepticisme), strain (× 0,6 + tension budgétaire).",
+ "data": {
+  "rogers": {
+   "innovator": 0.025,
+   "early_adopter": 0.135,
+   "early_majority": 0.34,
+   "late_majority": 0.34,
+   "laggard": 0.16
+  },
+  "tech": {
+   "ageWeight": 0.6,
+   "incomeWeight": 0.3,
+   "pivotAge": 48.5,
+   "ageScale": 17.5,
+   "incomeScale": 0.55,
+   "shift": 1.0
+  },
+  "equipmentCorrelation": 0.6,
+  "priceSensitivity": {
+   "intercept": 0.35,
+   "income": -1.3,
+   "strain": 1.0,
+   "noise": 0.7
+  },
+  "skepticism": {
+   "intercept": 0.35,
+   "age": 0.3,
+   "tech": 0.35,
+   "noise": 0.8
+  },
+  "tones": [
+   {
+    "id": "enthousiaste",
+    "label": "enthousiaste, aime essayer et en parler autour de lui",
+    "valence": "positive",
+    "modulator": "tech",
+    "weight": 1.2
+   },
+   {
+    "id": "curieux",
+    "label": "curieux, aime comprendre, comparer, se renseigner",
+    "valence": "positive",
+    "modulator": "tech",
+    "weight": 1.8
+   },
+   {
+    "id": "a_l_aise",
+    "label": "à l'aise, sûr de ses choix, bien installé dans sa vie",
+    "valence": "positive",
+    "modulator": "income",
+    "weight": 1.6
+   },
+   {
+    "id": "jovial",
+    "label": "jovial, bon vivant, prend les choses avec humour",
+    "valence": "positive",
+    "weight": 1.6
+   },
+   {
+    "id": "serein",
+    "label": "serein, posé, content de ce qu'il a",
+    "valence": "positive",
+    "modulator": "income",
+    "weight": 2.0
+   },
+   {
+    "id": "occupe",
+    "label": "très occupé, pressé, toujours entre deux choses",
+    "valence": "neutral",
+    "modulator": "busy",
+    "weight": 2.0
+   },
+   {
+    "id": "factuel",
+    "label": "factuel, sobre",
+    "valence": "neutral",
+    "weight": 2.2
+   },
+   {
+    "id": "pragmatique",
+    "label": "pragmatique, organisé, attentif à ses dépenses",
+    "valence": "neutral",
+    "weight": 1.8
+   },
+   {
+    "id": "indifferent",
+    "label": "indifférent aux nouveautés, attaché à ses habitudes",
+    "valence": "neutral",
+    "weight": 1.6
+   },
+   {
+    "id": "mefiant",
+    "label": "méfiant, sur la défensive",
+    "valence": "negative",
+    "modulator": "skepticism",
+    "weight": 1.6
+   },
+   {
+    "id": "fatigue",
+    "label": "las, fatigué par le quotidien",
+    "valence": "negative",
+    "modulator": "strain",
+    "weight": 1.4
+   },
+   {
+    "id": "inquiet",
+    "label": "inquiet pour l'avenir",
+    "valence": "negative",
+    "weight": 1.2
+   },
+   {
+    "id": "ironique",
+    "label": "ironique, un peu désabusé",
+    "valence": "negative",
+    "weight": 1.0
+   }
+  ],
+  "equipmentFromResidual": true
+ }
+}

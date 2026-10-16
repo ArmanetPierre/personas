@@ -1,0 +1,115 @@
+{
+ "id": "sg-tax-benefits",
+ "title": "Impôt sur le revenu des résidents fiscaux et transferts publics en espèces",
+ "assumption": true,
+ "sources": [
+  {
+   "org": "IRAS",
+   "title": "Individual Income Tax rates",
+   "year": 2026,
+   "url": "https://www.iras.gov.sg/taxes/individual-income-tax/basics-of-individual-income-tax/tax-residency-and-tax-rates/individual-income-tax-rates"
+  },
+  {
+   "org": "DOS",
+   "title": "Key Household Income Trends 2025 (M810361, M810871)",
+   "year": 2025,
+   "url": "https://tablebuilder.singstat.gov.sg/table/TS/M810871"
+  },
+  {
+   "org": "CPF Board",
+   "title": "Silver Support Scheme",
+   "year": 2026,
+   "url": "https://www.cpf.gov.sg/member/retirement-income/government-support/silver-support-scheme"
+  },
+  {
+   "org": "govbenefits.gov.sg",
+   "title": "GST Voucher",
+   "year": 2026,
+   "url": "https://www.govbenefits.gov.sg/government-benefits-schemes/gst-voucher/"
+  }
+ ],
+ "referenceYear": 2026,
+ "justification": "Barème officiel des résidents (IRAS, YA2024 et suivants) ; seul l'Earned Income Relief (1 000 S$) est déduit en plus du CPF (abattements familiaux non modélisés : impôt un peu surestimé pour les parents). Transferts non ciblés par membre et par mois (GST Voucher cash, U-Save, CDC et SG60 Vouchers), concentrés sur les bas revenus, en hypothèse : SingStat publie 7 300 S$ par membre et par an de transferts dont 1 891 S$ de contributions régulières, mais pas leur ventilation par décile. Silver Support : 215 à 360 S$ par mois selon le logement (CPF Board), moyenne retenue 290 S$. Workfare : jusqu'à 4 900 S$ par an dont 40 % en espèces, moyenne retenue 140 S$ par mois.",
+ "data": {
+  "brackets": [
+   {
+    "upTo": 20000,
+    "rate": 0
+   },
+   {
+    "upTo": 30000,
+    "rate": 0.02
+   },
+   {
+    "upTo": 40000,
+    "rate": 0.035
+   },
+   {
+    "upTo": 80000,
+    "rate": 0.07
+   },
+   {
+    "upTo": 120000,
+    "rate": 0.115
+   },
+   {
+    "upTo": 160000,
+    "rate": 0.15
+   },
+   {
+    "upTo": 200000,
+    "rate": 0.18
+   },
+   {
+    "upTo": 240000,
+    "rate": 0.19
+   },
+   {
+    "upTo": 280000,
+    "rate": 0.195
+   },
+   {
+    "upTo": 320000,
+    "rate": 0.2
+   },
+   {
+    "upTo": 500000,
+    "rate": 0.22
+   },
+   {
+    "upTo": 1000000,
+    "rate": 0.23
+   },
+   {
+    "upTo": null,
+    "rate": 0.24
+   }
+  ],
+  "reliefs": 1000,
+  "householdTransfers": {
+   "cuts": [
+    1300,
+    2300,
+    3400,
+    5200
+   ],
+   "perMember": [
+    120,
+    95,
+    75,
+    55,
+    35
+   ]
+  },
+  "silverSupport": {
+   "monthly": 290,
+   "maxIncomePerCapita": 1500,
+   "fromAge": 65
+  },
+  "workfare": {
+   "monthly": 140,
+   "fromAge": 30,
+   "maxIncome": 3000
+  }
+ }
+}

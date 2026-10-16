@@ -1,0 +1,46 @@
+Personas thematic modules
+Copyright 2026 the Personas contributors (each module's author, as recorded in
+its history)
+
+The files in this directory (modules/<id>/module.yaml) are licensed under the
+Creative Commons Attribution 4.0 International licence (CC BY 4.0).
+
+Full legal code: https://creativecommons.org/licenses/by/4.0/legalcode
+Human-readable summary: https://creativecommons.org/licenses/by/4.0/
+
+Summary (not a substitute for the legal code)
+---------------------------------------------
+
+You are free to:
+  - Share: copy and redistribute the material in any medium or format,
+    for any purpose, even commercially.
+  - Adapt: remix, transform and build upon the material (for example, fork a
+    module into a new version), for any purpose, even commercially.
+
+Under the following terms:
+  - Attribution: you must give appropriate credit, provide a link to the
+    licence, and indicate if changes were made. You may do so in any
+    reasonable manner, but not in any way that suggests the licensor endorses
+    you or your use.
+  - No additional restrictions: you may not apply legal terms or
+    technological measures that legally restrict others from doing anything
+    the licence permits.
+
+No warranties are given. The licence may not give you all of the permissions
+necessary for your intended use.
+
+Notes specific to this directory
+--------------------------------
+
+  - A module is declarative data. It does not execute code.
+  - Every attribute and every reference table in a module cites its sources
+    (`sources:` keys) or is marked `assumption: true` with a `justification`.
+    Keep those citations when you reuse or fork a module: they are part of
+    the attribution, and the underlying data remain under the terms of their
+    publishers.
+  - Contributors may also dedicate their own module to the public domain
+    under CC0 1.0 (https://creativecommons.org/publicdomain/zero/1.0/); say so
+    in the module's header comment. No other licence is accepted, to keep the
+    library usable as a whole.
+  - The licence of a module imposes nothing on the personas drawn with it or
+    on the results of a study.

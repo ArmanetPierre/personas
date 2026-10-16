@@ -1,0 +1,375 @@
+id: achats-groupes-communaute
+version: "2026.3"
+changelog:
+  - version: "2026.3"
+    date: "2026-10-16"
+    changes:
+      - "word_of_mouth_sensitivity recalibrated (about 28% high, 44% medium, 28% low on average instead of about 50% high): age factor (30-45 higher, seniors lower), group membership factors (condo chat group, expat or diaspora group), lower 'high' and higher 'low' without social media."
+      - "expat_community_groups now depends on nationality and residency: Western and East Asian EP / Dependant's Pass holders in expat-type groups; Work Permit holders and domestic workers in diaspora groups."
+      - "Card line for word_of_mouth_sensitivity written as a plain string (attribute always drawn)."
+  - version: "2026.2"
+    date: "2026-10-16"
+    changes: ["First version (sg socle): online grocery frequency, group buys, condo/neighbourhood chat groups, expat/diaspora groups, word-of-mouth and referral propensity."]
+label: Group buys, online grocery and community networks
+short_label: Community buying
+description: >-
+  How residents of Singapore shop for groceries online (RedMart, FairPrice Online, Shopee/Lazada), whether they join
+  group buys on WhatsApp, Telegram or Facebook, which community chat groups they belong to (condo or neighbourhood
+  groups, expat or diaspora groups), and how much they rely on word of mouth and referrals. Conditioned on age,
+  residency status, nationality, dwelling, social media use, tech adoption and smartphone ownership. Does not cover
+  meat purchase channels or dietary constraints, nor home delivery reception (separate modules).
+applies_to: [sg]
+requires: []
+
+sources:
+  milieu_redmart_2023:
+    org: "Milieu Insight / RedMart (Lazada)"
+    title: "80% of Singaporeans prefer online grocery shopping post-pandemic"
+    year: 2023
+    url: "https://www.mili.eu/sg/insights/80-singaporeans-prefer-shopping-for-groceries-online-post-pandemic-lazada-redmart-milieu-insight-study-2023-research"
+    detail: "1,000 consumers aged 16+, March 2023, sponsored by an online grocer: 80% prefer online grocery; 60% of those buy online at least monthly. Fresh food and meat mostly bought offline."
+  yougov_grocery:
+    org: "YouGov"
+    title: "Three in five Singaporeans say shopping habits have changed since pandemic"
+    year: 2021
+    url: "https://yougov.com/articles/35220-over-two-five-singaporeans-report-increased-consum"
+    detail: "Reported, page not opened: 38% buy groceries online, 62% among 35-44. YouGov APAC 2025 reportedly 33% online vs 79% in physical supermarkets."
+  scmp_group_buy:
+    org: "South China Morning Post"
+    title: "Singaporeans eye savings with bulk-shopping groups on WhatsApp, Telegram"
+    year: 2021
+    url: "https://www.scmp.com/news/asia/southeast-asia/article/3145970/singaporeans-form-bulk-shopping-groups-whatsapp-telegram"
+    detail: "Page not opened (403). Tens of thousands of residents in group-buy communities, at least 20 communities launched; no population rate."
+  imda_dsr_2023:
+    org: "IMDA"
+    title: "Singapore Digital Society Report 2023"
+    year: 2023
+    url: "https://www.imda.gov.sg/-/media/imda/files/infocomm-media-landscape/research-and-statistics/singapore-digital-society-report/singapore-digital-society-report-2023.pdf"
+    detail: "Reported, PDF not opened: 99% of resident households online, 97% of residents own a smartphone."
+  hashmeta_whatsapp:
+    org: "Hashmeta"
+    title: "WhatsApp Statistics Singapore"
+    year: 2025
+    url: "https://hashmeta.com/blog/whatsapp-statistics-singapore-complete-guide-to-messaging-trends-business-opportunities/"
+    detail: "Marketing blog, not opened: WhatsApp about 84% penetration in Singapore, Telegram 38-49%."
+
+conditions:
+  smartphone: {attr: socle.has_smartphone, eq: true}
+  non_citizen: {not: {attr: socle.residency_status, in: [citizen]}}
+  has_children: {attr: socle.children_under_12, gt: 0}
+  ever_group_buyer: {attr: group_buy_participation, in: [once_or_twice, occasionally, regularly, organiser]}
+  online_shopper: {attr: online_grocery_frequency, in: [less_than_monthly, monthly, weekly, several_per_week]}
+
+tables:
+  online_age:
+    label: "Online grocery age factor"
+    bands:
+      - {from: 18, to: 29, value: 1.0}
+      - {from: 30, to: 49, value: 1.3}
+      - {from: 50, to: 64, value: 0.9}
+      - {from: 65, to: 79, value: 0.5}
+    sources: [yougov_grocery]
+    assumption: true
+    justification: "Peak at 30-45 (62% at 35-44 vs 38% on average, unverified YouGov), lower from 60; band values are assumptions."
+  online_dwelling:
+    label: "Online grocery dwelling factor"
+    values: {hdb_1_2: 0.5, hdb_3: 0.7, hdb_4: 1.0, hdb_5_exec: 1.1, condo: 1.5, landed: 1.5, dormitory: 0.1, other: 0.6}
+    assumption: true
+    justification: "No published breakdown; assumed higher in condos and landed homes, near zero in dormitories (no kitchen, no delivery address)."
+  online_residency:
+    label: "Online grocery residency factor"
+    values: {citizen: 1.0, pr: 1.1, ep: 1.4, spass: 0.8, wp: 0.15, mdw: 0.1, dependant: 1.2, student: 0.9}
+    assumption: true
+    justification: "Assumption: expatriates (EP and dependants) use RedMart and premium platforms more; work permit holders and domestic workers rarely order groceries themselves."
+  online_tech:
+    label: "Online grocery tech adoption factor"
+    values: {innovator: 1.6, early_adopter: 1.4, early_majority: 1.1, late_majority: 0.7, laggard: 0.4}
+    assumption: true
+    justification: "Rogers profiles; ordering factors assumed."
+  social_gb:
+    label: "Social media factor for group buys and community groups"
+    values: {none: 0.05, occasional: 0.5, daily: 1.1, heavy: 1.7}
+    sources: [hashmeta_whatsapp]
+    assumption: true
+    justification: "Group buys run on WhatsApp, Telegram and Facebook (WhatsApp about 84% penetration, unverified); factors are assumptions."
+  age_gb:
+    label: "Community / group buy age factor"
+    bands:
+      - {from: 18, to: 29, value: 1.0}
+      - {from: 30, to: 49, value: 1.25}
+      - {from: 50, to: 64, value: 0.9}
+      - {from: 65, to: 79, value: 0.5}
+    assumption: true
+    justification: "Assumption: households with children aged 30-50 are the core of group buys."
+  dwelling_gb:
+    label: "Group buy dwelling factor"
+    values: {hdb_1_2: 0.6, hdb_3: 0.8, hdb_4: 1.0, hdb_5_exec: 1.1, condo: 1.3, landed: 1.3, dormitory: 0.3, other: 0.7}
+    assumption: true
+    justification: "Assumption; no data. Condo and landed residents share bulk orders within resident groups."
+  residency_gb:
+    label: "Group buy residency factor"
+    values: {citizen: 1.1, pr: 1.1, ep: 1.0, spass: 0.9, wp: 0.4, mdw: 0.3, dependant: 1.0, student: 0.8}
+    assumption: true
+    justification: "Assumption; lower for work permit holders and domestic workers."
+  chat_dwelling:
+    label: "Probability of a condo / estate / neighbourhood chat group, by dwelling"
+    values: {hdb_1_2: 0.2, hdb_3: 0.25, hdb_4: 0.3, hdb_5_exec: 0.35, condo: 0.8, landed: 0.55, dormitory: 0.05, other: 0.2}
+    assumption: true
+    justification: "No statistic found; assumed about 80% in condos, 55% in landed homes, 25-35% in HDB, 5% in dormitories."
+  chat_tenure:
+    label: "Chat group tenure factor"
+    values: {owner: 1.1, owner_mortgage: 1.1, renter_private: 0.8, renter_social: 0.9, free: 0.7}
+    assumption: true
+    justification: "Room renters and people living with others are less often added to resident groups."
+  wom_tech:
+    label: "Word-of-mouth tech factor for 'high'"
+    values: {innovator: 0.8, early_adopter: 0.9, early_majority: 1.05, late_majority: 1.1, laggard: 1.0}
+    assumption: true
+    justification: "Early adopters rely a bit more on online reviews than on referrals."
+  wom_social:
+    label: "Word-of-mouth social media factor for 'high'"
+    values: {none: 0.6, occasional: 0.85, daily: 1.1, heavy: 1.2}
+    assumption: true
+    justification: "Assumption."
+  wom_age:
+    label: "Word-of-mouth age factor for 'high'"
+    bands:
+      - {from: 18, to: 29, value: 0.9}
+      - {from: 30, to: 45, value: 1.25}
+      - {from: 46, to: 64, value: 0.95}
+      - {from: 65, to: 79, value: 0.7}
+    assumption: true
+    justification: "Assumption, no source: sensitivity to neighbours' and friends' recommendations peaks among 30-45s who are active on social media and in community groups, and is lowest among seniors."
+  expat_social:
+    label: "Expat group membership social media factor"
+    values: {none: 0.2, occasional: 0.6, daily: 1.1, heavy: 1.5}
+    assumption: true
+    justification: "Assumption."
+
+attributes:
+  - key: online_affinity
+    label: Online grocery affinity (internal score)
+    type: number
+    value:
+      mul:
+        - {lookup: online_age, by: socle.age}
+        - {lookup: online_dwelling, by: socle.dwelling}
+        - {lookup: online_residency, by: socle.residency_status}
+        - {lookup: online_tech, by: socle.tech_adoption}
+        - {if: has_children, then: 1.25, else: 1}
+        - {if: smartphone, then: 1, else: 0.2}
+    assumption: true
+    justification: "Multiplicative score used by online_grocery_frequency; no direct source."
+
+  - key: online_grocery_frequency
+    label: Online grocery shopping frequency
+    type: enum
+    when: {any: [smartphone, {attr: socle.has_computer, eq: true}]}
+    values:
+      - {code: never, label: never buys groceries online}
+      - {code: less_than_monthly, label: less than once a month}
+      - {code: monthly, label: about once or twice a month}
+      - {code: weekly, label: about weekly}
+      - {code: several_per_week, label: several times a week}
+    distribution:
+      weights:
+        never: {div: [50, {attr: online_affinity}]}
+        less_than_monthly: 14
+        monthly: {mul: [16, {attr: online_affinity}]}
+        weekly: {mul: [11, {attr: online_affinity}]}
+        several_per_week: {mul: [2, {attr: online_affinity}]}
+      sampler: quasi
+    display: {empty: no smartphone or computer}
+    sources: [milieu_redmart_2023, yougov_grocery]
+    assumption: true
+    justification: "Adult online buyers range from 33% (YouGov 2025, unverified) to 80% (RedMart-sponsored Milieu 2023, biased); about 50% target, 60% of buyers at least monthly (Milieu). Fresh food and meat remain mostly offline, hence moderate frequency."
+
+  - key: group_buy_affinity
+    label: Group buy and community affinity (internal score)
+    type: number
+    value:
+      mul:
+        - {lookup: age_gb, by: socle.age}
+        - {lookup: social_gb, by: socle.social_media}
+        - {lookup: dwelling_gb, by: socle.dwelling}
+        - {lookup: residency_gb, by: socle.residency_status}
+        - {if: has_children, then: 1.2, else: 1}
+        - {pick: socle.tech_adoption, values: {innovator: 1.2, early_adopter: 1.2, late_majority: 0.8, laggard: 0.6}, default: 1}
+    assumption: true
+    justification: "Multiplicative score; no published prevalence."
+
+  - key: group_buy_participation
+    label: Participation in group buys (WhatsApp, Telegram, Facebook)
+    type: enum
+    when: smartphone
+    values:
+      - {code: never, label: has never joined a group buy}
+      - {code: once_or_twice, label: has joined a group buy once or twice}
+      - {code: occasionally, label: joins group buys occasionally}
+      - {code: regularly, label: joins group buys regularly}
+      - {code: organiser, label: organises group buys}
+    distribution:
+      weights:
+        never: {div: [62, {attr: group_buy_affinity}]}
+        once_or_twice: 14
+        occasionally: {mul: [14, {attr: group_buy_affinity}]}
+        regularly: {mul: [8, {attr: group_buy_affinity}]}
+        organiser: {mul: [1.5, {attr: group_buy_affinity}]}
+      sampler: quasi
+    display: {empty: no smartphone}
+    sources: [scmp_group_buy, hashmeta_whatsapp]
+    assumption: true
+    justification: "No prevalence figure found (press only: tens of thousands of members, at least 20 communities in 2021). Cautious assumption: about 30-35% have ever joined, 8-12% regularly, 1-2% organise."
+
+  - key: condo_neighbourhood_chat_group
+    label: Member of a condo, estate or neighbourhood chat group
+    type: boolean
+    when: smartphone
+    rate:
+      min:
+        - 0.95
+        - mul:
+            - {lookup: chat_dwelling, by: socle.dwelling}
+            - {lookup: chat_tenure, by: socle.tenure}
+    labels: {yes: member of a condo or neighbourhood chat group, no: not in a condo or neighbourhood chat group}
+    assumption: true
+    justification: "No statistic found. About 80% in condos, 55% in landed homes, 25-35% in HDB, 5% in dormitories, adjusted by tenure."
+
+  - key: expat_community_groups
+    label: Expat or diaspora community groups (Facebook, WhatsApp)
+    type: enum
+    when: non_citizen
+    values:
+      - {code: none, label: no expat or diaspora group}
+      - {code: one, label: one expat or diaspora group}
+      - {code: several, label: several expat or diaspora groups}
+    distribution:
+      weights:
+        none:
+          cases:
+            - {when: {all: [{attr: socle.nationality, eq: western}, {attr: socle.residency_status, in: [ep, dependant]}]}, value: 35}
+            - {when: {all: [{attr: socle.nationality, eq: east_asia}, {attr: socle.residency_status, in: [ep, dependant]}]}, value: 42}
+            - {when: {attr: socle.residency_status, eq: pr}, value: 65}
+            - {when: {attr: socle.residency_status, in: [wp, mdw]}, value: 45}
+            - {else: 55}
+        one:
+          mul:
+            - cases:
+                - {when: {all: [{attr: socle.nationality, eq: western}, {attr: socle.residency_status, in: [ep, dependant]}]}, value: 35}
+                - {when: {all: [{attr: socle.nationality, eq: east_asia}, {attr: socle.residency_status, in: [ep, dependant]}]}, value: 33}
+                - {when: {attr: socle.residency_status, eq: pr}, value: 25}
+                - {when: {attr: socle.residency_status, in: [wp, mdw]}, value: 35}
+                - {else: 30}
+            - {lookup: expat_social, by: socle.social_media}
+        several:
+          mul:
+            - cases:
+                - {when: {all: [{attr: socle.nationality, eq: western}, {attr: socle.residency_status, in: [ep, dependant]}]}, value: 30}
+                - {when: {all: [{attr: socle.nationality, eq: east_asia}, {attr: socle.residency_status, in: [ep, dependant]}]}, value: 25}
+                - {when: {attr: socle.residency_status, eq: pr}, value: 10}
+                - {when: {attr: socle.residency_status, in: [wp, mdw]}, value: 20}
+                - {else: 15}
+            - {lookup: expat_social, by: socle.social_media}
+    assumption: true
+    justification: "No numbers found. Assumption: Western and, a bit less, East Asian EP and Dependant's Pass holders are more often in expat-type groups (e.g. French Expats in Singapore): about 65% of Western EP and dependants in at least one group; Work Permit holders and domestic workers mostly belong to nationality-based diaspora groups (Facebook, WhatsApp, Telegram), about 55% in at least one; PRs about 35%; other foreigners (S Pass, students, other nationalities) in between. Citizens are not covered (null)."
+
+  - key: word_of_mouth_sensitivity
+    label: Sensitivity to word of mouth and referrals for a new service
+    type: enum
+    values:
+      - {code: low, label: relies little on word of mouth}
+      - {code: medium, label: moderately influenced by word of mouth}
+      - {code: high, label: strongly influenced by word of mouth}
+    distribution:
+      weights:
+        low:
+          mul:
+            - 26
+            - {pick: socle.social_media, values: {none: 1.6, occasional: 1.2}, default: 1}
+            - {if: {attr: socle.age, gt: 64}, then: 1.3, else: 1}
+        medium: 45
+        high:
+          mul:
+            - 24
+            - {lookup: wom_age, by: socle.age}
+            - {lookup: wom_tech, by: socle.tech_adoption}
+            - {lookup: wom_social, by: socle.social_media}
+            - {if: {attr: socle.residency_status, in: [ep, dependant]}, then: 1.1, else: 1}
+            - {if: {attr: condo_neighbourhood_chat_group, eq: true}, then: 1.15, else: 1}
+            - {if: {attr: expat_community_groups, in: [one, several]}, then: 1.15, else: 1}
+    assumption: true
+    justification: "No direct measure; 63% of grocery shoppers open to new brands (Marketing-Interactive, not opened) is only an indirect proxy. Assumed on average about 28% high, 44% medium and 28% low across adults; higher 'high' among 30-45s active on social media and members of condo or expat groups, lower among seniors and people without social media."
+
+  - key: referral_incentive_response
+    label: Likelihood of referring friends or neighbours for a reward
+    type: enum
+    when: smartphone
+    values:
+      - {code: unlikely, label: unlikely to refer anyone}
+      - {code: maybe, label: might refer for a reward}
+      - {code: likely, label: likely to refer for a reward}
+    distribution:
+      weights:
+        unlikely: {pick: group_buy_participation, values: {organiser: 5, regularly: 15, occasionally: 35, once_or_twice: 50}, default: 62}
+        maybe: 30
+        likely: {pick: group_buy_participation, values: {organiser: 70, regularly: 50, occasionally: 30, once_or_twice: 20}, default: 8}
+    assumption: true
+    justification: "No data. Correlated with group buy participation (organisers and regulars 'likely' in about 50-70% of cases); to validate by a project-specific survey."
+
+card:
+  - when: {attr: online_grocery_frequency, present: true}
+    template: "Online groceries: {online_grocery_frequency}"
+  - when: smartphone
+    template: "Group buys: {group_buy_participation}"
+  - when: smartphone
+    template: "Chat groups: {condo_neighbourhood_chat_group}"
+  - when: non_citizen
+    template: "Expat or diaspora groups: {expat_community_groups}"
+  - "Word of mouth: {word_of_mouth_sensitivity}"
+  - when: smartphone
+    template: "Referrals: {referral_incentive_response}"
+
+segments:
+  - {id: communityOnlineGrocery, attribute: online_grocery_frequency, label: Online grocery frequency}
+  - {id: communityGroupBuy, attribute: group_buy_participation, label: Group buy participation, compare: 5}
+  - {id: communityExpatGroups, attribute: expat_community_groups, label: Expat or diaspora groups}
+  - {id: communityWordOfMouth, attribute: word_of_mouth_sensitivity, label: Word-of-mouth sensitivity}
+  - {id: communityReferral, attribute: referral_incentive_response, label: Referral propensity}
+
+validation:
+  margins:
+    - {attribute: online_grocery_frequency, title: "Online grocery frequency"}
+    - {attribute: group_buy_participation, title: "Group buy participation"}
+    - {attribute: expat_community_groups, title: "Expat or diaspora groups"}
+    - {attribute: word_of_mouth_sensitivity, title: "Word-of-mouth sensitivity"}
+    - {attribute: referral_incentive_response, title: "Referral propensity"}
+  shares:
+    - label: "Adults with a device who buy groceries online (sources diverge: 33% to 80%; target about 50%)"
+      among: {attr: socle.has_smartphone, eq: true}
+      share_of: online_shopper
+      range: [0.35, 0.65]
+    - label: "Smartphone owners who have joined a group buy (assumption: 30-35%)"
+      among: smartphone
+      share_of: ever_group_buyer
+      range: [0.22, 0.45]
+    - label: "Condo residents with a smartphone in a condo chat group (assumption: about 80%)"
+      among: {all: [smartphone, {attr: socle.dwelling, eq: condo}]}
+      share_of: {attr: condo_neighbourhood_chat_group, eq: true}
+      range: [0.65, 0.9]
+    - label: "Western EP holders in at least one expat group (assumption: about 65%)"
+      among: {all: [{attr: socle.residency_status, eq: ep}, {attr: socle.nationality, eq: western}]}
+      share_of: {attr: expat_community_groups, in: [one, several]}
+      range: [0.5, 0.8]
+    - label: "Adults strongly influenced by word of mouth (assumption: about 25-30%)"
+      among: {attr: socle.age, gt: 17}
+      share_of: {attr: word_of_mouth_sensitivity, eq: high}
+      range: [0.2, 0.36]
+  plausibility: []
+
+eligibility_helpers:
+  group_buyer: "achats-groupes-communaute.group_buy_participation in [occasionally, regularly, organiser]"
+  condo_chat_member: "achats-groupes-communaute.condo_neighbourhood_chat_group == true"
+  weekly_online_grocer: "achats-groupes-communaute.online_grocery_frequency in [weekly, several_per_week]"
+  referral_prone: "achats-groupes-communaute.referral_incentive_response == likely"
+  word_of_mouth_driven: "achats-groupes-communaute.word_of_mouth_sensitivity == high"
+  condo_hosts_30_45: "age >= 30 and age <= 45 and achats-groupes-communaute.condo_neighbourhood_chat_group == true and has_smartphone"

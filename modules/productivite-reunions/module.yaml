@@ -1,0 +1,408 @@
+# Module « Productivité et réunions » : charge de réunions, visio, prise de notes et transcription, contraintes de l'employeur, confidentialité, dictée vocale.
+# S'applique aux personnes en emploi du socle. Peu de données publiques françaises : l'essentiel est calé sur des proxys (télétravail par PCS, usage pro de l'IA générative).
+# Format : docs/modules.md. L'ordre de déclaration est l'ordre de tirage.
+id: productivite-reunions
+version: "2026.3"
+changelog:
+  - version: "2026.3"
+    date: "2026-10-15"
+    changes:
+      - "Part des réunions en visio affichée en pourcentage (« environ 30 % des réunions en visio » au lieu de « 0,3 »)."
+      - "Outils de visio : au moins un outil dès que la part de visio dépasse 10 % (`min_items: 1`, complément tiré au prorata des taux) ; avant, environ 11 % des personas en visio n'avaient aucun outil."
+      - "Les personas tirées en 2026.2 restent en base telles quelles ; les nouvelles tirées en 2026.3 ont un identifiant suffixé."
+  - version: "2026.2"
+    date: "2026-10-15"
+    changes: ["Version validée."]
+label: Productivité et réunions
+short_label: Réunions
+description: >-
+  Personnes en emploi : nombre de réunions par semaine, part en visio, outils de visio, usage de l'IA générative au travail,
+  contrainte de l'employeur ou de la DSI sur les outils cloud et IA, pratique de prise de notes et de transcription,
+  sensibilité à la confidentialité des réunions, usage de la dictée vocale. Conditionné au statut d'activité, à la PCS, à l'âge,
+  à l'équipement et au module numerique.
+applies_to: [fr]
+requires: [numerique]
+
+sources:
+  insee_tt:
+    org: "Insee"
+    title: "Télétravail et présentiel : le travail hybride, une pratique désormais ancrée dans les entreprises (Insee Analyses n°105)"
+    year: 2025
+    url: "https://www.insee.fr/fr/statistiques/8379375"
+    detail: "Salariés du privé, 1er semestre 2024 : télétravail au moins mensuel cadres ≈ 63 %, professions intermédiaires ≈ 22 %, employés ≈ 10 %, ouvriers ≈ 0 % ; postes télétravaillables : 80 % des cadres, 21 % des employés"
+  talan_ifop:
+    org: "Ifop pour Talan, repris par Archimag"
+    title: "43 % des Français utilisent les IA génératives dans leur travail"
+    year: 2025
+    url: "https://www.archimag.com/vie-numerique/2025/04/29/43-francais-utilisent-intelligences-artificielles-generatives-travail"
+    detail: "43 % des utilisateurs d'IA générative s'en servent au travail ; 9 % des salariés ont un outil fourni en interne ; 49 % disent que leur employeur n'envisage pas d'en déployer ; 65 % citent la sécurité des données"
+  pwc:
+    org: "PwC (via compta-online)"
+    title: "Global Workforce Hopes & Fears 2025 : la France décroche"
+    year: 2025
+    url: "https://www.compta-online.com/ia-entreprise-france-ao8490"
+    detail: "Non vérifiée (page non ouverte) : 54 % des actifs français n'ont pas utilisé d'IA générative dans l'année ; 7 % des salariés l'utilisent chaque jour"
+  senat:
+    org: "Sénat"
+    title: "L'entreprise 5.0 : l'impact de l'intelligence artificielle sur les entreprises"
+    year: 2025
+    url: "https://www.senat.fr/rap/r25-572/r25-5724.html"
+    detail: "Non vérifiée (page non ouverte) : 64 % des utilisateurs d'IA au travail le font de leur propre initiative ; 17 % sont dans une entreprise qui impose l'adoption"
+  credoc:
+    org: "CREDOC / Arcep / CGE"
+    title: "Baromètre du numérique, édition 2025"
+    year: 2026
+    url: "https://www.economie.gouv.fr/files/files/directions_services/cge/media-document/Barometre_numerique_2025_ed2026.pdf"
+    detail: "Non vérifiée (PDF en erreur 403) : 48 % des 12 ans et plus utilisent l'IA générative ; aucun chiffre sur la dictée vocale"
+  cadreo_hellowork:
+    org: "Cadreo, repris par HelloWork"
+    title: "Les cadres français face aux réunions"
+    year: 2017
+    url: "https://www.hellowork.com/fr-fr/medias/les-cadres-francais-face-aux-reunions.html"
+    detail: "Page ouverte. 630 cadres français, enquête 2017 : 25 % ont 0-1 réunion par semaine, 50 % en ont 2-3, 23 % en ont 6-10 ; 9 cadres sur 10 participent régulièrement à des réunions. Échantillon réduit et ancien."
+  wttj_reunions:
+    org: "Welcome to the Jungle"
+    title: "8 chiffres étonnants sur les réunions en entreprise"
+    year: 2019
+    url: "https://www.welcometothejungle.com/fr/articles/chiffres-chocs-reunion"
+    detail: "Page ouverte. Ifop/Wisembly 2018 (cadres français) : 3,5 réunions par semaine en moyenne. Barco/Circle Research 2019 (3 000 cols blancs, France et 6 autres pays) : 10 réunions par semaine en moyenne. Définitions de « réunion » incompatibles."
+  gpomag:
+    org: "GPO Magazine"
+    title: "La réunionite est-elle un fléau pour la productivité des salariés français"
+    year: 2024
+    url: "https://www.gpomag.fr/la-reunionite-est-elle-un-fleau-pour-la-productivite-des-salaries-francais/"
+    detail: "Non vérifiée (page en erreur 403, chiffres vus dans un résumé de recherche) : salariés français, 56,8 % ont 1-3 réunions par semaine, 23,4 % en ont 4-6, 14,7 % plus de 6 ; source primaire et année inconnues (année indicative)"
+  boulevardduweb_visio:
+    org: "Boulevard du Web (EmailToolTester/Semrush)"
+    title: "Cartographie des plateformes de visioconférence les plus populaires à travers le monde"
+    year: 2021
+    url: "https://boulevardduweb.com/plateformes-visio-2021/"
+    detail: "Non vérifiée (page non ouverte, chiffres vus dans un résumé de recherche) : parts de recherches en ligne, et non d'usage, en France en 2021 : Skype 50,5 %, Teams 12,3 %, Zoom 9,2 %, Meet 8,3 %"
+
+conditions:
+  employed: {attr: socle.activity_status, eq: employed}
+  digital: {attr: numerique.is_digital_worker, eq: true}
+  freelance: {attr: numerique.work_status, in: [freelance_micro, freelance_company]}
+  cadre: {attr: socle.pcs, eq: "3"}
+  self_employed: {any: [{attr: socle.pcs, in: ["1", "2"]}, {attr: numerique.work_status, in: [freelance_micro, freelance_company]}]}
+  has_video: {all: [{attr: socle.activity_status, eq: employed}, {attr: socle.has_computer, eq: true}, {attr: video_meeting_share, gt: 0.1}]}
+  few_meetings: {attr: meetings_per_week, lt: 3}
+
+tables:
+  ai_pcs:
+    label: "Propension à utiliser l'IA générative au travail, par PCS (1 = moyenne des actifs)"
+    values: {"1": 0.4, "2": 1.0, "3": 1.8, "4": 1.1, "5": 0.6, "6": 0.35, none: 0.5}
+    sources: [talan_ifop, pwc]
+    assumption: true
+    justification: "Les enquêtes ne publient pas de ventilation par PCS exploitable ici ; gradient supposé (cadres nettement au-dessus, ouvriers très en dessous), cohérent avec l'écart de postes télétravaillables (80 % des cadres, 21 % des employés, Insee)."
+  ai_age:
+    label: "Coefficient d'âge de l'usage de l'IA au travail"
+    bands:
+      - {from: 18, to: 29, value: 1.3}
+      - {from: 30, to: 44, value: 1.1}
+      - {from: 45, to: 54, value: 0.9}
+      - {from: 55, to: 79, value: 0.65}
+    sources: [credoc]
+    assumption: true
+    justification: "Usage de l'IA plus fréquent chez les jeunes (Baromètre du numérique) ; gradient lissé, hypothèse."
+  ai_tech:
+    label: "Coefficient du profil d'adoption technologique"
+    values: {innovator: 1.8, early_adopter: 1.4, early_majority: 1.0, late_majority: 0.7, laggard: 0.4}
+    assumption: true
+    justification: "Profil de Rogers du socle ; gradient supposé."
+  meetings_pcs:
+    label: "Réunions par semaine : médiane par PCS"
+    values: {"1": 1.0, "2": 1.7, "3": 2.6, "4": 2.4, "5": 1.3, "6": 1.0, none: 1.5}
+    sources: [insee_tt, cadreo_hellowork, wttj_reunions, gpomag]
+    assumption: true
+    justification: "Seule source française vérifiée : Cadreo 2017 (630 cadres) : 25 % ont 0-1 réunion par semaine, 50 % en ont 2-3, 23 % en ont 6-10, soit environ 25 % à 5 ou plus et une médiane de 2-3. Médiane des cadres ramenée à 2,6 (avec la dispersion log-normale et les coefficients d'âge et de métier, ≈ 63 % à 3 ou moins et ≈ 27 % à 5 ou plus), pour mieux retrouver les 75 % à 3 ou moins de Cadreo tout en gardant une queue de réunions fréquentes concentrée sur les cadres. Ifop/Wisembly 2018 (3,5 en moyenne chez les cadres) est cohérent ; Barco 2019 (10 en moyenne) et GPO Mag (non vérifié : ≈ 38 % des salariés à 4 ou plus) reposent sur d'autres définitions de « réunion » et ne sont pas retenus comme cibles. Professions intermédiaires (2,4, ≈ 22 % à 5 ou plus), employés (1,3) et ouvriers (1,0), rarement au-dessus de 2 : hypothèse, aucune source ne les ventile. Indépendants (PCS 2) : médiane ramenée de 3 à 1,7 (≈ 8 à 15 % à 5 ou plus avec la dispersion log-normale), pour qu'ils se situent entre les professions intermédiaires et les employés et jamais au-dessus des cadres : hypothèse, aucune source ne les ventile ; artisans et commerçants travaillent surtout seuls ou en petite équipe, avec peu de réunions formelles. Les chefs d'entreprise de 10 salariés ou plus ne sont pas distingués dans la PCS 2 du socle. Work Trend Index, Owl Labs, DARES, Cigref, Apec, Doodle, Fellow, Atlassian : aucune ventilation française exploitable trouvée. Hiérarchie cohérente avec la part de postes télétravaillables (Insee 2024). Les données sources disent peu de réunions : l'ancienne médiane de 8 pour les cadres n'était pas défendable."
+  meetings_age:
+    label: "Coefficient d'âge du nombre de réunions"
+    bands:
+      - {from: 18, to: 24, value: 0.7}
+      - {from: 25, to: 54, value: 1.05}
+      - {from: 55, to: 79, value: 0.85}
+    assumption: true
+    justification: "Les débutants ont moins de réunions, les seniors un peu moins aussi ; hypothèse."
+  meetings_occupation:
+    label: "Coefficient de métier du numérique pour le nombre de réunions"
+    values: {dev: 1.0, devops: 0.9, data: 1.15, product: 1.3, design: 1.0, marketing: 1.1, consulting: 1.3, sales: 1.1, support: 0.8, leadership: 1.3}
+    assumption: true
+    justification: "Plus de réunions en conseil, produit, direction et données ; hypothèse."
+  video_pcs:
+    label: "Part moyenne des réunions en visio, par PCS"
+    values: {"1": 0.05, "2": 0.4, "3": 0.55, "4": 0.35, "5": 0.15, "6": 0.04, none: 0.1}
+    sources: [insee_tt]
+    assumption: true
+    justification: "Proportionnelle à l'intensité de télétravail par PCS (cadres 63 %, professions intermédiaires 22 %, employés 10 %, ouvriers ≈ 0 %) ; part de visio non publiée pour la France."
+  video_age:
+    label: "Coefficient d'âge de la part de visio"
+    bands:
+      - {from: 18, to: 29, value: 1.1}
+      - {from: 30, to: 54, value: 1.0}
+      - {from: 55, to: 79, value: 0.85}
+    assumption: true
+    justification: "Hypothèse : légère baisse chez les seniors."
+  dictation_age:
+    label: "Coefficient d'âge de la dictée vocale"
+    bands:
+      - {from: 18, to: 34, value: 1.4}
+      - {from: 35, to: 54, value: 1.0}
+      - {from: 55, to: 79, value: 0.6}
+    sources: [credoc]
+    assumption: true
+    justification: "Aucun chiffre sur la dictée ; indice : les usages conversationnels de l'IA sont bien plus fréquents chez les 18-24 ans (59 % contre 41 % en moyenne)."
+
+attributes:
+  - key: ai_propensity
+    label: Propension à utiliser l'IA au travail (latente)
+    type: number
+    when: employed
+    value:
+      mul:
+        - {lookup: ai_pcs, by: socle.pcs}
+        - {lookup: ai_age, by: socle.age}
+        - {lookup: ai_tech, by: socle.tech_adoption}
+        - {if: digital, then: 1.8, else: 1}
+    sources: [talan_ifop]
+    assumption: true
+    justification: "Variable latente (PCS × âge × adoption technologique × métier du numérique) qui module l'usage de l'IA, la transcription IA et la dictée. Hypothèse de modélisation."
+
+  - key: ai_work_usage
+    label: Usage de l'IA générative au travail
+    type: enum
+    when: employed
+    values:
+      - {code: none, label: "n'utilise pas d'IA générative au travail"}
+      - {code: occasional, label: "utilise l'IA générative de temps en temps au travail"}
+      - {code: regular, label: "utilise l'IA générative régulièrement au travail"}
+      - {code: daily, label: "utilise l'IA générative tous les jours au travail"}
+    distribution:
+      weights:
+        none: {div: [50, {attr: ai_propensity}]}
+        occasional: 28
+        regular: {mul: [15, {attr: ai_propensity}]}
+        daily: {mul: [7, {attr: ai_propensity}, {attr: ai_propensity}]}
+    sources: [talan_ifop, pwc, senat]
+    assumption: true
+    justification: "Repères : 54 % des actifs sans usage dans l'année et 7 % d'usage quotidien (PwC 2025, non vérifié) ; 43 % des utilisateurs d'IA l'emploient au travail (Ifop/Talan). Base none 50 / occasionnel 28 / régulier 15 / quotidien 7, déformée par la propension latente. Enquêtes à définitions différentes, à recalibrer."
+    display: {template: "{value}"}
+
+  - key: meetings_per_week
+    label: Réunions par semaine
+    type: number
+    unit: réunions
+    when: employed
+    value:
+      min:
+        - 40
+        - round:
+            lognormal:
+              median:
+                mul:
+                  - {lookup: meetings_pcs, by: socle.pcs}
+                  - {lookup: meetings_age, by: socle.age}
+                  - {if: digital, then: {lookup: meetings_occupation, by: numerique.occupation}, else: 1}
+                  - {if: freelance, then: 0.7, else: 1}
+              sigma: 0.75
+    sources: [insee_tt, cadreo_hellowork, wttj_reunions, gpomag]
+    assumption: true
+    justification: "Loi log-normale à queue lourde autour d'une médiane par PCS, modulée par l'âge, le métier du numérique et le statut freelance (moins de réunions internes). Recalée sur Cadreo 2017 (cadres français : ≈ 25 % à 5 réunions ou plus, 50 % à 2-3), seule source française vérifiée, qui porte uniquement sur les cadres. Réunions fréquentes (5 et plus) concentrées sur les cadres, puis les professions intermédiaires, puis les indépendants (≈ 8 à 15 %, hypothèse) ; employés et ouvriers rarement au-dessus de 2 (hypothèse, aucune source). Les autres chiffres (Ifop/Wisembly, Barco, GPO Mag non vérifié) divergent selon la définition de « réunion » : la distribution reste une hypothèse."
+    display: {template: "environ {value} réunions par semaine", empty: aucune réunion régulière}
+
+  - key: video_meeting_share
+    label: Part des réunions en visio
+    type: number
+    when: {all: [employed, {attr: socle.has_computer, eq: true}]}
+    value:
+      div:
+        - round:
+            mul:
+              - 20
+              - min:
+                  - 0.95
+                  - mul:
+                      - {lookup: video_pcs, by: socle.pcs}
+                      - {lookup: video_age, by: socle.age}
+                      - {if: digital, then: 1.25, else: 1}
+                      - {exp: {mul: [0.35, {normal: {}}]}}
+        - 20
+    sources: [insee_tt]
+    assumption: true
+    justification: "Part de visio non publiée pour la France ; proportionnelle à l'intensité de télétravail par PCS (Insee 2024), relevée pour les métiers du numérique, arrondie à 5 %. Absente sans ordinateur."
+    display: {format: percent, template: "environ {value} des réunions en visio", empty: "pas de réunion en visio"}
+
+  - key: video_tools
+    label: Outils de visio utilisés
+    type: set
+    when: has_video
+    items:
+      - {code: teams, label: Microsoft Teams, card_label: Teams, rate: {base: 0.65, factors: {freelance: 0.5, digital: 0.85, cadre: 1.1}}}
+      - {code: google_meet, label: Google Meet, card_label: Google Meet, rate: {base: 0.3, factors: {digital: 1.4, freelance: 1.2}}}
+      - {code: zoom, label: Zoom, card_label: Zoom, rate: {base: 0.25, factors: {freelance: 1.6, self_employed: 1.2}}}
+      - {code: other, label: "Autres (Webex, Whaller, Tixeo, Jitsi…)", card_label: "autres outils", rate: 0.1}
+    rate_cap: 0.9
+    # Au-delà de 10 % de visio (condition has_video), au moins un outil
+    min_items: 1
+    display: {template: "{value}", empty: aucun outil de visio identifié}
+    sources: [senat, boulevardduweb_visio]
+    assumption: true
+    justification: "Aucune part d'usage française vérifiée (Work Trend Index, Owl Labs : aucune part de plateforme trouvée). Seul repère, non vérifié et non transposable à l'usage : parts de recherches en ligne en France en 2021 (Skype 50,5 %, Teams 12,3 %, Zoom 9,2 %, Meet 8,3 %). Hypothèse conservée pour les actifs en visio : Teams ≈ 65 %, Meet ≈ 30-35 %, Zoom ≈ 25-30 %, autres ≈ 10 %, plusieurs outils possibles ; Teams dominant en grandes organisations, Meet chez les développeurs, Zoom chez les indépendants."
+
+  - key: employer_cloud_ai_policy
+    label: Contrainte de l'employeur sur les outils cloud et IA
+    type: enum
+    when: employed
+    values:
+      - {code: no_rule, label: "pas de règle connue sur les outils cloud et IA"}
+      - {code: ban_or_blocked, label: "outils cloud et IA interdits ou bloqués par l'employeur"}
+      - {code: approved_tools_only, label: "seuls les outils validés par la DSI sont autorisés"}
+      - {code: open, label: "libre choix des outils"}
+    distribution:
+      weights:
+        no_rule: {cases: [{when: self_employed, value: 45}, {when: cadre, value: 25}, {else: 40}]}
+        ban_or_blocked: {cases: [{when: self_employed, value: 5}, {when: cadre, value: 20}, {else: 20}]}
+        approved_tools_only: {cases: [{when: self_employed, value: 15}, {when: cadre, value: 38}, {else: 25}]}
+        open: {cases: [{when: self_employed, value: 35}, {when: cadre, value: 17}, {else: 15}]}
+    sources: [talan_ifop, senat]
+    assumption: true
+    justification: "Pas de statistique directe sur les blocages DSI. Repères : 49 % des salariés disent que leur employeur n'envisage pas d'IA générative, 9 % ont un outil interne, 64 % des utilisateurs le font de leur propre initiative. Hypothèse : cadres plus encadrés, indépendants et freelances plus libres. La fonction publique et les professions réglementées ne sont pas distinguables dans le socle."
+
+  - key: note_taking_practice
+    label: Prise de notes et transcription en réunion
+    type: enum
+    when: employed
+    values:
+      - {code: none, label: "ne prend pas de notes en réunion"}
+      - {code: manual_notes, label: "prend des notes à la main ou au clavier"}
+      - {code: cloud_ai_tool, label: "utilise un outil d'IA dans le cloud pour transcrire ou résumer"}
+      - {code: builtin_video_transcription, label: "utilise la transcription intégrée à l'outil de visio"}
+    distribution:
+      weights:
+        none: {cases: [{when: few_meetings, value: 30}, {else: 10}]}
+        manual_notes: 60
+        cloud_ai_tool:
+          mul:
+            - 40
+            - {pick: ai_work_usage, values: {none: 0.01, occasional: 0.08, regular: 0.3, daily: 0.6}, default: 0.01}
+            - {pick: employer_cloud_ai_policy, values: {ban_or_blocked: 0.3, approved_tools_only: 0.6}, default: 1}
+        builtin_video_transcription:
+          mul:
+            - 25
+            - {if: {attr: video_meeting_share, present: true}, then: {attr: video_meeting_share}, else: 0}
+            - {pick: employer_cloud_ai_policy, values: {ban_or_blocked: 0.2, approved_tools_only: 1.2}, default: 1}
+            - {pick: ai_work_usage, values: {none: 0.7, daily: 1.5}, default: 1}
+    sources: [talan_ifop]
+    assumption: true
+    justification: "Aucune enquête française sur la transcription de réunions. Calé sur l'usage de l'IA (43 % des utilisateurs l'emploient au travail), sur l'intensité de visio et sur la contrainte employeur (9 % seulement ont un outil interne). Visé chez les cadres en visio : notes manuelles ≈ 55 %, transcription intégrée ≈ 20 %, IA cloud ≈ 15 %, aucune ≈ 10 %."
+
+  - key: meeting_privacy_sensitivity
+    label: Sensibilité à la confidentialité des réunions
+    type: enum
+    when: employed
+    values:
+      - {code: low, label: "peu sensible à la confidentialité des données de réunion"}
+      - {code: medium, label: "moyennement sensible à la confidentialité des données de réunion"}
+      - {code: high, label: "très attentif·ve à la confidentialité des données de réunion"}
+    distribution:
+      weights:
+        low: {cases: [{when: cadre, value: 20}, {else: 35}]}
+        medium: 40
+        high:
+          mul:
+            - {cases: [{when: cadre, value: 40}, {else: 25}]}
+            - {pick: employer_cloud_ai_policy, values: {ban_or_blocked: 1.4, approved_tools_only: 1.2}, default: 1}
+            - {if: {attr: socle.age, gt: 49}, then: 1.15, else: 1}
+    sources: [talan_ifop]
+    assumption: true
+    justification: "65 % des utilisateurs d'IA citent la sécurité des données comme préoccupation (Ifop/Talan), mais sur l'IA en général : plafond, pas cible. Hypothèse : high ≈ 40 % des cadres, ≈ 25 % ailleurs, plus élevé sous contrainte DSI. Les professions réglementées, chercheurs et journalistes ne sont pas distinguables dans le socle."
+
+  - key: voice_dictation_usage
+    label: Usage de la dictée vocale
+    type: enum
+    when: {all: [employed, {any: [{attr: socle.has_smartphone, eq: true}, {attr: socle.has_computer, eq: true}]}]}
+    values:
+      - {code: never, label: "n'utilise jamais la dictée vocale"}
+      - {code: occasional, label: "utilise parfois la dictée vocale"}
+      - {code: regular, label: "utilise régulièrement la dictée vocale"}
+    distribution:
+      weights:
+        never: 50
+        occasional:
+          mul:
+            - 35
+            - {lookup: dictation_age, by: socle.age}
+            - {pick: ai_work_usage, values: {none: 0.8, regular: 1.3, daily: 1.5}, default: 1}
+        regular:
+          mul:
+            - 15
+            - {lookup: dictation_age, by: socle.age}
+            - {pick: ai_work_usage, values: {none: 0.5, occasional: 1, regular: 1.8, daily: 2.5}, default: 1}
+    sources: [credoc]
+    assumption: true
+    justification: "Donnée non trouvée. Hypothèse de départ : régulière ≈ 15 %, occasionnelle ≈ 35 %, jamais ≈ 50 %, plus fréquente chez les moins de 35 ans et les utilisateurs réguliers d'IA. Absente sans smartphone ni ordinateur."
+
+card:
+  - when: employed
+    template: "Réunions : {meetings_per_week}"
+  - when: {attr: video_meeting_share, present: true}
+    template: "Visio : {video_meeting_share} ; outils : {video_tools}"
+  - when: employed
+    template: "Notes de réunion : {note_taking_practice} ; IA au travail : {ai_work_usage}"
+  - when: employed
+    template: "Employeur : {employer_cloud_ai_policy} ; confidentialité : {meeting_privacy_sensitivity}"
+  - when: {attr: voice_dictation_usage, present: true}
+    template: "Dictée vocale : {voice_dictation_usage}"
+
+segments:
+  - {id: meetingsNotes, attribute: note_taking_practice, label: Prise de notes en réunion, compare: 4}
+  - {id: meetingsPolicy, attribute: employer_cloud_ai_policy, label: Contrainte employeur cloud et IA}
+  - {id: meetingsPrivacy, attribute: meeting_privacy_sensitivity, label: Sensibilité à la confidentialité}
+  - {id: meetingsAiUsage, attribute: ai_work_usage, label: Usage de l'IA au travail}
+  - {id: meetingsDictation, attribute: voice_dictation_usage, label: Dictée vocale}
+
+validation:
+  margins:
+    - {attribute: ai_work_usage, title: "Usage de l'IA générative au travail"}
+    - {attribute: employer_cloud_ai_policy, title: "Contrainte employeur sur les outils cloud et IA"}
+    - {attribute: note_taking_practice, title: "Prise de notes et transcription"}
+    - {attribute: meeting_privacy_sensitivity, title: "Sensibilité à la confidentialité"}
+    - {attribute: voice_dictation_usage, title: "Dictée vocale"}
+  shares:
+    - label: "Sans usage d'IA générative parmi les personnes en emploi (PwC : 54 % sans usage dans l'année, non vérifié)"
+      among: employed
+      share_of: {attr: ai_work_usage, eq: none}
+      range: [0.45, 0.62]
+    - label: "Usage quotidien de l'IA parmi les personnes en emploi (PwC : 7 %, non vérifié)"
+      among: employed
+      share_of: {attr: ai_work_usage, eq: daily}
+      range: [0.04, 0.11]
+    - label: "Employés et ouvriers avec plus de 2 réunions par semaine (cible de calage, hypothèse sans source : rarement plus de 2)"
+      among: {all: [employed, {attr: socle.pcs, in: ["5", "6"]}]}
+      share_of: {attr: meetings_per_week, gt: 2}
+      range: [0.05, 0.28]
+    - label: "Cadres avec 5 réunions par semaine ou plus (Cadreo 2017, 630 cadres : ≈ 25 % à 5 ou plus, 23 % à 6-10 ; échantillon réduit et ancien)"
+      among: {all: [employed, {attr: socle.pcs, eq: "3"}]}
+      share_of: {attr: meetings_per_week, gt: 4}
+      range: [0.2, 0.4]
+    - label: "Cadres avec au plus 3 réunions par semaine (Cadreo 2017 : 25 % à 0-1 et 50 % à 2-3, soit ≈ 75 %)"
+      among: {all: [employed, {attr: socle.pcs, eq: "3"}]}
+      share_of: {attr: meetings_per_week, lt: 4}
+      range: [0.55, 0.78]
+    - label: "Cadres et professions intermédiaires avec 5 réunions par semaine ou plus (cadres : Cadreo 2017 ≈ 25 % ; professions intermédiaires : hypothèse sans source)"
+      among: {all: [employed, {attr: socle.pcs, in: ["3", "4"]}]}
+      share_of: {attr: meetings_per_week, gt: 4}
+      range: [0.18, 0.4]
+    - label: "Indépendants (PCS 2) avec 5 réunions par semaine ou plus (cible de calage, hypothèse sans source : entre professions intermédiaires et employés, ≈ 8 à 15 %)"
+      among: {all: [employed, {attr: socle.pcs, eq: "2"}]}
+      share_of: {attr: meetings_per_week, gt: 4}
+      range: [0.06, 0.17]
+
+eligibility_helpers:
+  gros_volume_reunions: "activity_status == employed and productivite-reunions.meetings_per_week >= 8"
+  reunions_confidentielles: "activity_status == employed and productivite-reunions.meetings_per_week >= 8 and productivite-reunions.meeting_privacy_sensitivity == high"
+  cadre_visio_confidentialite: "pcs == 3 and has_computer and productivite-reunions.video_meeting_share >= 0.4 and productivite-reunions.meeting_privacy_sensitivity == high"
+  notes_manuelles_visio: "productivite-reunions.note_taking_practice == manual_notes and productivite-reunions.video_meeting_share >= 0.4"
+  employeur_restrictif: "productivite-reunions.employer_cloud_ai_policy in [ban_or_blocked, approved_tools_only]"
+  ia_cloud_transcription: "productivite-reunions.note_taking_practice == cloud_ai_tool"
+  dicteur_regulier: "productivite-reunions.voice_dictation_usage == regular"

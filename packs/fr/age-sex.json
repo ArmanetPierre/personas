@@ -1,0 +1,98 @@
+{
+ "id": "age-sex",
+ "title": "Population de 18 à 79 ans par sexe et tranche d'âge quinquennale, France métropolitaine, au 1er janvier 2026",
+ "assumption": false,
+ "sources": [
+  {
+   "org": "INSEE",
+   "title": "Bilan démographique 2025 / Données nationales - Population — POP3 : Population au 1er janvier par sexe et âge détaillé (en années révolues)",
+   "year": 2026,
+   "url": "https://www.insee.fr/fr/statistiques/8999013",
+   "detail": "fichier 3_Pop1janv_age.xlsx, colonnes France métropolitaine, agrégation des âges détaillés"
+  }
+ ],
+ "referenceYear": 2026,
+ "notes": "Estimations provisoires au 1er janvier 2026. Âge en années révolues. Dans une tranche, l'âge est tiré uniformément (l'écart avec les âges détaillés est faible). Total 18-79 ans : 49 346 371.",
+ "data": {
+  "bands": [
+   {
+    "from": 18,
+    "to": 19,
+    "M": 836666,
+    "F": 776152
+   },
+   {
+    "from": 20,
+    "to": 24,
+    "M": 1955682,
+    "F": 1857964
+   },
+   {
+    "from": 25,
+    "to": 29,
+    "M": 1947928,
+    "F": 1926551
+   },
+   {
+    "from": 30,
+    "to": 34,
+    "M": 1950905,
+    "F": 1986692
+   },
+   {
+    "from": 35,
+    "to": 39,
+    "M": 2073572,
+    "F": 2143916
+   },
+   {
+    "from": 40,
+    "to": 44,
+    "M": 2070912,
+    "F": 2167971
+   },
+   {
+    "from": 45,
+    "to": 49,
+    "M": 2029593,
+    "F": 2085111
+   },
+   {
+    "from": 50,
+    "to": 54,
+    "M": 2141035,
+    "F": 2180282
+   },
+   {
+    "from": 55,
+    "to": 59,
+    "M": 2106655,
+    "F": 2178370
+   },
+   {
+    "from": 60,
+    "to": 64,
+    "M": 2038363,
+    "F": 2162743
+   },
+   {
+    "from": 65,
+    "to": 69,
+    "M": 1829404,
+    "F": 2041782
+   },
+   {
+    "from": 70,
+    "to": 74,
+    "M": 1636247,
+    "F": 1928341
+   },
+   {
+    "from": 75,
+    "to": 79,
+    "M": 1476949,
+    "F": 1816585
+   }
+  ]
+ }
+}
