@@ -1,0 +1,231 @@
+{
+ "id": "sg-earnings",
+ "title": "Revenus bruts mensuels (hors cotisation employeur CPF) : résidents par profession, étrangers par pass, retraités, étudiants, NSF",
+ "assumption": true,
+ "sources": [
+  {
+   "org": "MOM",
+   "title": "Labour Force in Singapore 2025 (tables A4, A5, C1-C4, D1, D5, E7, L7)",
+   "year": 2025,
+   "url": "https://stats.mom.gov.sg/Pages/Labour-Force-In-Singapore-2025.aspx"
+  },
+  {
+   "org": "MOM",
+   "title": "Written answer to PQ on salary of new EP applications by percentiles",
+   "year": 2026,
+   "url": "https://www.mom.gov.sg/newsroom/parliament-questions-and-replies/2026/0112-written-answer-to-pq-on-salary-of-new-ep-applications-by-percentiles"
+  },
+  {
+   "org": "MOM",
+   "title": "Employment Pass eligibility",
+   "year": 2026,
+   "url": "https://www.mom.gov.sg/passes-and-permits/employment-pass/eligibility"
+  },
+  {
+   "org": "MOM",
+   "title": "Written answer on wages of Work Permit holders",
+   "year": 2021,
+   "url": "https://www.mom.gov.sg/newsroom/parliament-questions-and-replies/2021/0802-written-answer-by-dr-tan-see-leng-to-pq-on-wages-of-work-permit-holders"
+  },
+  {
+   "org": "MINDEF",
+   "title": "NS allowance to increase from 1 July 2025",
+   "year": 2025,
+   "url": "https://mindef.gov.sg/news-and-events/latest-releases/03mar25_fs3"
+  },
+  {
+   "org": "CPF Board",
+   "title": "Projected CPF monthly payouts at 65 and 70",
+   "year": 2026,
+   "url": "https://www.cpf.gov.sg/member/infohub/reports-and-statistics/cpf-statistics/retirement-statistics/projected-cpf-monthly-payouts-at-age-65-and-70"
+  },
+  {
+   "org": "DOS",
+   "title": "Household Expenditure Survey 2023 (tables 17967, 18010, 18013)",
+   "year": 2023,
+   "url": "https://tablebuilder.singstat.gov.sg/table/CT/17967"
+  }
+ ],
+ "referenceYear": 2025,
+ "justification": "Résidents à temps plein : médianes par profession calées pour retrouver la médiane officielle (5 000 S$ hors cotisation employeur, MOM C1) et les médianes par profession (C2) une fois le facteur d'âge et la composition par diplôme appliqués, facteur d'âge tiré des médianes par âge (C4) adouci (la composition par profession porte une partie de l'écart), dispersion calée sur les centiles P10-P90 (2 080 et 13 780 S$) ; temps partiel 7,1 % des hommes, 13,3 % des femmes, médiane 1 600 S$. EP : salaire minimal 5 600 S$ à 23 ans, 10 700 S$ à 45 ans (MOM), médiane des nouvelles demandes 9 200 S$ en 2025. S Pass : minimum 3 300 S$ (4 800 S$ à 45 ans), médiane supposée 3 800 S$. Work Permit : médiane officielle 1 100 S$ en 2020, actualisée et heures supplémentaires comprises (hypothèse 1 350-1 600 S$). MDW : 600-750 S$ selon la nationalité (sources secondaires). Retraités : revenu en espèces (CPF LIFE ≈ 760 S$ médian projeté, aide des enfants ≈ 500 S$, loyers et placements selon le diplôme), hypothèse de synthèse (HES 2023, table 18010). NSF : 790 à 1 530 S$ (MINDEF, 2025).",
+ "data": {
+  "fullTime": {
+   "1": {
+    "median": 10700,
+    "sigma": 0.5
+   },
+   "2": {
+    "median": 7900,
+    "sigma": 0.45
+   },
+   "3": {
+    "median": 4700,
+    "sigma": 0.38
+   },
+   "4": {
+    "median": 3400,
+    "sigma": 0.3
+   },
+   "5": {
+    "median": 3250,
+    "sigma": 0.35
+   },
+   "6": {
+    "median": 2900,
+    "sigma": 0.35
+   },
+   "7": {
+    "median": 3300,
+    "sigma": 0.3
+   },
+   "8": {
+    "median": 3100,
+    "sigma": 0.28
+   },
+   "9": {
+    "median": 2250,
+    "sigma": 0.28
+   }
+  },
+  "ageFactor": [
+   {
+    "from": 18,
+    "to": 19,
+    "factor": 0.55
+   },
+   {
+    "from": 20,
+    "to": 24,
+    "factor": 0.65
+   },
+   {
+    "from": 25,
+    "to": 29,
+    "factor": 0.82
+   },
+   {
+    "from": 30,
+    "to": 34,
+    "factor": 0.98
+   },
+   {
+    "from": 35,
+    "to": 39,
+    "factor": 1.1
+   },
+   {
+    "from": 40,
+    "to": 44,
+    "factor": 1.16
+   },
+   {
+    "from": 45,
+    "to": 49,
+    "factor": 1.16
+   },
+   {
+    "from": 50,
+    "to": 54,
+    "factor": 1.12
+   },
+   {
+    "from": 55,
+    "to": 59,
+    "factor": 1.0
+   },
+   {
+    "from": 60,
+    "to": 64,
+    "factor": 0.85
+   },
+   {
+    "from": 65,
+    "to": 99,
+    "factor": 0.75
+   }
+  ],
+  "sexFactor": {
+   "M": 1.04,
+   "F": 0.95
+  },
+  "partTime": {
+   "M": 0.071,
+   "F": 0.133,
+   "incomeFactor": 0.42
+  },
+  "passes": {
+   "ep": {
+    "median": 9200,
+    "sigma": 0.45,
+    "floor": 5600,
+    "floorAgeStep": 232
+   },
+   "spass": {
+    "median": 3800,
+    "sigma": 0.2,
+    "floor": 3300,
+    "floorAgeStep": 68
+   },
+   "wp_cmp": {
+    "median": 1350,
+    "sigma": 0.25
+   },
+   "wp_other": {
+    "median": 1600,
+    "sigma": 0.25
+   },
+   "mdw": {
+    "median": 680,
+    "sigma": 0.12
+   },
+   "student": {
+    "median": 1500,
+    "sigma": 0.4
+   }
+  },
+  "retired": {
+   "below_secondary": {
+    "median": 850,
+    "sigma": 0.45
+   },
+   "secondary": {
+    "median": 1150,
+    "sigma": 0.45
+   },
+   "post_secondary": {
+    "median": 1400,
+    "sigma": 0.45
+   },
+   "diploma": {
+    "median": 1800,
+    "sigma": 0.5
+   },
+   "degree": {
+    "median": 2700,
+    "sigma": 0.6
+   }
+  },
+  "student": {
+   "median": 450,
+   "sigma": 0.6
+  },
+  "nationalService": {
+   "median": 840,
+   "sigma": 0.15
+  },
+  "unemployed": {
+   "withIncomeShare": 0.35,
+   "income": {
+    "median": 900,
+    "sigma": 0.5
+   }
+  },
+  "inactive": {
+   "withIncomeShare": 0.4,
+   "income": {
+    "median": 400,
+    "sigma": 0.7
+   }
+  }
+ }
+}

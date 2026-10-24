@@ -1,0 +1,324 @@
+{
+ "id": "us-occupation",
+ "title": "Grands groupes de professions (SOC 2018) par diplôme et sexe ; statut de l'emploi par profession",
+ "assumption": true,
+ "sources": [
+  {
+   "org": "Bureau of Labor Statistics",
+   "title": "CPS 2025 annual averages, table 11: employed persons by detailed occupation and sex",
+   "year": 2025,
+   "url": "https://www.bls.gov/cps/cpsaat11.htm"
+  },
+  {
+   "org": "U.S. Census Bureau",
+   "title": "American Community Survey 2024 1-year, C24010: Sex by Occupation for the Civilian Employed Population",
+   "year": 2024,
+   "url": "https://data.census.gov/table/ACSDT1Y2024.C24010"
+  },
+  {
+   "org": "U.S. Census Bureau",
+   "title": "American Community Survey 2024 1-year, B24080: Sex by Class of Worker",
+   "year": 2024,
+   "url": "https://data.census.gov/table/ACSDT1Y2024.B24080"
+  },
+  {
+   "org": "Bureau of Labor Statistics",
+   "title": "CPS 2025 annual averages, tables 12 and 15 (class of worker), series LNU02048984 (incorporated self-employed)",
+   "year": 2025,
+   "url": "https://www.bls.gov/cps/cpsaat15.htm"
+  }
+ ],
+ "referenceYear": 2025,
+ "justification": "Effectifs par profession et sexe : CPS 2025 (table 11), recopiés. Le croisement avec le diplôme n'est pas publié sous cette forme : P(profession | diplôme, sexe) ∝ P(profession | sexe) × P(diplôme | profession), où P(diplôme | profession) est une hypothèse agrégée d'après BLS Employment Projections (table 5.3 « educational attainment for workers 25 years and older by detailed occupation »), puis ajustement itératif pour retrouver les marges par sexe. Statut de l'emploi par profession : hypothèse calée sur les totaux (CPS 2025 : indépendants 6,0 % non constitués en société + 4,2 % en société, administrations 13,4 % ; ACS B24080 : associations ≈ 9 %) ; total du modèle : privé 67.1%, associations 7.8%, administrations 14.6%, indépendants 10.5%.",
+ "data": {
+  "labels": {
+   "management": "Manager",
+   "business_finance": "Business and financial operations",
+   "computer_engineering_science": "Computer, engineering or science occupation",
+   "education_legal_community_arts": "Education, legal, community service, arts or media occupation",
+   "healthcare_practitioners": "Healthcare practitioner or technician",
+   "service": "Service worker (healthcare support, protective service, food service, cleaning, personal care)",
+   "sales": "Sales worker",
+   "office_admin": "Office and administrative support worker",
+   "farming": "Farming, fishing or forestry worker",
+   "construction": "Construction or extraction worker",
+   "installation_repair": "Installation, maintenance or repair worker",
+   "production": "Production worker",
+   "transportation": "Transportation or material moving worker"
+  },
+  "byEducationSex": {
+   "below_hs": {
+    "M": {
+     "management": 0.0403,
+     "business_finance": 0.0052,
+     "computer_engineering_science": 0.0093,
+     "education_legal_community_arts": 0.0062,
+     "healthcare_practitioners": 0.0,
+     "service": 0.228,
+     "sales": 0.0615,
+     "office_admin": 0.0288,
+     "farming": 0.0334,
+     "construction": 0.2304,
+     "installation_repair": 0.0539,
+     "production": 0.1144,
+     "transportation": 0.1887
+    },
+    "F": {
+     "management": 0.0493,
+     "business_finance": 0.0101,
+     "computer_engineering_science": 0.0064,
+     "education_legal_community_arts": 0.0215,
+     "healthcare_practitioners": 0.0,
+     "service": 0.5084,
+     "sales": 0.0924,
+     "office_admin": 0.114,
+     "farming": 0.0195,
+     "construction": 0.0166,
+     "installation_repair": 0.0043,
+     "production": 0.0735,
+     "transportation": 0.084
+    }
+   },
+   "high_school": {
+    "M": {
+     "management": 0.0656,
+     "business_finance": 0.0144,
+     "computer_engineering_science": 0.0162,
+     "education_legal_community_arts": 0.0129,
+     "healthcare_practitioners": 0.0038,
+     "service": 0.1791,
+     "sales": 0.0858,
+     "office_admin": 0.0604,
+     "farming": 0.0116,
+     "construction": 0.1645,
+     "installation_repair": 0.0879,
+     "production": 0.1123,
+     "transportation": 0.1853
+    },
+    "F": {
+     "management": 0.071,
+     "business_finance": 0.0248,
+     "computer_engineering_science": 0.0098,
+     "education_legal_community_arts": 0.0398,
+     "healthcare_practitioners": 0.0175,
+     "service": 0.3528,
+     "sales": 0.1139,
+     "office_admin": 0.2109,
+     "farming": 0.006,
+     "construction": 0.0105,
+     "installation_repair": 0.0062,
+     "production": 0.0638,
+     "transportation": 0.0729
+    }
+   },
+   "some_college": {
+    "M": {
+     "management": 0.1139,
+     "business_finance": 0.035,
+     "computer_engineering_science": 0.0473,
+     "education_legal_community_arts": 0.0313,
+     "healthcare_practitioners": 0.0124,
+     "service": 0.1772,
+     "sales": 0.1092,
+     "office_admin": 0.0815,
+     "farming": 0.0075,
+     "construction": 0.1007,
+     "installation_repair": 0.0779,
+     "production": 0.0727,
+     "transportation": 0.1333
+    },
+    "F": {
+     "management": 0.0982,
+     "business_finance": 0.0481,
+     "computer_engineering_science": 0.0228,
+     "education_legal_community_arts": 0.0772,
+     "healthcare_practitioners": 0.0451,
+     "service": 0.2785,
+     "sales": 0.1156,
+     "office_admin": 0.227,
+     "farming": 0.0031,
+     "construction": 0.0051,
+     "installation_repair": 0.0044,
+     "production": 0.033,
+     "transportation": 0.0418
+    }
+   },
+   "associate": {
+    "M": {
+     "management": 0.1212,
+     "business_finance": 0.0465,
+     "computer_engineering_science": 0.0734,
+     "education_legal_community_arts": 0.0347,
+     "healthcare_practitioners": 0.0618,
+     "service": 0.1447,
+     "sales": 0.0792,
+     "office_admin": 0.0781,
+     "farming": 0.0054,
+     "construction": 0.0945,
+     "installation_repair": 0.0947,
+     "production": 0.0726,
+     "transportation": 0.0931
+    },
+    "F": {
+     "management": 0.0935,
+     "business_finance": 0.0573,
+     "computer_engineering_science": 0.0317,
+     "education_legal_community_arts": 0.0766,
+     "healthcare_practitioners": 0.2014,
+     "service": 0.2034,
+     "sales": 0.0751,
+     "office_admin": 0.1945,
+     "farming": 0.002,
+     "construction": 0.0043,
+     "installation_repair": 0.0048,
+     "production": 0.0294,
+     "transportation": 0.0261
+    }
+   },
+   "bachelor": {
+    "M": {
+     "management": 0.2131,
+     "business_finance": 0.1033,
+     "computer_engineering_science": 0.1748,
+     "education_legal_community_arts": 0.0951,
+     "healthcare_practitioners": 0.0401,
+     "service": 0.0774,
+     "sales": 0.1027,
+     "office_admin": 0.0554,
+     "farming": 0.0036,
+     "construction": 0.0306,
+     "installation_repair": 0.025,
+     "production": 0.0299,
+     "transportation": 0.0492
+    },
+    "F": {
+     "management": 0.1521,
+     "business_finance": 0.1177,
+     "computer_engineering_science": 0.0698,
+     "education_legal_community_arts": 0.194,
+     "healthcare_practitioners": 0.1206,
+     "service": 0.1006,
+     "sales": 0.0899,
+     "office_admin": 0.1276,
+     "farming": 0.0012,
+     "construction": 0.0013,
+     "installation_repair": 0.0012,
+     "production": 0.0112,
+     "transportation": 0.0128
+    }
+   },
+   "graduate": {
+    "M": {
+     "management": 0.2309,
+     "business_finance": 0.0926,
+     "computer_engineering_science": 0.2399,
+     "education_legal_community_arts": 0.2021,
+     "healthcare_practitioners": 0.0707,
+     "service": 0.0445,
+     "sales": 0.048,
+     "office_admin": 0.0225,
+     "farming": 0.0015,
+     "construction": 0.0082,
+     "installation_repair": 0.0094,
+     "production": 0.0112,
+     "transportation": 0.0184
+    },
+    "F": {
+     "management": 0.1429,
+     "business_finance": 0.0915,
+     "computer_engineering_science": 0.083,
+     "education_legal_community_arts": 0.3573,
+     "healthcare_practitioners": 0.1846,
+     "service": 0.0502,
+     "sales": 0.0365,
+     "office_admin": 0.045,
+     "farming": 0.0004,
+     "construction": 0.0003,
+     "installation_repair": 0.0004,
+     "production": 0.0036,
+     "transportation": 0.0041
+    }
+   }
+  },
+  "classOfWorker": {
+   "management": {
+    "private": 0.74,
+    "nonprofit": 0.07,
+    "government": 0.07,
+    "self_employed": 0.12
+   },
+   "business_finance": {
+    "private": 0.74,
+    "nonprofit": 0.06,
+    "government": 0.12,
+    "self_employed": 0.08
+   },
+   "computer_engineering_science": {
+    "private": 0.75,
+    "nonprofit": 0.05,
+    "government": 0.12,
+    "self_employed": 0.08
+   },
+   "education_legal_community_arts": {
+    "private": 0.22,
+    "nonprofit": 0.18,
+    "government": 0.48,
+    "self_employed": 0.12
+   },
+   "healthcare_practitioners": {
+    "private": 0.56,
+    "nonprofit": 0.27,
+    "government": 0.1,
+    "self_employed": 0.07
+   },
+   "service": {
+    "private": 0.66,
+    "nonprofit": 0.07,
+    "government": 0.18,
+    "self_employed": 0.09
+   },
+   "sales": {
+    "private": 0.8,
+    "nonprofit": 0.02,
+    "government": 0.01,
+    "self_employed": 0.17
+   },
+   "office_admin": {
+    "private": 0.7,
+    "nonprofit": 0.09,
+    "government": 0.17,
+    "self_employed": 0.04
+   },
+   "farming": {
+    "private": 0.62,
+    "nonprofit": 0.01,
+    "government": 0.05,
+    "self_employed": 0.32
+   },
+   "construction": {
+    "private": 0.66,
+    "nonprofit": 0.01,
+    "government": 0.07,
+    "self_employed": 0.26
+   },
+   "installation_repair": {
+    "private": 0.8,
+    "nonprofit": 0.02,
+    "government": 0.07,
+    "self_employed": 0.11
+   },
+   "production": {
+    "private": 0.89,
+    "nonprofit": 0.01,
+    "government": 0.03,
+    "self_employed": 0.07
+   },
+   "transportation": {
+    "private": 0.82,
+    "nonprofit": 0.01,
+    "government": 0.1,
+    "self_employed": 0.07
+   }
+  }
+ }
+}

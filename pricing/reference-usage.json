@@ -1,0 +1,63 @@
+{
+  "version": 1,
+  "generatedAt": "2026-10-16",
+  "note": "Moyennes mesurées sur la base locale du mainteneur (réponses, récits), sans aucun identifiant d'étude. claude-cli : l'entrée compte aussi ~3 k tokens propres à la CLI (lus en cache), l'estimation est donc prudente pour les autres fournisseurs. Régénérer : npm run pricing:reference.",
+  "charsPerToken": 1.17,
+  "protocols": [
+    {
+      "protocol": "concept-price",
+      "version": "1",
+      "socle": "fr",
+      "provider": "claude-cli",
+      "responses": 20,
+      "callsPerResponse": 1,
+      "inputPerCall": 5413,
+      "outputPerCall": 824,
+      "cacheReadPerCall": 3686,
+      "msPerResponse": 5988
+    },
+    {
+      "protocol": "concept-price",
+      "version": "2",
+      "socle": "fr",
+      "provider": "claude-cli",
+      "responses": 3703,
+      "callsPerResponse": 1.0219,
+      "inputPerCall": 8817,
+      "outputPerCall": 1252,
+      "cacheReadPerCall": 6829,
+      "msPerResponse": 8888
+    },
+    {
+      "protocol": "concept-price",
+      "version": "3",
+      "socle": "fr",
+      "provider": "claude-cli",
+      "responses": 920,
+      "callsPerResponse": 1.038,
+      "inputPerCall": 9121,
+      "outputPerCall": 1208,
+      "cacheReadPerCall": 7140,
+      "msPerResponse": 8278
+    },
+    {
+      "protocol": "concept-price",
+      "version": "3",
+      "socle": "sg",
+      "provider": "claude-cli",
+      "responses": 90,
+      "callsPerResponse": 1.1778,
+      "inputPerCall": 7848,
+      "outputPerCall": 974,
+      "cacheReadPerCall": 6032,
+      "msPerResponse": 8216
+    }
+  ],
+  "narratives": {
+    "batchSize": 10,
+    "batches": 200,
+    "inputPerBatch": 4780,
+    "outputPerBatch": 7036,
+    "method": "longueur des prompts et des récits de 200 lots : entrée à 3 caractères par token (hypothèse), sortie à 1.17 caractère(s) de texte par token facturé (mesuré sur les sorties claude-cli, réflexion comprise)"
+  }
+}

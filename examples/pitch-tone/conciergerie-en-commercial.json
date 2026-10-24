@@ -1,0 +1,32 @@
+{
+  "id": "tone-conciergerie-en-commercial",
+  "name": "Conciergerie express",
+  "pitch": "Free yourself from those little chores! With Conciergerie express, your dry cleaning, shoe repairs, parcels and small errands are taken care of at home or at the office. Book a slot in two clicks in the app: a courier picks everything up and brings it back for you. For €19 a month, four visits included (€6 per extra visit). Available in Paris and the inner suburbs.",
+  "targetAudience": "Professionals aged 25 to 35 in the Paris region, with no time for small chores.",
+  "businessModel": "Monthly subscription at €19 (4 visits included), extra visits at €6.",
+  "price": {
+    "amountEur": 19,
+    "period": "month"
+  },
+  "freeOffer": null,
+  "competitors": [
+    "Corporate concierge services",
+    "Home dry-cleaning services",
+    "Grocery and delivery apps"
+  ],
+  "alternatives": [
+    "Doing it yourself on Saturday",
+    "Asking a relative or friend",
+    "Parcel pickup points near the office"
+  ],
+  "priceTiers": [
+    9,
+    19,
+    29
+  ],
+  "target": {
+    "socle": "fr",
+    "eligibility": "age >= 25 and age <= 35 and region == IDF and pcs == 3 and activity_status == employed",
+    "n": 60
+  }
+}

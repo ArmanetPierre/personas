@@ -1,0 +1,452 @@
+# Module "Work software and remote work" (US): where, how and with which tools employed people work.
+# Generic: reusable by any app or SaaS project. Employed personas only. No socle_overrides, no affects_budget.
+# Format: docs/modules.md. Declaration order = draw order (own random stream).
+id: us-work-software
+version: "2026.2"
+changelog:
+  - version: "2026.2"
+    date: "2026-10-22"
+    changes:
+      - "First version: work arrangement, desk vs frontline work (only for personas with a computer), work software stack, who pays for tools, generative AI use at work, side gig or platform work."
+      - "Draft calibration (version not yet accepted): platform_side_gig helper restricted to the three side gig codes (no longer matches personas without the attribute); self-employed telework coefficient raised to land near the BLS 36.4%; weekly and daily generative AI baseline weights raised slightly."
+label: Work software and remote work
+short_label: Work tools
+description: >-
+  Employed adults only: work arrangement (fully on-site, hybrid, fully remote), how much of the job is desk and
+  computer work versus frontline (only for personas who have a computer), the main work software stack (Microsoft 365 / Teams, Google Workspace, Slack, Zoom,
+  industry-specific tools), who pays for work tools, generative AI use at work, and side gig or platform work
+  alongside the main job. Conditioned on occupation group, education, class of worker, age, income and urbanicity.
+  Generic and not tied to any product. It does not change the socle income or budget.
+applies_to: [us]
+requires: []
+
+sources:
+  bls_cps_telework_2025:
+    org: "U.S. Bureau of Labor Statistics"
+    title: "CPS Table 62: percent of hours teleworked by telework status, occupation, industry, class of worker (2025 annual averages)"
+    year: 2025
+    url: "https://www.bls.gov/cps/cpsaat62.htm"
+    detail: "22.4% of employed people teleworked or worked at home for pay; computer and mathematical 65.2%; management, business and financial 37.3%; sales and office 24.5%; education, training and library 15.1%; healthcare practitioners 13.1%; service 5.7%; construction 3.4%; production, transportation 3.1%; self-employed 36.4%; government 16.5%"
+  bls_telework_march_2026:
+    org: "U.S. Bureau of Labor Statistics"
+    title: "22.6 percent of workers teleworked in March 2026 (The Economics Daily)"
+    year: 2026
+    url: "https://www.bls.gov/opub/ted/2026/22-6-percent-of-workers-teleworked-in-march-2026.htm"
+    detail: "Not verified (search snippet only): 22.6% in March 2026; women 24.9%, men 20.5%"
+  gallup_hybrid:
+    org: "Gallup"
+    title: "Hybrid Work and Productivity: What the Data Show"
+    year: 2026
+    url: "https://www.gallup.com/workplace/713093/hybrid-work-productivity.aspx"
+    detail: "About half of workers are remote-capable; among them 52% hybrid, 26% exclusively remote, 22% fully on-site"
+  pew_ai_workers_2025:
+    org: "Pew Research Center"
+    title: "Workers' experience with AI chatbots in their jobs"
+    year: 2025
+    url: "https://www.pewresearch.org/social-trends/2025/02/25/workers-experience-with-ai-chatbots-in-their-jobs/"
+    detail: "Oct 2024: 9% of employed adults use AI chatbots at work daily or several times a week, 7% a few times a month; ages 18-29: 23% at least monthly; postgraduate degrees 26%"
+  pew_ai_2026:
+    org: "Pew Research Center"
+    title: "Americans and AI 2026: Chatbots, Smart Devices and Views on Impact"
+    year: 2026
+    url: "https://www.pewresearch.org/internet/2026/06/17/americans-and-ai-2026-chatbots-smart-devices-and-views-on-impact/"
+    detail: "Feb 2026: 38% of employed adults use chatbots for tasks at work"
+  gallup_ai_work:
+    org: "Gallup"
+    title: "AI Use at Work Has Nearly Doubled in Two Years"
+    year: 2025
+    url: "https://www.gallup.com/workplace/691643/work-nearly-doubled-two-years.aspx"
+    detail: "Q2 2025: frequent use (a few times a week or more) 27% of white-collar workers vs 9% of production and front-line workers; technology 50%, professional services 34%, finance 32%"
+  gallup_ai_2026:
+    org: "Gallup"
+    title: "AI and Workplace Productivity: What the Data Show"
+    year: 2026
+    url: "https://www.gallup.com/workplace/713063/ai-workplace-productivity.aspx"
+    detail: "Not verified (search snippet only): May 2026, 15% of employees use AI daily, 30% a few times a week or more, 52% a few times a year or more"
+  fed_shed_2024_gig:
+    org: "Federal Reserve Board"
+    title: "Economic Well-Being of U.S. Households in 2024: Employment and Gig Work"
+    year: 2025
+    url: "https://www.federalreserve.gov/publications/2025-economic-well-being-of-us-households-in-2024-employment-and-gig-work.htm"
+    detail: "Not verified (search snippet only): 20% of adults did gig activities in the prior month (13% selling items, 9% short-term tasks such as rides, delivery, odd jobs); 51% of gig doers had a non-gig main job"
+  bls_caea_2023:
+    org: "U.S. Bureau of Labor Statistics"
+    title: "Contingent and Alternative Employment Arrangements (July 2023)"
+    year: 2023
+    url: "https://www.bls.gov/news.release/conemp.nr0.htm"
+    detail: "Independent contractors 7.4% of employment; about 5% of employed hold multiple jobs"
+
+conditions:
+  employed: {attr: socle.activity_status, in: [employed]}
+  employed_with_computer:
+    all:
+      - {attr: socle.activity_status, in: [employed]}
+      - {attr: socle.has_computer, eq: true}
+  self_employed: {attr: socle.class_of_worker, eq: self_employed}
+  government: {attr: socle.class_of_worker, eq: government}
+  nonprofit: {attr: socle.class_of_worker, eq: nonprofit}
+  bachelor_plus: {attr: socle.education, in: [bachelor, graduate]}
+  low_education: {attr: socle.education, in: [below_hs, high_school]}
+  under35: {attr: socle.age, lt: 35}
+  tech_pcs: {attr: socle.pcs, eq: computer_engineering_science}
+  education_pcs: {attr: socle.pcs, eq: education_legal_community_arts}
+  healthcare_pcs: {attr: socle.pcs, eq: healthcare_practitioners}
+  field_pcs: {attr: socle.pcs, in: [service, sales, farming, construction, installation_repair, production, transportation]}
+  trades_pcs: {attr: socle.pcs, in: [construction, installation_repair]}
+  driver_service_pcs: {attr: socle.pcs, in: [service, transportation]}
+  freelance_pcs: {attr: socle.pcs, in: [computer_engineering_science, education_legal_community_arts, business_finance, sales]}
+  low_income: {attr: socle.monthly_income, lt: 2500}
+  high_income: {attr: socle.monthly_income, gt: 6000}
+  desk: {attr: desk_based_job, eq: mostly_desk_computer}
+  frontline: {attr: desk_based_job, eq: mostly_frontline_hands_on}
+  remote_or_hybrid: {attr: work_arrangement, in: [hybrid, fully_remote]}
+  has_side_gig: {attr: side_gig_platform_work, in: [occasional_selling, platform_tasks, online_freelance]}
+
+tables:
+  telework_rate:
+    label: "Share of employed people who telework at least some hours, by occupation group"
+    values: {management: 0.33, business_finance: 0.50, computer_engineering_science: 0.55, education_legal_community_arts: 0.18, healthcare_practitioners: 0.13, service: 0.057, sales: 0.20, office_admin: 0.30, farming: 0.04, construction: 0.034, installation_repair: 0.03, production: 0.03, transportation: 0.03, none: 0.2}
+    sources: [bls_cps_telework_2025]
+    assumption: true
+    justification: "BLS 2025 groups: management, business and financial 37.3% (split here 33% / 50%), computer and mathematical 65.2% (the socle group also includes engineering and science, hence 55%), sales and office 24.5% (split 20% / 30%), education 15.1% (legal pulls it up), healthcare practitioners 13.1%, service 5.7%, construction 3.4%, production and transportation 3.1%. The split into socle groups is inferred."
+  remote_share:
+    label: "Share of teleworkers who are fully remote, by occupation group"
+    values: {management: 0.40, business_finance: 0.45, computer_engineering_science: 0.50, education_legal_community_arts: 0.40, healthcare_practitioners: 0.30, service: 0.30, sales: 0.45, office_admin: 0.45, farming: 0, construction: 0, installation_repair: 0, production: 0, transportation: 0, none: 0.3}
+    sources: [bls_cps_telework_2025, gallup_hybrid]
+    assumption: true
+    justification: "Roughly half of teleworkers work all hours from home (10.5% of workers at work vs 11.9% some hours, secondary summary of BLS). Gallup's remote-capable workers are about two thirds hybrid-and-remote split 2:1. Set a bit below half outside tech; zero for occupations that cannot be done remotely."
+  cow_telework_factor:
+    label: "Telework coefficient by class of worker"
+    values: {private: 1.0, nonprofit: 1.1, government: 0.8, self_employed: 2.1, none: 1.0}
+    sources: [bls_cps_telework_2025]
+    assumption: true
+    justification: "BLS 2025: self-employed 36.4%, wage and salary 20.9%, government 16.5%; nonprofit assumed slightly above private. The self-employed coefficient (2.1, up from 1.3) is higher than the raw ratio to the 22.4% average (about 1.6) because self-employed personas are concentrated in occupation groups with low telework rates (trades, service, sales), which the occupation table already applies; it was calibrated by preview so that telework among the self-employed lands near 36%. Magnitude assumed."
+  cow_remote_factor:
+    label: "Coefficient of fully remote share by class of worker"
+    values: {private: 1.0, nonprofit: 1.0, government: 0.8, self_employed: 1.3, none: 1.0}
+    sources: [gallup_hybrid]
+    assumption: true
+    justification: "Self-employed workers who telework mostly work from home all hours; federal return-to-office reduced hybrid and remote work in government (Gallup 2025). Magnitudes assumed."
+  education_telework_factor:
+    label: "Telework coefficient by education within an occupation group"
+    values: {below_hs: 0.6, high_school: 0.8, some_college: 0.95, associate: 0.95, bachelor: 1.15, graduate: 1.2}
+    sources: [bls_cps_telework_2025]
+    assumption: true
+    justification: "Occupation explains most of the gradient; a modest extra coefficient captures within-group differences in remote-capable tasks. Magnitudes assumed."
+  urbanicity_factor:
+    label: "Telework coefficient by urbanicity"
+    values: {urban: 1.05, rural: 0.8}
+    assumption: true
+    justification: "Remote work is more common in metropolitan areas, partly through occupation mix and broadband; no source checked, small coefficients."
+  desk_weight:
+    label: "Weight of 'mostly at a desk or computer', by occupation group (on-site baseline)"
+    values: {management: 0.6, business_finance: 0.85, computer_engineering_science: 0.85, education_legal_community_arts: 0.45, healthcare_practitioners: 0.2, service: 0.05, sales: 0.3, office_admin: 0.85, farming: 0.02, construction: 0.03, installation_repair: 0.03, production: 0.02, transportation: 0.01, none: 0.3}
+    assumption: true
+    justification: "No published distribution of the share of work time at a computer by occupation. The ordering follows the telework gradient (BLS 2025) and the white-collar vs front-line split used by Gallup; values are assumptions."
+  mixed_weight:
+    label: "Weight of 'mix of desk and hands-on work', by occupation group"
+    values: {management: 0.3, business_finance: 0.13, computer_engineering_science: 0.13, education_legal_community_arts: 0.4, healthcare_practitioners: 0.5, service: 0.25, sales: 0.4, office_admin: 0.13, farming: 0.18, construction: 0.2, installation_repair: 0.27, production: 0.18, transportation: 0.14, none: 0.3}
+    assumption: true
+    justification: "Same logic as desk_weight; values are assumptions."
+  frontline_weight:
+    label: "Weight of 'mostly frontline or hands-on work', by occupation group"
+    values: {management: 0.1, business_finance: 0.02, computer_engineering_science: 0.02, education_legal_community_arts: 0.15, healthcare_practitioners: 0.3, service: 0.7, sales: 0.3, office_admin: 0.02, farming: 0.8, construction: 0.77, installation_repair: 0.7, production: 0.8, transportation: 0.85, none: 0.4}
+    assumption: true
+    justification: "Same logic as desk_weight; values are assumptions."
+  ai_pcs_factor:
+    label: "Generative AI adoption coefficient by occupation group (on top of desk vs frontline)"
+    values: {management: 1.2, business_finance: 1.3, computer_engineering_science: 1.7, education_legal_community_arts: 0.9, healthcare_practitioners: 0.6, service: 1.0, sales: 0.9, office_admin: 0.9, farming: 1.0, construction: 1.0, installation_repair: 1.0, production: 1.0, transportation: 1.0, none: 1.0}
+    sources: [gallup_ai_work, pew_ai_workers_2025]
+    assumption: true
+    justification: "Gallup: technology 50%, professional services 34%, finance 32% frequent use. Pew: encouragement highest in IT and finance. Coefficients are relative and assumed."
+  ai_education_factor:
+    label: "Generative AI adoption coefficient by education"
+    values: {below_hs: 0.5, high_school: 0.7, some_college: 0.9, associate: 0.9, bachelor: 1.2, graduate: 1.4}
+    sources: [pew_ai_workers_2025]
+    assumption: true
+    justification: "Pew (Oct 2024): 26% of workers with a postgraduate degree use chatbots at least monthly, against 16% overall; ratios rounded."
+  ai_age_factor:
+    label: "Generative AI adoption coefficient by age"
+    bands:
+      - {from: 18, to: 29, value: 1.5}
+      - {from: 30, to: 39, value: 1.2}
+      - {from: 40, to: 49, value: 1.0}
+      - {from: 50, to: 59, value: 0.8}
+      - {from: 60, to: 79, value: 0.55}
+    sources: [pew_ai_workers_2025]
+    assumption: true
+    justification: "Pew (Oct 2024): 23% of workers aged 18-29 use chatbots at least monthly vs 16% overall; the older bands are extrapolated."
+  ai_cow_factor:
+    label: "Generative AI adoption coefficient by class of worker"
+    values: {private: 1.0, nonprofit: 0.95, government: 0.7, self_employed: 1.1, none: 1.0}
+    assumption: true
+    justification: "Government employers more often restrict tools; self-employed choose their own tools. No source checked."
+  ai_desk_factor:
+    label: "Generative AI adoption coefficient by desk vs frontline work (computer owners only)"
+    values: {mostly_desk_computer: 1.2, mixed: 0.7, mostly_frontline_hands_on: 0.3}
+    sources: [gallup_ai_work]
+    assumption: true
+    justification: "Gallup Q2 2025: frequent use 27% of white-collar vs 9% of production and front-line workers (ratio about 3). Personas without a computer have no desk_based_job value and get a low default coefficient in ai_adoption_index."
+  ai_arrangement_factor:
+    label: "Generative AI adoption coefficient by work arrangement"
+    values: {fully_on_site: 0.9, hybrid: 1.15, fully_remote: 1.3}
+    assumption: true
+    justification: "Remote and hybrid workers are mostly desk workers who use tools more; modest extra coefficient assumed."
+  gig_age_factor:
+    label: "Side gig coefficient by age"
+    bands:
+      - {from: 18, to: 29, value: 1.5}
+      - {from: 30, to: 44, value: 1.05}
+      - {from: 45, to: 59, value: 0.8}
+      - {from: 60, to: 79, value: 0.5}
+    sources: [fed_shed_2024_gig]
+    assumption: true
+    justification: "Secondary report of SHED 2024: 26% of ages 18-29 vs 12% of ages 60 and over; the middle bands are interpolated."
+
+attributes:
+  - key: work_arrangement
+    label: Work arrangement
+    type: enum
+    when: employed
+    values:
+      - {code: fully_on_site, label: "fully on-site"}
+      - {code: hybrid, label: "hybrid (part on-site, part remote)"}
+      - {code: fully_remote, label: "fully remote"}
+    distribution:
+      weights:
+        fully_on_site:
+          add:
+            - 1
+            - mul:
+                - -1
+                - min: [0.9, {mul: [{lookup: telework_rate, by: socle.pcs}, {lookup: cow_telework_factor, by: socle.class_of_worker}, {lookup: education_telework_factor, by: socle.education}, {lookup: urbanicity_factor, by: socle.urbanicity}]}]
+        hybrid:
+          mul:
+            - min: [0.9, {mul: [{lookup: telework_rate, by: socle.pcs}, {lookup: cow_telework_factor, by: socle.class_of_worker}, {lookup: education_telework_factor, by: socle.education}, {lookup: urbanicity_factor, by: socle.urbanicity}]}]
+            - add:
+                - 1
+                - mul: [-1, {min: [0.9, {mul: [{lookup: remote_share, by: socle.pcs}, {lookup: cow_remote_factor, by: socle.class_of_worker}]}]}]
+        fully_remote:
+          mul:
+            - min: [0.9, {mul: [{lookup: telework_rate, by: socle.pcs}, {lookup: cow_telework_factor, by: socle.class_of_worker}, {lookup: education_telework_factor, by: socle.education}, {lookup: urbanicity_factor, by: socle.urbanicity}]}]
+            - min: [0.9, {mul: [{lookup: remote_share, by: socle.pcs}, {lookup: cow_remote_factor, by: socle.class_of_worker}]}]
+    sources: [bls_cps_telework_2025, gallup_hybrid]
+    justification: "P(telework) = BLS 2025 rate for the occupation group × class of worker × education × urbanicity, capped at 90%; teleworkers are split into hybrid and fully remote with a remote share by occupation (about half overall, per BLS all-hours vs some-hours and Gallup). The mapping of BLS groups to socle groups and the coefficients are inferred. No conditioning on race or ethnicity: occupation and education explain most of the published gaps."
+
+  - key: desk_based_job
+    label: Share of work time at a computer
+    type: enum
+    when: employed_with_computer
+    values:
+      - {code: mostly_desk_computer, label: "mostly at a desk or computer"}
+      - {code: mixed, label: "a mix of desk and hands-on work"}
+      - {code: mostly_frontline_hands_on, label: "mostly frontline or hands-on work"}
+    distribution:
+      weights:
+        mostly_desk_computer: {mul: [{lookup: desk_weight, by: socle.pcs}, {pick: work_arrangement, values: {fully_remote: 4, hybrid: 2.5}, default: 1}]}
+        mixed: {mul: [{lookup: mixed_weight, by: socle.pcs}, {pick: work_arrangement, values: {fully_remote: 0.6, hybrid: 0.9}, default: 1}]}
+        mostly_frontline_hands_on: {mul: [{lookup: frontline_weight, by: socle.pcs}, {pick: work_arrangement, values: {fully_remote: 0.03, hybrid: 0.12}, default: 1}]}
+    sources: [gallup_ai_work, bls_cps_telework_2025]
+    assumption: true
+    justification: "Only drawn for employed personas who have a computer. No published distribution of time at a computer by occupation. Derived from the occupation group (desk-heavy: management, business, computer, office; frontline: service, farming, construction, production, transportation) and made consistent with the work arrangement (remote and hybrid workers are almost all desk-based)."
+
+  - key: work_software_stack
+    label: Main work software
+    type: set
+    when: employed
+    items:
+      - {code: microsoft_365_teams, label: Microsoft 365 / Teams, card_label: "Microsoft 365 / Teams", rate: {base: 0.30, factors: {desk: 2.2, frontline: 0.3, government: 1.5, nonprofit: 1.2, self_employed: 0.5, bachelor_plus: 1.15, remote_or_hybrid: 1.15, education_pcs: 0.7}}}
+      - {code: google_workspace, label: Google Workspace, card_label: "Google Workspace", rate: {base: 0.15, factors: {desk: 1.8, frontline: 0.5, self_employed: 1.6, education_pcs: 2.2, government: 0.5, under35: 1.3, tech_pcs: 1.3}}}
+      - {code: slack, label: Slack, card_label: "Slack", rate: {base: 0.05, factors: {desk: 2.5, frontline: 0.2, remote_or_hybrid: 2.2, tech_pcs: 1.8, self_employed: 0.8, government: 0.3, under35: 1.3, bachelor_plus: 1.3}}}
+      - {code: zoom, label: Zoom, card_label: "Zoom", rate: {base: 0.10, factors: {desk: 2.2, frontline: 0.3, remote_or_hybrid: 2.2, self_employed: 1.3, education_pcs: 1.3, bachelor_plus: 1.2, healthcare_pcs: 1.2}}}
+      - {code: industry_specific_tools, label: Industry-specific tools, card_label: "industry-specific tools (POS, EHR, scheduling, dispatch, CRM, ERP)", rate: {base: 0.30, factors: {field_pcs: 1.8, healthcare_pcs: 2.2, frontline: 1.2, desk: 0.8, self_employed: 0.9}}}
+    rate_cap: 0.9
+    display: {template: "{value}", empty: "no dedicated work software"}
+    assumption: true
+    justification: "No public source gives the work software stack of the US workforce. Rules of thumb: Microsoft 365 / Teams more common among desk workers, large employers, government and nonprofits; Google Workspace in small firms, education and among the self-employed; Slack and Zoom mostly in hybrid and remote knowledge work; frontline roles use industry-specific tools or none (empty set). Personas without a computer have no desk or frontline factor applied. This describes tools used at work, not the personal subscriptions of the socle. Marginals should be validated by the user."
+
+  - key: tool_payer
+    label: Who pays for work tools and software
+    type: enum
+    when: employed
+    values:
+      - {code: employer_provides, label: "employer provides the tools"}
+      - {code: mixed, label: "employer and self (own device or apps used for work)"}
+      - {code: self_paid, label: "pays for own tools"}
+    distribution:
+      weights:
+        employer_provides: {cases: [{when: self_employed, value: 0.03}, {when: trades_pcs, value: 0.62}, {when: remote_or_hybrid, value: 0.76}, {else: 0.84}]}
+        mixed: {cases: [{when: self_employed, value: 0.17}, {when: trades_pcs, value: 0.28}, {when: remote_or_hybrid, value: 0.21}, {else: 0.13}]}
+        self_paid: {cases: [{when: self_employed, value: 0.80}, {when: trades_pcs, value: 0.10}, {else: 0.03}]}
+    sources: [bls_caea_2023]
+    assumption: true
+    justification: "No published distribution. Self-employed workers (and independent contractors, 7.4% of employment per BLS 2023) pay their own tools; most wage and salary workers have tools provided; remote and hybrid workers more often use their own devices or apps; construction and repair trades often buy their own tools. Values are assumptions."
+
+  - key: ai_adoption_index
+    label: Relative propensity to use generative AI at work
+    type: number
+    when: employed
+    value:
+      mul:
+        - {lookup: ai_pcs_factor, by: socle.pcs}
+        - {lookup: ai_education_factor, by: socle.education}
+        - {lookup: ai_age_factor, by: socle.age}
+        - {lookup: ai_cow_factor, by: socle.class_of_worker}
+        - cases:
+            - {when: desk, value: 1.2}
+            - {when: {attr: desk_based_job, eq: mixed}, value: 0.7}
+            - {else: 0.3}
+        - {lookup: ai_arrangement_factor, by: work_arrangement}
+        - cases:
+            - {when: {attr: socle.monthly_income, lt: 2000}, value: 0.8}
+            - {when: {attr: socle.monthly_income, lt: 4000}, value: 1.0}
+            - {when: {attr: socle.monthly_income, lt: 7000}, value: 1.1}
+            - {else: 1.2}
+    sources: [gallup_ai_work]
+    assumption: true
+    justification: "Technical attribute (not on the card): product of the coefficients that tilt the generative AI frequency (occupation, education, age, class of worker, desk work, arrangement, income). Desk coefficients as in ai_desk_factor (1.2 desk, 0.7 mixed); frontline workers and personas without a computer (no desk_based_job value) get 0.3. Around 1 on average and above 2 for young graduate tech workers. The income coefficient is a mild assumption, since occupation already carries most of the gradient."
+
+  - key: genai_use
+    label: Generative AI use at work
+    type: enum
+    when: employed
+    values:
+      - {code: never_or_unaware, label: "never uses it at work (or not familiar with it)"}
+      - {code: rarely, label: "rarely uses it at work"}
+      - {code: monthly, label: "uses it a few times a month"}
+      - {code: weekly, label: "uses it a few times a week"}
+      - {code: daily, label: "uses it daily"}
+    distribution:
+      weights:
+        never_or_unaware: 56
+        rarely: 9
+        monthly: {mul: [9, {attr: ai_adoption_index}]}
+        weekly: {mul: [22, {attr: ai_adoption_index}]}
+        daily: {mul: [14, {attr: ai_adoption_index}]}
+    sources: [pew_ai_workers_2025, pew_ai_2026, gallup_ai_work, gallup_ai_2026]
+    justification: "Baseline calibrated between Pew (38% of employed adults use chatbots for work tasks, Feb 2026; 9% daily or several times a week, Oct 2024) and Gallup (about 30% a few times a week or more and 15% daily, May 2026, unverified; 27% of white-collar vs 9% of front-line workers, Q2 2025). The definitions differ (chatbots vs any AI tool), so the target is a compromise: about 40% any use, 24-25% weekly or more (weekly and daily baseline weights raised slightly from the first preview, which gave 18.9%). The tilt by occupation, education and age follows the published gaps; coefficients are assumed. Employer AI policy is left to the productivite-reunions module."
+
+  - key: side_gig_platform_work
+    label: Side gig or platform work alongside the main job
+    type: enum
+    when: employed
+    values:
+      - {code: none, label: "no side gig"}
+      - {code: occasional_selling, label: "occasionally sells items online"}
+      - {code: platform_tasks, label: "does gig tasks, rides or delivery through apps"}
+      - {code: online_freelance, label: "freelances on online marketplaces"}
+    distribution:
+      weights:
+        none: 79
+        occasional_selling: {mul: [11, {lookup: gig_age_factor, by: socle.age}]}
+        platform_tasks:
+          mul:
+            - 6
+            - {lookup: gig_age_factor, by: socle.age}
+            - {if: low_income, then: 1.5, else: 1}
+            - {if: high_income, then: 0.5, else: 1}
+            - {if: bachelor_plus, then: 0.8, else: 1}
+            - {if: driver_service_pcs, then: 1.3, else: 1}
+        online_freelance:
+          mul:
+            - 4
+            - {lookup: gig_age_factor, by: socle.age}
+            - {if: bachelor_plus, then: 1.6, else: 1}
+            - {if: low_education, then: 0.5, else: 1}
+            - {if: freelance_pcs, then: 1.5, else: 1}
+    sources: [fed_shed_2024_gig, bls_caea_2023]
+    assumption: true
+    justification: "SHED 2024 (unverified snippet): 20% of adults did gig activities in the prior month (13% selling items, 9% short-term tasks), and about half of gig doers have a non-gig main job; so about 21% of employed personas have some side activity. The split among the three types and the coefficients by income, education and occupation are assumptions. For self-employed personas, the side gig is on top of their main activity."
+
+card:
+  - when: employed
+    template: "Work setup: {work_arrangement}"
+  - when: {attr: desk_based_job, present: true}
+    template: "Time at a computer: {desk_based_job}"
+  - when: employed
+    template: "Work software: {work_software_stack}; {tool_payer}"
+  - when: employed
+    template: "AI at work: {genai_use}"
+  - when: has_side_gig
+    template: "Side activity: {side_gig_platform_work}"
+
+segments:
+  - {id: workArrangement, attribute: work_arrangement, label: Work arrangement, compare: 4}
+  - {id: workDeskJob, attribute: desk_based_job, label: Desk vs frontline work}
+  - {id: workToolPayer, attribute: tool_payer, label: Who pays for work tools}
+  - {id: workAiUse, attribute: genai_use, label: Generative AI use at work}
+  - {id: workSideGig, attribute: side_gig_platform_work, label: Side gig or platform work}
+
+eligibility_helpers:
+  remote_or_hybrid: "us-work-software.work_arrangement in [hybrid, fully_remote]"
+  fully_remote_worker: "us-work-software.work_arrangement == fully_remote"
+  hybrid_worker: "us-work-software.work_arrangement == hybrid"
+  on_site_worker: "us-work-software.work_arrangement == fully_on_site"
+  desk_worker: "us-work-software.desk_based_job == mostly_desk_computer"
+  frontline_worker: "us-work-software.desk_based_job == mostly_frontline_hands_on"
+  remote_desk_worker: "us-work-software.work_arrangement in [hybrid, fully_remote] and us-work-software.desk_based_job == mostly_desk_computer"
+  weekly_ai_user: "us-work-software.genai_use in [weekly, daily]"
+  any_ai_user: "us-work-software.genai_use in [rarely, monthly, weekly, daily]"
+  no_ai_user: "us-work-software.genai_use == never_or_unaware"
+  self_paid_tools: "us-work-software.tool_payer == self_paid"
+  tools_not_fully_employer_paid: "us-work-software.tool_payer in [mixed, self_paid]"
+  platform_side_gig: "us-work-software.side_gig_platform_work in [occasional_selling, platform_tasks, online_freelance]"
+  self_employed_remote: "class_of_worker == self_employed and us-work-software.work_arrangement in [hybrid, fully_remote]"
+  young_remote_ai_user: "age <= 34 and us-work-software.work_arrangement in [hybrid, fully_remote] and us-work-software.genai_use in [weekly, daily]"
+
+validation:
+  margins:
+    - {attribute: work_arrangement, title: "Work arrangement (expected from occupation, class of worker, education)"}
+    - {attribute: desk_based_job, title: "Desk vs frontline work (expected from occupation and arrangement)"}
+    - {attribute: tool_payer, title: "Who pays for work tools (expected from class of worker)"}
+    - {attribute: genai_use, title: "Generative AI use at work (expected from adoption index)"}
+    - {attribute: side_gig_platform_work, title: "Side gig or platform work (expected from age, income, occupation)"}
+  shares:
+    - label: "Employed people who telework at least some hours (BLS 2025: 22.4%)"
+      among: employed
+      share_of: remote_or_hybrid
+      range: [0.19, 0.27]
+    - label: "Employed people who are fully remote (BLS 2025: about 10.5% teleworked all hours, secondary summary)"
+      among: employed
+      share_of: {attr: work_arrangement, eq: fully_remote}
+      range: [0.07, 0.14]
+    - label: "Telework among self-employed (BLS 2025: 36.4%)"
+      among: {all: [employed, self_employed]}
+      share_of: remote_or_hybrid
+      range: [0.28, 0.46]
+    - label: "Telework among government workers (BLS 2025: 16.5%)"
+      among: {all: [employed, government]}
+      share_of: remote_or_hybrid
+      range: [0.11, 0.22]
+    - label: "Telework in computer, engineering and science occupations (BLS 2025: 65.2% for computer and mathematical)"
+      among: {all: [employed, tech_pcs]}
+      share_of: remote_or_hybrid
+      range: [0.45, 0.72]
+    - label: "Telework in service occupations (BLS 2025: 5.7%)"
+      among: {all: [employed, {attr: socle.pcs, eq: service}]}
+      share_of: remote_or_hybrid
+      range: [0.03, 0.09]
+    - label: "Employed people who use generative AI at work at least rarely (Pew Feb 2026: 38%; Gallup May 2026: 52%, unverified)"
+      among: employed
+      share_of: {attr: genai_use, in: [rarely, monthly, weekly, daily]}
+      range: [0.33, 0.52]
+    - label: "Employed people who use generative AI a few times a week or more (Gallup May 2026: 30%, unverified; Pew Oct 2024: 9%)"
+      among: employed
+      share_of: {attr: genai_use, in: [weekly, daily]}
+      range: [0.19, 0.33]
+    - label: "Employed people who use generative AI daily (Gallup May 2026: 15%, unverified)"
+      among: employed
+      share_of: {attr: genai_use, eq: daily}
+      range: [0.06, 0.17]
+    - label: "Frequent AI use among desk-based workers (Gallup Q2 2025: 27% of white-collar workers)"
+      among: {all: [employed, desk]}
+      share_of: {attr: genai_use, in: [weekly, daily]}
+      range: [0.20, 0.42]
+    - label: "Frequent AI use among frontline workers (Gallup Q2 2025: 9% of production and front-line workers)"
+      among: {all: [employed, frontline]}
+      share_of: {attr: genai_use, in: [weekly, daily]}
+      range: [0.03, 0.14]
+    - label: "Employed people with some side gig activity (SHED 2024: about 20% of adults did gig activities, unverified)"
+      among: employed
+      share_of: has_side_gig
+      range: [0.15, 0.27]

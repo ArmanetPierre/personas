@@ -1,0 +1,45 @@
+# Fictional B2B SaaS on the Singapore base population (sg socle), with two roles: the manager pays, team members
+# use it for free. Pitch and answers in English, amounts in SGD.
+id: sg-team-schedule
+name: Rota
+pitch: >-
+  Rota is a scheduling app for small teams working shifts (retail, food and beverage, home care): the manager
+  prepares the weekly schedule, team members see it on their phone, give their availability and swap shifts. The
+  app is free for team members. The manager pays for more than 2 teams or more than 30 members.
+targetAudience: Managers of small shift-based teams (payers) and their team members (free users).
+businessModel: Freemium paid by the manager only; Rota Pro at S$14 a month or S$140 a year; always free for members.
+price:
+  currency: SGD
+  offers:
+    - id: monthly
+      amount: 14
+      unit: month
+    - id: yearly
+      amount: 140
+      unit: year
+  reference: monthly
+  tiers: [7, 14, 21]
+  freemium:
+    free: up to 2 teams or 30 members; always free for team members
+    paid: Rota Pro (unlimited teams, hours reports, payroll export, schedule templates)
+competitors: [workforce management suites, WhatsApp groups]
+alternatives: [a shared spreadsheet, a paper schedule in the back office]
+roles:
+  - id: manager
+    label: Managers
+    perspective: payer
+    intro: You manage one or more small teams that work shifts.
+    dependsOn: { role: member }
+    target:
+      socle: sg
+      eligibility: "age >= 25 and age <= 55 and residency_status != mdw and dwelling != dormitory"
+      n: 40
+  - id: member
+    label: Team members
+    perspective: user
+    intro: You work shifts, with a schedule that changes from one week to the next.
+    offerNote: free for team members; the manager pays for more than 2 teams or 30 members
+    target:
+      socle: sg
+      eligibility: "age <= 35 and residency_status != mdw"
+      n: 60

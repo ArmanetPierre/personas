@@ -1,0 +1,509 @@
+# Module "Online learning and upskilling" for the Singapore socle (sg-2026.2).
+# Generic: reusable by any app or SaaS project. No socle_overrides, no affects_budget.
+# Not conditioned on ethnicity, religion or home_language.
+# Format: docs/modules.md. Declaration order = draw order.
+id: sg-online-learning
+version: "2026.2"
+changelog:
+  - version: "2026.2"
+    date: "2026-10-22"
+    changes: ["First version (Singapore socle v2): SkillsFuture Credit status, learning in the last 12 months, course funding, online channels, self-paid budget, motivation, preferred format, completion pattern."]
+label: Online learning and upskilling
+short_label: Learning
+description: >-
+  Adult learning and upskilling in Singapore: SkillsFuture Credit eligibility and use, structured learning in the
+  last 12 months, online learning channels (free video tutorials, MOOCs, paid platforms, SkillsFuture-funded online
+  courses, employer e-learning), who funds the learning, self-paid yearly course budget, main reason for learning,
+  preferred format and course completion pattern. Conditioned on age, education, activity status, occupation group (SSOC),
+  residency status, income and living standard, device access, tech adoption and social media use. Students and retirees
+  are modelled separately; Work Permit holders and migrant domestic workers have limited access (employer-mandated
+  training, rest-day courses, phone-only access).
+applies_to: [sg]
+requires: []
+
+sources:
+  ssg_yir_2024:
+    org: "SkillsFuture Singapore / SWDA"
+    title: "SkillsFuture Year-In-Review 2024"
+    year: 2024
+    url: "https://www.swda.gov.sg/home/newsroom/skillsfuture-year-in-review-2024"
+    detail: "Verified (page opened). 2024: 555,000 SSG-supported learners (520,000 in 2023); 260,000 citizens used SkillsFuture Credit (192,000 in 2023); 28,000 used the Mid-Career top-up (citizens 40+, since 1 May 2024); 1.05 million users since 2016 = 37% of Singaporeans; among citizens aged 30-59, 44% have used Credit for SSG-supported courses and 14% received employer sponsorship for such training; 96,000 enrolled in IT-related courses (AI, cybersecurity, digital marketing). The 2025 edition was not found."
+  moe_pq_midcareer_2025:
+    org: "MOE"
+    title: "Career Impact of SkillsFuture Credits, Mid-Career Training Allowance and Level-Up Programme (Parliamentary reply, 25 Sep 2025)"
+    year: 2025
+    url: "https://www.moe.gov.sg/news/parliamentary-replies/20250925-career-impact-of-skillsfuture-credits-mid-career-training-allowance-and-level-up-programme"
+    detail: "Verified. Over 36,000 citizens used SkillsFuture Credit (Mid-Career) from May 2024 to April 2025, claims over S$24 million; Mid-Career top-up usable on over 7,000 courses."
+  mysf_credit_rules:
+    org: "SkillsFuture Singapore (MySkillsFuture)"
+    title: "SkillsFuture Credit"
+    year: 2026
+    url: "https://www.myskillsfuture.gov.sg/content/portal/en/career-resources/career-resources/education-career-personal-development/SkillsFuture_Credit.html"
+    detail: "Verified. Base tier: S$500 for citizens aged 25+, no expiry, all courses on the portal. Mid-Career tier: S$4,000 for citizens aged 40+, no expiry, selected courses only. The 2020 Additional Credit (Mid-Career Support) was merged into the Mid-Career tier and no longer expires."
+  mom_pq_training_2025:
+    org: "MOM"
+    title: "Written Answer to PQ on Training Participation Rate (18 Feb 2025)"
+    year: 2025
+    url: "https://www.mom.gov.sg/newsroom/parliament-questions-and-replies/2025/0218-written-answer-to-pq-on-training-participation-rate"
+    detail: "Verified. Employed residents (citizens and PRs) aged 15-64, 2024: 82.5% of those who trained received employer-sponsored training (financial and insurance 89.7%, accommodation and food services 87.2%). No breakdown by age or education."
+  mom_lf_2024_training:
+    org: "MOM (relayed by The Independent SG)"
+    title: "Training participation rate of the resident labour force, 2024 (Labour Force in Singapore 2024)"
+    year: 2024
+    url: "https://theindependent.sg/singapores-training-participation-rate-drops-to-40-7-in-2024-continuing-downward-trend/"
+    detail: "NOT VERIFIED: page returned 403 and was not opened; figures come from a search snippet and the earlier draft. Residents aged 15-64 in the labour force: 40.7% trained in the 12 months to June 2024 (49.9% in 2021); employed 42.0%, unemployed 33.7%; 47.0% of residents outside the labour force in education or training. Not checked against the MOM report (PDF text not extractable)."
+  iss_sfc_topup:
+    org: "NUS-ISS"
+    title: "More than 70% of Singaporeans have yet to use SkillsFuture Credit top-up expiring end 2025"
+    year: 2025
+    url: "https://www.iss.nus.edu.sg/community/newsroom/news-detail/2025/06/26/more-than-70--of-singaporeans-have-yet-to-use-skillsfuture-credit-top-up-expiring-end-2025"
+    detail: "Verified. June 2025: 28% of eligible citizens (aged 25+) had used the one-off S$500 top-up of 2020, stated to expire 31 Dec 2025 (MySkillsFuture states instead that the 2020 Additional Credit was merged into the Mid-Career tier without expiry: sources conflict). Popular areas: ICT, F&B, sales and marketing, AI, digital marketing."
+  ntuc_ai_learning:
+    org: "NTUC"
+    title: "AI disruption drives push for lifelong learning among Singapore workers"
+    year: 2026
+    url: "https://www.ntuc.org.sg/uportal/news/AI-disruption-drives-push-for-lifelong-learning-among-Singapore-workers/"
+    detail: "47% of workers recognise the need to upskill in the face of AI; nearly 30% worry about job displacement; PMET workers get more structured employer training; older and lower-educated workers struggle more with reskilling"
+  coursera_gsr_2025:
+    org: "Coursera (relayed by Yahoo Finance SG)"
+    title: "Global Skills Report 2025 / Over a third of Singapore professionals are upskilling on Coursera"
+    year: 2025
+    url: "https://sg.finance.yahoo.com/news/over-third-singapore-professionals-upskilling-203000098.html"
+    detail: "36% of Singapore working professionals actively learning on Coursera (platform data, not a national survey); women are 45% of the Singapore learner base. Not verified."
+
+conditions:
+  citizen: {attr: socle.residency_status, eq: citizen}
+  not_citizen: {not: {attr: socle.residency_status, eq: citizen}}
+  resident: {attr: socle.residency_status, in: [citizen, pr]}
+  wp: {attr: socle.residency_status, eq: wp}
+  mdw: {attr: socle.residency_status, eq: mdw}
+  sf_eligible:
+    all:
+      - {attr: socle.residency_status, eq: citizen}
+      - {attr: socle.age, gt: 24}
+  sf_used: {attr: skillsfuture_credit_status, in: [used_base_only, used_mid_career]}
+  employed: {attr: socle.activity_status, eq: employed}
+  not_employed: {not: {attr: socle.activity_status, eq: employed}}
+  unemployed: {attr: socle.activity_status, eq: unemployed}
+  student: {attr: socle.activity_status, eq: student}
+  retired: {attr: socle.activity_status, eq: retired}
+  inactive: {attr: socle.activity_status, eq: inactive}
+  employed_resident:
+    all:
+      - {attr: socle.activity_status, eq: employed}
+      - {attr: socle.residency_status, in: [citizen, pr]}
+  pmet: {attr: socle.pcs, in: ["1", "2", "3"]}
+  blue_collar: {attr: socle.pcs, in: ["7", "8", "9"]}
+  degree: {attr: socle.education, eq: degree}
+  graduate: {attr: socle.education, in: [diploma, degree]}
+  low_edu: {attr: socle.education, in: [below_secondary, secondary]}
+  no_computer: {attr: socle.has_computer, eq: false}
+  no_smartphone: {attr: socle.has_smartphone, eq: false}
+  young: {attr: socle.age, lt: 35}
+  older: {attr: socle.age, gt: 59}
+  prime_age:
+    all:
+      - {attr: socle.age, gt: 29}
+      - {attr: socle.age, lt: 55}
+  switch_age:
+    all:
+      - {attr: socle.age, gt: 24}
+      - {attr: socle.age, lt: 41}
+  adopters: {attr: socle.tech_adoption, in: [innovator, early_adopter]}
+  lagging: {attr: socle.tech_adoption, in: [late_majority, laggard]}
+  heavy_social: {attr: socle.social_media, in: [daily, heavy]}
+  learner: {attr: learning_last_12m, eq: true}
+  non_learner: {attr: learning_last_12m, eq: false}
+  employer_funded: {attr: training_funding, eq: employer_sponsored}
+  sfc_funded: {attr: training_funding, eq: skillsfuture_credit}
+  self_funded: {attr: training_funding, eq: self_funded}
+
+tables:
+  sf_use_age:
+    label: "Cumulative use of SkillsFuture Credit among eligible citizens, by age (before education and activity adjustments)"
+    bands:
+      - {from: 18, to: 29, value: 0.32}
+      - {from: 30, to: 39, value: 0.48}
+      - {from: 40, to: 49, value: 0.50}
+      - {from: 50, to: 59, value: 0.48}
+      - {from: 60, to: 69, value: 0.36}
+      - {from: 70, to: 79, value: 0.20}
+    sources: [ssg_yir_2024, iss_sfc_topup]
+    assumption: true
+    justification: "Verified headline figures: 37% of Singaporeans have used their Credit since 2016 and 44% of citizens aged 30-59 (SSG 2024); 28% had used the S$500 2020 top-up by June 2025 (NUS-ISS). The age profile itself is an assumption that follows the direction of the NTUC findings (older citizens struggle more with reskilling); no verified figure disagrees with it."
+  sf_edu_factor:
+    label: "Education coefficient for SkillsFuture Credit use"
+    values: {degree: 1.15, diploma: 1.1, post_secondary: 0.95, secondary: 0.85, below_secondary: 0.6}
+    assumption: true
+    justification: "Directional: degree and diploma holders use the Credit more than lower-educated citizens (NTUC). Sizes are assumed, calibrated so that the overall share stays near 37-40%."
+  sf_activity_factor:
+    label: "Activity coefficient for SkillsFuture Credit use"
+    values: {employed: 1.0, unemployed: 1.05, inactive: 0.7, retired: 0.8, student: 0.5}
+    assumption: true
+    justification: "Directional assumption: the employed and the unemployed (job search, retraining) use the Credit more than retirees and inactive people."
+  sf_mid_rate:
+    label: "Share of eligible citizens who used the Mid-Career credit (40+), by age"
+    bands:
+      - {from: 18, to: 39, value: 0}
+      - {from: 40, to: 59, value: 0.05}
+      - {from: 60, to: 79, value: 0.03}
+    sources: [ssg_yir_2024, moe_pq_midcareer_2025, mysf_credit_rules]
+    assumption: true
+    justification: "Verified: 28,000 Mid-Career users in 2024 (SSG) and over 36,000 between May 2024 and April 2025 (MOE), i.e. about 3% of roughly 1.1 million citizens aged 40+ in the first year (the denominator is an estimate). The Mid-Career tier is S$4,000 for citizens 40+ and does not expire (MySkillsFuture). A cumulated 5% (40-59) and 3% (60+) by 2026 is an extrapolation and stays an assumption."
+
+  learning_age_factor:
+    label: "Age coefficient for structured learning in the last 12 months"
+    bands:
+      - {from: 18, to: 24, value: 1.1}
+      - {from: 25, to: 34, value: 1.1}
+      - {from: 35, to: 44, value: 1.05}
+      - {from: 45, to: 54, value: 0.95}
+      - {from: 55, to: 64, value: 0.8}
+      - {from: 65, to: 79, value: 0.5}
+    sources: [mom_lf_2024_training, ntuc_ai_learning]
+    assumption: true
+    justification: "MOM age tables could not be read (PDF text not extractable) and the relayed MOM figures are unverified. Directional gradient: participation declines with age, and older workers struggle more with reskilling (NTUC). Sizes are assumed."
+
+attributes:
+  - key: skillsfuture_credit_status
+    label: SkillsFuture Credit eligibility and use
+    type: enum
+    values:
+      - {code: not_eligible, label: "not eligible for SkillsFuture Credit"}
+      - {code: eligible_unused, label: "eligible for SkillsFuture Credit, has not used it"}
+      - {code: used_base_only, label: "has used SkillsFuture Credit"}
+      - {code: used_mid_career, label: "has used the SkillsFuture Mid-Career Credit (40+)"}
+    distribution:
+      weights:
+        not_eligible: {if: sf_eligible, then: 0, else: 1}
+        eligible_unused:
+          if: sf_eligible
+          then: {add: [1, {mul: [-1, {min: [0.9, {mul: [{lookup: sf_use_age, by: socle.age}, {lookup: sf_edu_factor, by: socle.education}, {lookup: sf_activity_factor, by: socle.activity_status}]}]}]}]}
+          else: 0
+        used_base_only:
+          if: sf_eligible
+          then: {max: [0.01, {add: [{min: [0.9, {mul: [{lookup: sf_use_age, by: socle.age}, {lookup: sf_edu_factor, by: socle.education}, {lookup: sf_activity_factor, by: socle.activity_status}]}]}, {mul: [-1, {lookup: sf_mid_rate, by: socle.age}]}]}]}
+          else: 0
+        used_mid_career: {if: sf_eligible, then: {lookup: sf_mid_rate, by: socle.age}, else: 0}
+    sources: [ssg_yir_2024, iss_sfc_topup, mysf_credit_rules, moe_pq_midcareer_2025]
+    assumption: true
+    justification: "Eligibility is rule-based (MySkillsFuture): citizens aged 25+ receive the S$500 base Credit (no expiry); citizens 40+ also have the S$4,000 Mid-Career tier (no expiry, selected courses); PR, EP, S Pass, WP, MDW, dependants, students and citizens aged 18-24 are not eligible. Overall use among eligible citizens is consistent with verified figures (37% of Singaporeans since 2016; 44% of citizens aged 30-59, SSG 2024), so weights are unchanged. The split by age, education and activity is an assumption. Sources conflict on the 2020 top-up (NUS-ISS: expires 31 Dec 2025; MySkillsFuture: merged into Mid-Career, no expiry): only the base and Mid-Career tiers are modelled. The SkillsFuture Level-Up Programme is not modelled."
+
+  - key: learning_last_12m
+    label: Structured learning in the last 12 months
+    type: boolean
+    rate:
+      min:
+        - 0.95
+        - mul:
+            - {pick: socle.activity_status, values: {employed: 0.42, unemployed: 0.337, student: 0.9, retired: 0.22}, default: 0.25}
+            - {if: student, then: 1, else: {pick: socle.education, values: {degree: 1.15, diploma: 1.05, post_secondary: 0.85, secondary: 0.7, below_secondary: 0.45}, default: 1}}
+            - {pick: socle.pcs, values: {"1": 1.1, "2": 1.12, "3": 1.05, "4": 0.9, "5": 0.85, "6": 0.7, "7": 0.8, "8": 0.75, "9": 0.7}, default: 1}
+            - {lookup: learning_age_factor, by: socle.age}
+            - {pick: socle.residency_status, values: {citizen: 1, pr: 1, ep: 1.05, spass: 0.9, wp: 0.7, mdw: 0.25, dependant: 0.6, student: 1}, default: 1}
+            - cases:
+                - {when: {attr: socle.living_standard_ratio, lt: 0.6}, value: 0.85}
+                - {when: {attr: socle.living_standard_ratio, lt: 1.5}, value: 1}
+                - {else: 1.05}
+    labels: {yes: "took structured courses or training in the last 12 months", no: "no structured course or training in the last 12 months"}
+    sources: [mom_lf_2024_training, ssg_yir_2024, ntuc_ai_learning]
+    assumption: true
+    justification: "Anchored on the MOM resident training participation rate (40.7% overall; 42.0% employed, 33.7% unemployed; 47.0% of residents outside the labour force in education or training): these figures come from a secondary relay that could not be opened and are NOT verified. The verified SSG 2024 figures (555,000 SSG-supported learners, 96,000 IT-course enrolments) are consistent with a participation well below half of adults but do not give a rate. Gradients by education, occupation group, age, residency and living standard are assumptions (MOM breakdowns not read). WP is lower, MDW very low (rest-day courses only)."
+
+  - key: training_funding
+    label: Main funder of the last course
+    type: enum
+    when: learner
+    values:
+      - {code: employer_sponsored, label: "employer-sponsored"}
+      - {code: skillsfuture_credit, label: "paid with SkillsFuture Credit"}
+      - {code: self_funded, label: "self-funded"}
+      - {code: free_or_other, label: "free, school-provided or funded by another body"}
+    distribution:
+      weights:
+        employer_sponsored:
+          cases:
+            - {when: mdw, value: 0.15}
+            - {when: wp, value: 0.9}
+            - {when: employed_resident, value: 0.825}
+            - {when: employed, value: 0.85}
+            - {when: student, value: 0.03}
+            - {else: 0.1}
+        skillsfuture_credit:
+          cases:
+            - {when: mdw, value: 0}
+            - {when: wp, value: 0}
+            - {when: employed_resident, value: {if: sf_used, then: 0.12, else: {if: sf_eligible, then: 0.03, else: 0}}}
+            - {when: employed, value: 0}
+            - {when: student, value: 0}
+            - {else: {if: sf_used, then: 0.35, else: {if: sf_eligible, then: 0.1, else: 0}}}
+        self_funded:
+          cases:
+            - {when: mdw, value: 0.45}
+            - {when: wp, value: 0.07}
+            - {when: employed_resident, value: {if: sf_used, then: 0.055, else: {if: sf_eligible, then: 0.145, else: 0.175}}}
+            - {when: employed, value: 0.13}
+            - {when: student, value: 0.17}
+            - {else: 0.3}
+        free_or_other:
+          cases:
+            - {when: mdw, value: 0.4}
+            - {when: wp, value: 0.03}
+            - {when: employed_resident, value: 0}
+            - {when: employed, value: 0.02}
+            - {when: student, value: 0.8}
+            - {else: 0.3}
+    sources: [mom_pq_training_2025]
+    assumption: true
+    justification: "Verified (MOM written answer to PQ, 18 Feb 2025): 82.5% of employed resident (citizen and PR) trainees aged 15-64 received employer-sponsored training in 2024. That figure is applied to employed citizens and PRs; the remaining 17.5% is split between SkillsFuture Credit and self-funding according to past Credit use (assumption). Other groups (WP, MDW, students, non-employed) are assumptions. The SSG figure of 14% employer sponsorship among citizens aged 30-59 refers to SSG-supported courses and a different base."
+
+  - key: online_learning_channels
+    label: Online learning channels used (last 12 months)
+    type: set
+    rate_cap: 0.9
+    items:
+      - code: free_video_tutorials
+        label: Free video tutorials (e.g. YouTube)
+        card_label: free video tutorials
+        rate: {base: 0.35, factors: {young: 1.3, older: 0.55, adopters: 1.3, lagging: 0.6, heavy_social: 1.2, no_smartphone: 0.3, graduate: 1.15, low_edu: 0.8, learner: 1.2, mdw: 0.8}}
+      - code: free_mooc
+        label: Free online courses (MOOCs)
+        card_label: free online courses
+        rate: {base: 0.08, factors: {graduate: 1.8, low_edu: 0.4, young: 1.3, older: 0.5, adopters: 1.5, lagging: 0.5, no_computer: 0.3, student: 1.8, wp: 0.4, mdw: 0.2, learner: 1.5}}
+      - code: paid_platform
+        label: Paid learning platforms (e.g. Coursera, Udemy, LinkedIn Learning)
+        card_label: a paid learning platform
+        rate: {base: 0.03, factors: {degree: 2.2, low_edu: 0.4, employed: 1.4, pmet: 1.5, adopters: 1.5, lagging: 0.5, no_computer: 0.25, older: 0.5, wp: 0.3, mdw: 0.1, learner: 2}}
+      - code: skillsfuture_funded_online
+        label: SkillsFuture-funded online courses
+        card_label: SkillsFuture-funded online courses
+        rate: {base: 0.04, factors: {sf_used: 4, not_citizen: 0.15, no_computer: 0.5, older: 0.7, graduate: 1.2, non_learner: 0.2}}
+      - code: employer_elearning
+        label: Employer e-learning (e.g. NTUC LearningHub, in-house modules)
+        card_label: employer e-learning
+        rate: {base: 0.22, factors: {not_employed: 0.04, pmet: 1.4, blue_collar: 0.8, wp: 1.1, mdw: 0.1, non_learner: 0.35, no_computer: 0.7, employer_funded: 2}}
+    display: {template: "{value}", empty: "no online learning channel"}
+    sources: [coursera_gsr_2025, ssg_yir_2024, mom_lf_2024_training]
+    assumption: true
+    justification: "No national survey gives channel shares. Free video tutorials are the broadest channel, concentrated among smartphone users, the young, early adopters and heavy social media users. Paid platforms are concentrated among degree-holding PMET workers with a computer; Coursera's 36% of professionals is an unverified platform ceiling, not a population share. SkillsFuture-funded online courses need a citizen (or a PR with subsidy) and favour past Credit users (SSG 2024 reports only 2,655 online-learning subscription claims in 2024, so the rate stays low). Employer e-learning follows employed status and employer funding. WP and MDW without a computer rely mostly on a phone. Drawn after the course funder so that employer funding can raise the e-learning rate."
+
+  - key: annual_course_budget_self_paid
+    label: Self-paid course budget per year
+    type: enum
+    values:
+      - {code: none, label: "S$0 of their own money on courses"}
+      - {code: under_200, label: "under S$200 a year on courses"}
+      - {code: from_200_to_1000, label: "S$200-1,000 a year on courses"}
+      - {code: over_1000, label: "over S$1,000 a year on courses"}
+    distribution:
+      weights:
+        none:
+          cases:
+            - {when: mdw, value: 12}
+            - {when: wp, value: 6}
+            - {when: non_learner, value: 6}
+            - {when: self_funded, value: 0.5}
+            - {else: 2.5}
+        under_200:
+          mul:
+            - {cases: [{when: self_funded, value: 3}, {when: non_learner, value: 0.6}, {else: 1}]}
+            - {cases: [{when: {attr: socle.living_standard_ratio, lt: 0.6}, value: 0.6}, {when: {attr: socle.living_standard_ratio, lt: 1.5}, value: 1}, {else: 1.2}]}
+            - {cases: [{when: wp, value: 0.4}, {when: mdw, value: 0.2}, {when: student, value: 0.6}, {when: retired, value: 0.7}, {else: 1}]}
+        from_200_to_1000:
+          mul:
+            - {cases: [{when: self_funded, value: 2.5}, {when: non_learner, value: 0.3}, {else: 0.5}]}
+            - {cases: [{when: {attr: socle.living_standard_ratio, lt: 0.6}, value: 0.3}, {when: {attr: socle.living_standard_ratio, lt: 1.5}, value: 1}, {else: 1.6}]}
+            - {cases: [{when: degree, value: 1.4}, {when: graduate, value: 1.1}, {else: 0.8}]}
+            - {cases: [{when: wp, value: 0.1}, {when: mdw, value: 0.03}, {when: student, value: 0.3}, {when: retired, value: 0.6}, {else: 1}]}
+        over_1000:
+          mul:
+            - {cases: [{when: self_funded, value: 1.2}, {when: non_learner, value: 0.05}, {else: 0.12}]}
+            - {cases: [{when: {attr: socle.living_standard_ratio, lt: 0.6}, value: 0.15}, {when: {attr: socle.living_standard_ratio, lt: 1.5}, value: 1}, {else: 2.5}]}
+            - {cases: [{when: degree, value: 1.6}, {when: graduate, value: 1.0}, {else: 0.5}]}
+            - {cases: [{when: wp, value: 0.05}, {when: mdw, value: 0.01}, {when: student, value: 0.1}, {when: retired, value: 0.5}, {when: {attr: socle.residency_status, eq: ep}, value: 1.3}, {else: 1}]}
+    sources: [mom_pq_training_2025]
+    assumption: true
+    justification: "No published distribution of self-paid learning spend. Majority 'none' because employers sponsor most training (82.5% of employed resident trainees, MOM PQ 2025, verified) and SkillsFuture Credit covers part of the fees. Higher bands rise with living standard, degree or diploma and self-funding; students, retirees, WP and MDW are low. Band shares are assumptions."
+
+  - key: learning_motivation
+    label: Main reason for learning
+    type: enum
+    when: learner
+    values:
+      - {code: career_switch, label: "to switch career or field"}
+      - {code: promotion_or_job_security, label: "to get promoted or protect their job"}
+      - {code: keep_up_with_ai, label: "to keep up with AI and new technology"}
+      - {code: personal_interest, label: "personal interest"}
+      - {code: required_by_employer, label: "required by their employer"}
+    distribution:
+      weights:
+        required_by_employer:
+          mul:
+            - {if: employer_funded, then: 4, else: 0.4}
+            - {cases: [{when: wp, value: 1.5}, {when: blue_collar, value: 1.4}, {else: 1}]}
+        promotion_or_job_security:
+          cases:
+            - {when: employed, value: 3}
+            - {when: student, value: 1.2}
+            - {else: 0.5}
+        keep_up_with_ai:
+          mul:
+            - 0.8
+            - {if: {all: [employed, pmet]}, then: 1.8, else: 1}
+            - {cases: [{when: prime_age, value: 1.4}, {when: older, value: 0.5}, {else: 1}]}
+            - {cases: [{when: mdw, value: 0.3}, {when: wp, value: 0.5}, {when: not_employed, value: 0.4}, {else: 1}]}
+            - {if: graduate, then: 1.2, else: 1}
+        personal_interest:
+          mul:
+            - {cases: [{when: retired, value: 6}, {when: inactive, value: 3}, {when: mdw, value: 3}, {when: student, value: 1.5}, {else: 1}]}
+            - {if: older, then: 2.5, else: 1}
+        career_switch:
+          mul:
+            - {cases: [{when: unemployed, value: 4}, {when: student, value: 2}, {else: 1}]}
+            - {cases: [{when: switch_age, value: 1.8}, {when: {attr: socle.age, gt: 54}, value: 0.3}, {else: 1}]}
+    sources: [ntuc_ai_learning, mom_pq_training_2025]
+    assumption: true
+    justification: "47% of workers see the need to upskill because of AI and about 30% fear displacement (NTUC); 82.5% of employed resident trainees are employer-sponsored (MOM PQ 2025, verified). AI and digital courses are among the most popular areas (SSG 2024: 96,000 IT-course enrolments; NUS-ISS). AI upskilling peaks among PMET workers aged 30-54; employer-required training dominates for WP and SSOC 7-9; personal interest dominates among retirees and older inactive people; career switch is higher among the unemployed and ages 25-40. Exact shares are assumed. Only drawn for people who took courses in the last 12 months."
+
+  - key: preferred_learning_format
+    label: Preferred learning format
+    type: enum
+    values:
+      - {code: self_paced_online, label: "self-paced online courses"}
+      - {code: live_online, label: "live online classes"}
+      - {code: in_person, label: "in-person classes"}
+      - {code: blended, label: "a blend of online and in-person"}
+    distribution:
+      weights:
+        self_paced_online:
+          mul:
+            - 3
+            - {cases: [{when: young, value: 1.3}, {when: older, value: 0.5}, {else: 1}]}
+            - {if: no_computer, then: 0.5, else: 1}
+            - {cases: [{when: adopters, value: 1.4}, {when: lagging, value: 0.5}, {else: 1}]}
+            - {if: employed, then: 1.1, else: 1}
+            - {if: mdw, then: 1.2, else: 1}
+        live_online:
+          mul:
+            - 1.5
+            - {if: no_computer, then: 0.5, else: 1}
+            - {if: older, then: 0.6, else: 1}
+            - {if: adopters, then: 1.2, else: 1}
+            - {if: mdw, then: 0.6, else: 1}
+        in_person:
+          mul:
+            - 3
+            - {cases: [{when: older, value: 1.8}, {when: young, value: 0.9}, {else: 1}]}
+            - {cases: [{when: lagging, value: 1.6}, {when: adopters, value: 0.7}, {else: 1}]}
+            - {if: no_computer, then: 1.6, else: 1}
+            - {cases: [{when: mdw, value: 2.5}, {when: wp, value: 1.5}, {else: 1}]}
+        blended:
+          mul:
+            - 2.5
+            - {if: graduate, then: 1.2, else: 1}
+            - {if: older, then: 0.8, else: 1}
+            - {if: employed, then: 1.1, else: 1}
+    sources: [mom_lf_2024_training]
+    assumption: true
+    justification: "No Singapore source reports format shares. Participation peaked at 49.9% in 2021 during the shift to e-learning (relayed MOM figure, unverified), which supports a sizeable online share. Directional assumptions: self-paced online favoured by the young, early adopters and people with a computer; in-person favoured by people aged 60+, late adopters and people without a computer; MDW and WP lean to in-person short courses on rest days."
+
+  - key: course_completion_pattern
+    label: Course completion pattern
+    type: enum
+    when: learner
+    values:
+      - {code: finishes_most, label: "usually finishes the courses they start"}
+      - {code: finishes_some, label: "finishes some of the courses they start"}
+      - {code: often_drops_out, label: "often drops out before the end"}
+    distribution:
+      weights:
+        finishes_most:
+          mul:
+            - {cases: [{when: employer_funded, value: 4}, {when: sfc_funded, value: 3.5}, {when: self_funded, value: 3}, {else: 2.5}]}
+            - {cases: [{when: degree, value: 1.2}, {when: low_edu, value: 0.8}, {else: 1}]}
+            - {if: student, then: 1.1, else: 1}
+        finishes_some: 3
+        often_drops_out:
+          mul:
+            - 1.2
+            - {cases: [{when: employer_funded, value: 0.4}, {when: sfc_funded, value: 0.7}, {when: self_funded, value: 1.3}, {else: 2}]}
+            - {if: young, then: 1.2, else: 1}
+            - {if: low_edu, then: 1.1, else: 1}
+    sources: [ssg_yir_2024]
+    assumption: true
+    justification: "No source gives completion rates. Funded or employer-sponsored courses are assumed to be finished more often than free ones, so dropping out is more frequent after free or other-body courses. Only drawn for people who took courses in the last 12 months. Shares are assumptions."
+
+card:
+  - "Learning activity: {learning_last_12m}"
+  - "Online learning channels: {online_learning_channels}"
+  - "SkillsFuture Credit: {skillsfuture_credit_status}"
+  - when: learner
+    template: "Main reason for learning: {learning_motivation}; last course {training_funding}"
+  - "Courses: {annual_course_budget_self_paid}; prefers {preferred_learning_format}"
+  - when: learner
+    template: "Course completion: {course_completion_pattern}"
+
+segments:
+  - {id: learningCreditStatus, attribute: skillsfuture_credit_status, label: SkillsFuture Credit status, compare: 6}
+  - {id: learningMotivation, attribute: learning_motivation, label: Main reason for learning, compare: 7}
+  - {id: learningFormat, attribute: preferred_learning_format, label: Preferred learning format}
+  - {id: learningBudget, attribute: annual_course_budget_self_paid, label: Self-paid course budget}
+  - {id: learningFunding, attribute: training_funding, label: Course funding}
+  - {id: learningCompletion, attribute: course_completion_pattern, label: Course completion pattern}
+
+eligibility_helpers:
+  skillsfuture_eligible: "sg-online-learning.skillsfuture_credit_status != not_eligible"
+  credit_not_yet_used: "sg-online-learning.skillsfuture_credit_status == eligible_unused"
+  credit_user: "sg-online-learning.skillsfuture_credit_status in [used_base_only, used_mid_career]"
+  mid_career_unused_credit: "age >= 40 and sg-online-learning.skillsfuture_credit_status == eligible_unused"
+  recent_learner: "sg-online-learning.learning_last_12m"
+  ai_upskiller: "sg-online-learning.learning_motivation == keep_up_with_ai"
+  career_switcher_employed: "sg-online-learning.learning_motivation == career_switch and activity_status == employed"
+  employer_mandated_trainee: "sg-online-learning.learning_motivation == required_by_employer"
+  self_funded_learner: "sg-online-learning.training_funding == self_funded"
+  self_paying_learner: "sg-online-learning.annual_course_budget_self_paid in [from_200_to_1000, over_1000]"
+  self_paced_online_with_computer: "sg-online-learning.preferred_learning_format == self_paced_online and has_computer"
+  often_drops_out: "sg-online-learning.course_completion_pattern == often_drops_out"
+
+validation:
+  margins:
+    - {attribute: skillsfuture_credit_status, title: "SkillsFuture Credit status (expected from residency, age, education and activity)"}
+    - {attribute: training_funding, title: "Course funding (expected from activity and residency)"}
+    - {attribute: annual_course_budget_self_paid, title: "Self-paid course budget (expected from funding, living standard and education)"}
+    - {attribute: learning_motivation, title: "Main reason for learning (expected from activity, age and funding)"}
+    - {attribute: preferred_learning_format, title: "Preferred learning format (expected from age, device and tech adoption)"}
+    - {attribute: course_completion_pattern, title: "Course completion pattern (expected from funding and education)"}
+  shares:
+    - label: "Eligible citizens (25+) who have used SkillsFuture Credit (SSG 2024, verified: 37% of Singaporeans since 2016; 44% of citizens aged 30-59)"
+      among: sf_eligible
+      share_of: sf_used
+      range: [0.30, 0.46]
+    - label: "Residents (citizens and PRs) aged 25-64 who trained in the last 12 months (MOM 2024: 40.7% for the resident labour force aged 15-64, UNVERIFIED secondary relay)"
+      among:
+        all:
+          - resident
+          - {attr: socle.age, gt: 24}
+          - {attr: socle.age, lt: 65}
+      share_of: learner
+      range: [0.30, 0.50]
+    - label: "Employed citizens and PRs under 65 who trained in the last 12 months (MOM 2024: 42.0%, unverified relay)"
+      among:
+        all:
+          - employed_resident
+          - {attr: socle.age, lt: 65}
+      share_of: learner
+      range: [0.34, 0.52]
+    - label: "Unemployed citizens and PRs who trained in the last 12 months (MOM 2024: 33.7%, unverified relay)"
+      among:
+        all:
+          - unemployed
+          - resident
+      share_of: learner
+      range: [0.25, 0.45]
+    - label: "Employer-sponsored training among employed citizen and PR learners (MOM PQ 18 Feb 2025, verified: 82.5% of employed residents aged 15-64 who trained, 2024)"
+      among:
+        all:
+          - employed_resident
+          - learner
+      share_of: employer_funded
+      range: [0.76, 0.89]

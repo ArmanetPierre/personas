@@ -1,0 +1,291 @@
+{
+ "id": "us-earnings",
+ "title": "Revenus mensuels bruts : salaires des temps plein par profession et sexe, effets de l'âge et du diplôme, temps partiel, retraites, allocations",
+ "assumption": true,
+ "sources": [
+  {
+   "org": "Bureau of Labor Statistics",
+   "title": "CPS 2025 annual averages, table 39: median weekly earnings of full-time wage and salary workers by occupation and sex",
+   "year": 2025,
+   "url": "https://www.bls.gov/cps/cpsaat39.htm"
+  },
+  {
+   "org": "Bureau of Labor Statistics",
+   "title": "Usual Weekly Earnings of Wage and Salary Workers, Third Quarter 2026 (tables 3 and 5)",
+   "year": 2026,
+   "url": "https://www.bls.gov/news.release/wkyeng.t05.htm"
+  },
+  {
+   "org": "Bureau of Labor Statistics",
+   "title": "Employment Projections: Education pays (earnings and unemployment by educational attainment, 2025)",
+   "year": 2025,
+   "url": "https://www.bls.gov/emp/tables/unemployment-earnings-education.htm"
+  },
+  {
+   "org": "Bureau of Labor Statistics",
+   "title": "CPS 2025 annual averages, table 8: employed persons by full- and part-time status and sex",
+   "year": 2025,
+   "url": "https://www.bls.gov/cps/cpsaat08.htm"
+  },
+  {
+   "org": "U.S. Census Bureau",
+   "title": "Income in the United States: 2025 (P60-289, CPS ASEC 2026), tables 1, 6 and 11",
+   "year": 2026,
+   "url": "https://www2.census.gov/programs-surveys/demo/tables/p60/289/"
+  },
+  {
+   "org": "U.S. Census Bureau",
+   "title": "CPS ASEC 2026, PINC-08: source of income, people 65 and over",
+   "year": 2026,
+   "url": "https://www2.census.gov/programs-surveys/cps/tables/pinc-08/2026/pinc08_1_8_1.xlsx"
+  },
+  {
+   "org": "Social Security Administration",
+   "title": "Monthly Statistical Snapshot, July 2026 (average retired-worker benefit, SSI)",
+   "year": 2026,
+   "url": "https://www.ssa.gov/policy/docs/quickfacts/stat_snapshot/2026-07.html",
+   "detail": "non ouvert (ssa.gov refuse l'accès automatisé) : chiffre relevé dans les résultats de recherche"
+  },
+  {
+   "org": "U.S. Department of Labor, ETA",
+   "title": "Unemployment Insurance Data Summary, Q2 2026",
+   "year": 2026,
+   "url": "https://oui.doleta.gov/unemploy/data_summary/SummaryTables.xlsx"
+  }
+ ],
+ "referenceYear": 2026,
+ "justification": "Médianes hebdomadaires des temps plein par profession et sexe (CPS 2025, table 39 ; groupes fusionnés pondérés par les effectifs) × 52/12, actualisées au 3e trimestre 2026 (× 1.023, médiane de 1 232 $ par semaine) et recalées sur la distribution publiée (facteur 0.92, dispersion 0.58 au-dessus de la médiane et 0.2 au-dessous, la distribution publiée étant asymétrique : docs/research/socle-us-data/earnings-calibration.json, contrôlé par packs/us/calibrate.ts ; cible P10 / P50 / P90 = 634 / 1 232 / 2 919 $ par semaine, wkyeng T3 2026). Effets de l'âge et du diplôme à profession donnée : hypothèses déduites des médianes par âge (wkyeng table 3) et par diplôme (Education pays 2025), atténuées car une partie de l'écart passe par la profession. Temps partiel : 12,4 % des hommes et 23,1 % des femmes en emploi (CPS 2025, table 8), revenu ≈ 42 % d'un temps plein (hypothèse). Retraités : Social Security (2 086 $ en moyenne pour un retraité, juillet 2026), pensions et retraits de comptes (29 % et 18,5 % des 65 ans et plus, PINC-08) : médianes par diplôme en hypothèse, relevées de 5 % car l'ASEC sous-déclare les revenus de retraite (Census CES-WP-24-32) et les retraits d'épargne ne sont pas modélisés autrement. Chômeurs : 24 % indemnisés (DOL, T2 2026), 500 $ par semaine en moyenne. Inactifs : pensions d'invalidité (SSDI, SSI) pour 38 % (hypothèse).",
+ "data": {
+  "fullTime": {
+   "management": {
+    "M": {
+     "median": 8159,
+     "sigma": 0.58
+    },
+    "F": {
+     "median": 6535,
+     "sigma": 0.58
+    }
+   },
+   "business_finance": {
+    "M": {
+     "median": 7458,
+     "sigma": 0.58
+    },
+    "F": {
+     "median": 6147,
+     "sigma": 0.58
+    }
+   },
+   "computer_engineering_science": {
+    "M": {
+     "median": 8319,
+     "sigma": 0.58
+    },
+    "F": {
+     "median": 6986,
+     "sigma": 0.58
+    }
+   },
+   "education_legal_community_arts": {
+    "M": {
+     "median": 6483,
+     "sigma": 0.58
+    },
+    "F": {
+     "median": 5112,
+     "sigma": 0.58
+    }
+   },
+   "healthcare_practitioners": {
+    "M": {
+     "median": 7506,
+     "sigma": 0.58
+    },
+    "F": {
+     "median": 5973,
+     "sigma": 0.58
+    }
+   },
+   "service": {
+    "M": {
+     "median": 3635,
+     "sigma": 0.58
+    },
+    "F": {
+     "median": 2986,
+     "sigma": 0.58
+    }
+   },
+   "sales": {
+    "M": {
+     "median": 5132,
+     "sigma": 0.58
+    },
+    "F": {
+     "median": 3696,
+     "sigma": 0.58
+    }
+   },
+   "office_admin": {
+    "M": {
+     "median": 4540,
+     "sigma": 0.58
+    },
+    "F": {
+     "median": 3855,
+     "sigma": 0.58
+    }
+   },
+   "farming": {
+    "M": {
+     "median": 3186,
+     "sigma": 0.58
+    },
+    "F": {
+     "median": 2676,
+     "sigma": 0.58
+    }
+   },
+   "construction": {
+    "M": {
+     "median": 4508,
+     "sigma": 0.58
+    },
+    "F": {
+     "median": 3985,
+     "sigma": 0.58
+    }
+   },
+   "installation_repair": {
+    "M": {
+     "median": 4834,
+     "sigma": 0.58
+    },
+    "F": {
+     "median": 4451,
+     "sigma": 0.58
+    }
+   },
+   "production": {
+    "M": {
+     "median": 4218,
+     "sigma": 0.58
+    },
+    "F": {
+     "median": 3243,
+     "sigma": 0.58
+    }
+   },
+   "transportation": {
+    "M": {
+     "median": 3835,
+     "sigma": 0.58
+    },
+    "F": {
+     "median": 3076,
+     "sigma": 0.58
+    }
+   }
+  },
+  "lowerSigma": 0.2,
+  "ageFactor": [
+   {
+    "from": 18,
+    "to": 19,
+    "factor": 0.66
+   },
+   {
+    "from": 20,
+    "to": 24,
+    "factor": 0.76
+   },
+   {
+    "from": 25,
+    "to": 34,
+    "factor": 0.92
+   },
+   {
+    "from": 35,
+    "to": 44,
+    "factor": 1.04
+   },
+   {
+    "from": 45,
+    "to": 54,
+    "factor": 1.04
+   },
+   {
+    "from": 55,
+    "to": 64,
+    "factor": 1.02
+   },
+   {
+    "from": 65,
+    "to": 79,
+    "factor": 0.98
+   }
+  ],
+  "educationFactor": {
+   "below_hs": 0.86,
+   "high_school": 0.9,
+   "some_college": 0.94,
+   "associate": 0.98,
+   "bachelor": 1.14,
+   "graduate": 1.32
+  },
+  "partTime": {
+   "M": 0.124,
+   "F": 0.231,
+   "incomeFactor": 0.42
+  },
+  "selfEmployedSigma": 0.6,
+  "retired": {
+   "below_hs": {
+    "median": 1650,
+    "sigma": 0.45
+   },
+   "high_school": {
+    "median": 2450,
+    "sigma": 0.5
+   },
+   "some_college": {
+    "median": 2800,
+    "sigma": 0.5
+   },
+   "associate": {
+    "median": 2900,
+    "sigma": 0.5
+   },
+   "bachelor": {
+    "median": 3850,
+    "sigma": 0.55
+   },
+   "graduate": {
+    "median": 4900,
+    "sigma": 0.55
+   }
+  },
+  "student": {
+   "withIncomeShare": 0.42,
+   "income": {
+    "median": 1100,
+    "sigma": 0.55
+   }
+  },
+  "unemployed": {
+   "withIncomeShare": 0.24,
+   "income": {
+    "median": 2170,
+    "sigma": 0.25
+   }
+  },
+  "inactive": {
+   "withIncomeShare": 0.38,
+   "income": {
+    "median": 1250,
+    "sigma": 0.35
+   }
+  }
+ }
+}

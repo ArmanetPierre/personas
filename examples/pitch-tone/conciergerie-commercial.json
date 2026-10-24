@@ -1,0 +1,32 @@
+{
+  "id": "tone-conciergerie-commercial",
+  "name": "Conciergerie express",
+  "pitch": "Libérez-vous des petites corvées ! Avec Conciergerie express, votre pressing, vos réparations de chaussures, vos colis et vos petites démarches sont pris en charge à domicile ou au bureau. Réservez un créneau en deux clics dans l'appli : un coursier passe chercher et rapporte tout pour vous. Pour 19 € par mois, quatre passages inclus (6 € le passage supplémentaire). Disponible dans Paris et la petite couronne.",
+  "targetAudience": "Cadres franciliens de 25 à 35 ans, sans temps pour les petites corvées.",
+  "businessModel": "Abonnement mensuel à 19 € (4 passages inclus), passages supplémentaires à 6 €.",
+  "price": {
+    "amountEur": 19,
+    "period": "month"
+  },
+  "freeOffer": null,
+  "competitors": [
+    "Conciergeries d'entreprise",
+    "Services de pressing à domicile",
+    "Applications de courses et de livraison"
+  ],
+  "alternatives": [
+    "S'en occuper soi-même le samedi",
+    "Demander à un proche",
+    "Points relais près du bureau"
+  ],
+  "priceTiers": [
+    9,
+    19,
+    29
+  ],
+  "target": {
+    "socle": "fr",
+    "eligibility": "age >= 25 and age <= 35 and region == IDF and pcs == 3 and activity_status == employed",
+    "n": 60
+  }
+}

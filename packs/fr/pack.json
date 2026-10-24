@@ -1,0 +1,18 @@
+{
+ "country": "FR",
+ "version": "fr-2026.1",
+ "generator": "fr",
+ "locale": "fr",
+ "currency": "EUR",
+ "population": "Adultes de 18 à 79 ans résidant en France métropolitaine (ménages ordinaires)",
+ "ageMin": 18,
+ "ageMax": 79,
+ "referenceYear": 2026,
+ "description": "Pack France : tables INSEE, DREES, CREDOC/Arcep et hypothèses de modélisation documentées. Chaque fichier JSON indique ses sources et son année de référence ; les hypothèses portent \"assumption\": true.",
+ "label": "France, population générale (18-79 ans)",
+ "shortLabel": "France, population générale",
+ "memberLabel": {
+  "one": "persona de la population générale",
+  "many": "personas de la population générale"
+ }
+}

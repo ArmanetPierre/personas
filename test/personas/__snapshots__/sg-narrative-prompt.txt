@@ -1,0 +1,186 @@
+You write short biographical profiles of ordinary people living in Singapore, for a market research panel.
+The attributes provided are FACTS drawn from official statistics: you never change them, never contradict them and never invent incompatible ones (another age, another place, another job, another household composition, another income, another residency status, ethnicity, religion or type of housing).
+Your job: make the person concrete, singular and credible, without clichés and without complacency.
+Writing rules:
+- 80 to 150 words, in English, in the third person, in a single paragraph.
+- Start exactly with “Name, N,” using the name and age provided, then continue with the opening angle given for this person.
+- Include a concrete habit, a small everyday annoyance and a real constraint (money, time, health, housing, transport, family, work pass), woven into the story, in any order, without announcing them.
+- VARIETY: each narrative in a batch has a different construction. Follow the opening angle and the type of ending given for each person. Never use label formulas such as “Pet peeve:”, “What annoys him:”, “Her main constraint”. Do not systematically end on an annoyance.
+- Details specific to the person (their job, their neighbourhood, their family, their tastes, their housing) rather than generic digital clichés: never “passwords”, “software updates”, “apps that keep changing” or “buttons that move around”.
+- No stereotypes tied to ethnicity, religion, nationality or residency status: no caricatured Singlish, no exoticism, no “kiasu” cliché; a migrant worker or a domestic worker is not miserable by default, an expatriate is not wealthy and carefree by default. Write in standard English; a local word is fine when natural (hawker centre, kopitiam, void deck).
+- If the profile describes a job and a plan to start a business: the narrative talks concretely about the job and the relationship with the project, with its nuances (half-hearted wish, hesitation, postponement, constraints, stated obstacles). Not an enthusiastic startup founder by default.
+- Only mention advertising, cold calls or distrust of novelties IF the profile indicates marked distrust.
+- Respect the tone given: it describes mood and character (cheerful, enthusiastic, serene, rushed, wary, weary…), not the attitude to buying. A cheerful or comfortable person still watches their money and time; a weary person is not necessarily unhappy. Avoid both misery and forced enthusiasm.
+- The relationship with technology follows the adoption profile and the equipment: most people are not passionate about technology, without rejecting it. Technology need not be a topic of the narrative.
+- AT MOST ONE figure with an amount in the whole narrative (none is fine). Do not recite the profile: translate figures into situations (“tight end of the month”, “no money worries”, “keeps the cheapest mobile plan”). Any amount must be one of those provided.
+- No place of residence other than the one given (you may name no place at all).
+- No moral, no forced positive conclusion, no bullet list.
+Reply only with the requested JSON.
+
+=====
+
+Write a narrative for each of the 10 people below.
+
+Return {"items": [{"id": "...", "narrative": "..."}]} with exactly one item per id, ids copied exactly.
+
+
+
+### id: sg-2026.1-s42-0001
+Name: Muhammad Irfan; man; 23 years old
+Residency: Singapore citizen
+Background: Malay; religion: Islam; language most spoken at home: English; highest qualification: diploma or professional qualification
+Lives in: Rochor (Central Region)
+Situation: Service or sales worker
+Household: lives with their parents; with both parents; housing: other housing (shophouse, quarters, hostel…), the parents' home
+Personal income: S$3,274 net/month after CPF contribution (gross S$4,092); household income after tax and government transfers: S$9,412/month
+Discretionary budget after committed and day-to-day expenses and subscriptions: S$2,051/month
+Equipment: smartphone, computer, tablet, home internet; social media several hours a day
+Current subscriptions: SIM-only mobile plan (MVNO) S$10, iCloud+ 2 TB S$13.98, GrabUnlimited S$6.99
+Relationship with technology: early adopter (adopts early what is useful to them)
+Price sensitivity: rather low; marked distrust of novelties, advertising and sales calls (high)
+Narrative tone: enthusiastic, likes trying things and talking about them
+Construction: start with “Muhammad Irfan, 23,” then open with a precise scene from an ordinary day (place, moment, gesture); end on a plan or wish, even a modest one.
+
+### id: sg-2026.1-s42-0002
+Name: Eric Goh; man; 49 years old
+Residency: Singapore citizen
+Background: Chinese; religion: Buddhism; language most spoken at home: English; highest qualification: diploma or professional qualification
+Lives in: Tampines (East Region)
+Situation: Plant or machine operator or assembler
+Household: lives with a partner and child(ren); wife or female partner, 48, not working; 3 children (13, 9, 6); housing: HDB 5-room or executive flat, owner, repaying a housing loan (mostly paid from CPF savings; cash part about S$359/month)
+Personal income: S$3,753 net/month after CPF contribution (gross S$4,691); household income after tax and government transfers: S$4,740/month
+Discretionary budget after committed and day-to-day expenses and subscriptions: S$697/month
+Equipment: smartphone, computer, tablet, home internet; does not use social media
+Current subscriptions: 5G SIM-only plan S$20, Home fibre broadband S$35 (for the household)
+Relationship with technology: late majority (adopts out of necessity, late)
+Price sensitivity: very high
+Narrative tone: wary, on the defensive
+Construction: start with “Eric Goh, 49,” then open with a habit or ritual that defines them; end on a concrete and unexpected detail.
+
+### id: sg-2026.1-s42-0003
+Name: Sharvin; man; 36 years old
+Residency: Singapore permanent resident
+Background: Indian; religion: Islam; language most spoken at home: Tamil; highest qualification: university degree
+Lives in: Jurong West (West Region)
+Situation: Professional
+Household: lives with a partner and child(ren); wife or female partner, 32, associate professional or technician; 3 children (9, 5, under 1); housing: HDB 5-room or executive flat, owner, repaying a housing loan (mostly paid from CPF savings; cash part about S$332/month)
+Personal income: S$7,204 net/month after CPF contribution (gross S$8,804); household income after tax and government transfers: S$11,100/month
+Discretionary budget after committed and day-to-day expenses and subscriptions: S$2,096/month
+Equipment: smartphone, computer, tablet, home internet; social media every day
+Current subscriptions: SIM-only mobile plan (MVNO) S$10, Home fibre broadband S$35 (for the household), Disney+ Premium S$22.98 (for the household), The Straits Times digital S$29.90
+Relationship with technology: early majority (adopts once it is proven)
+Price sensitivity: rather low
+Narrative tone: worried about the future
+Construction: start with “Sharvin, 36,” then open with a character trait illustrated by an anecdote; end on a habit that sums the person up.
+
+### id: sg-2026.1-s42-0004
+Name: Sharon Ho; woman; 47 years old
+Residency: Singapore citizen
+Background: Chinese; religion: Buddhism; language most spoken at home: Mandarin; highest qualification: university degree
+Lives in: Jurong East (West Region)
+Situation: Not in paid work (homemaker or other)
+Household: lives with a partner and child(ren); husband or male partner, 49, manager or administrator; 1 child (16); housing: condominium or private apartment, renting
+Personal income: no personal income; household income after tax and government transfers: S$10,363/month
+Discretionary budget after committed and day-to-day expenses and subscriptions: S$627/month
+Equipment: smartphone, computer, tablet, home internet; social media several hours a day
+Current subscriptions: SIM-only mobile plan (MVNO) S$10, Home fibre broadband S$45 (for the household), Gym membership S$95
+Relationship with technology: early adopter (adopts early what is useful to them)
+Price sensitivity: rather low
+Narrative tone: wary, on the defensive
+Construction: start with “Sharon Ho, 47,” then open with their current life situation (household, housing, stage of life); end on a relationship or someone around them.
+
+### id: sg-2026.1-s42-0005
+Name: Md. Rahim Uddin; man; 21 years old
+Residency: Work Permit holder, construction, marine or process sector (nationality: Bangladesh)
+Background: ethnic group in Singapore's classification: Indian; religion: Islam; language most spoken at home: English; highest qualification: below secondary
+Lives in: Tampines (East Region)
+Situation: Cleaner, labourer or related worker
+Household: lives in a workers' dormitory; housing: foreign workers' dormitory, provided by the employer
+Personal income: S$1,338 net/month; sends about S$803/month to family back home; household income after tax and government transfers: S$1,338/month
+Discretionary budget after committed and day-to-day expenses and subscriptions: S$198/month
+Equipment: smartphone, dormitory wifi; social media every day
+Current subscriptions: SIM-only mobile plan (MVNO) S$10
+Relationship with technology: early majority (adopts once it is proven)
+Price sensitivity: very high
+Narrative tone: very busy, rushed, always between two things
+Construction: start with “Md. Rahim Uddin, 21,” then open with their work or former working life, seen from the inside; end on a constraint that weighs on their choices.
+
+### id: sg-2026.1-s42-0006
+Name: Sumiati; woman; 31 years old
+Residency: migrant domestic worker (Work Permit) (nationality: Indonesia)
+Background: ethnic group in Singapore's classification: Malay; religion: Islam; language most spoken at home: another language; highest qualification: below secondary
+Lives in: Jurong West (West Region)
+Situation: Live-in domestic worker
+Household: lives in the employer's household; housing: lives in the employer's home (condominium or private apartment), with board and lodging provided
+Personal income: S$561 net/month; sends about S$393/month to family back home; household income after tax and government transfers: S$561/month
+Discretionary budget after committed and day-to-day expenses and subscriptions: S$57/month
+Equipment: smartphone, computer, employer's home wifi; social media every day
+Current subscriptions: SIM-only mobile plan (MVNO) S$10
+Relationship with technology: early adopter (adopts early what is useful to them)
+Price sensitivity: very high
+Narrative tone: serene, calm, content with what they have
+Construction: start with “Sumiati, 31,” then open with an important relationship (partner, child, parent, neighbour, colleague); end on a small pleasure they would not give up.
+
+### id: sg-2026.1-s42-0007
+Name: Ong Teck Seng; man; 75 years old
+Residency: Singapore permanent resident
+Background: Chinese; religion: No religion; language most spoken at home: Mandarin; highest qualification: below secondary
+Lives in: Jurong West (West Region)
+Situation: Not in paid work (homemaker or other)
+Household: lives with a partner, no child at home; wife or female partner, 76, not working; housing: HDB 4-room flat, owner, no housing loan
+Personal income: no personal income; household income after tax and government transfers: S$820/month
+Discretionary budget after committed and day-to-day expenses and subscriptions: S$0/month (in the red at the end of the month, about S$1,446 short)
+Equipment: basic mobile phone; does not use social media
+Current subscriptions: Telco mobile plan S$45
+Relationship with technology: laggard (avoids digital tools when possible)
+Price sensitivity: very high; marked distrust of novelties, advertising and sales calls (high)
+Narrative tone: matter-of-fact, sober
+Construction: start with “Ong Teck Seng, 75,” then open with a taste, passion or hobby (not digital); end on a plan or wish, even a modest one.
+
+### id: sg-2026.1-s42-0008
+Name: Derrick Tay; man; 39 years old
+Residency: Work Permit holder, manufacturing or services (nationality: Malaysia)
+Background: ethnic group in Singapore's classification: Chinese; religion: No religion; language most spoken at home: English; highest qualification: secondary
+Lives in: Geylang (Central Region)
+Situation: Plant or machine operator or assembler
+Household: lives with unrelated people; housing: other housing (shophouse, quarters, hostel…), renting
+Personal income: S$1,728 net/month; sends about S$467/month to family back home; household income after tax and government transfers: S$1,728/month
+Discretionary budget after committed and day-to-day expenses and subscriptions: S$289/month
+Equipment: smartphone, computer, home internet; social media every day
+Current subscriptions: Telco mobile plan S$45, Home fibre broadband S$35 (for the household), YouTube Premium Family S$31.98, The Straits Times digital S$29.90
+Relationship with technology: late majority (adopts out of necessity, late)
+Price sensitivity: high; marked distrust of novelties, advertising and sales calls (high)
+Narrative tone: very busy, rushed, always between two things
+Construction: start with “Derrick Tay, 39,” then open with a current worry or plan; end on a concrete and unexpected detail.
+
+### id: sg-2026.1-s42-0009
+Name: Siti Khotimah; woman; 39 years old
+Residency: migrant domestic worker (Work Permit) (nationality: Indonesia)
+Background: ethnic group in Singapore's classification: Malay; religion: Islam; language most spoken at home: another language; highest qualification: secondary
+Lives in: Tampines (East Region)
+Situation: Live-in domestic worker
+Household: lives in the employer's household; housing: lives in the employer's home (HDB 5-room or executive flat), with board and lodging provided
+Personal income: S$589 net/month; sends about S$412/month to family back home; household income after tax and government transfers: S$589/month
+Discretionary budget after committed and day-to-day expenses and subscriptions: S$28/month
+Equipment: smartphone, employer's home wifi; social media now and then
+Current subscriptions: Telco mobile plan S$45, iCloud+ 50 GB S$1.48
+Relationship with technology: early majority (adopts once it is proven)
+Price sensitivity: very high; rather trusting, open to new things
+Narrative tone: wary, on the defensive
+Construction: start with “Siti Khotimah, 39,” then open with their relationship with money, shown through a concrete behaviour; end on a habit that sums the person up.
+
+### id: sg-2026.1-s42-0010
+Name: Aidil; man; 34 years old
+Residency: Singapore citizen
+Background: Malay; religion: Islam; language most spoken at home: English; highest qualification: diploma or professional qualification
+Lives in: Yishun (North Region)
+Situation: Associate professional or technician
+Household: lives with a partner and child(ren); wife or female partner, 32, not working; 2 children (4, under 1); housing: HDB 4-room flat, owner, repaying a housing loan (mostly paid from CPF savings; cash part about S$261/month)
+Personal income: S$5,265 net/month after CPF contribution (gross S$6,581); household income after tax and government transfers: S$5,634/month
+Discretionary budget after committed and day-to-day expenses and subscriptions: S$628/month
+Equipment: smartphone, computer, tablet, home internet; social media several hours a day
+Current subscriptions: 5G SIM-only plan S$20, Home fibre broadband S$35 (for the household)
+Relationship with technology: early adopter (adopts early what is useful to them)
+Price sensitivity: very high
+Narrative tone: pragmatic, organised, careful with spending
+Construction: start with “Aidil, 34,” then open with their neighbourhood (estate, town, commute) and what they do there; end on a relationship or someone around them.

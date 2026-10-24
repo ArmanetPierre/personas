@@ -1,0 +1,21 @@
+Personas
+Copyright 2026 Pierre Armanet
+
+This product is licensed under the Apache License, Version 2.0 (see LICENSE),
+except for the Hub service in hub/, licensed under the GNU Affero General
+Public License, version 3 (see hub/LICENSE), and for the following
+directories, which are data and are licensed under the Creative Commons
+Attribution 4.0 International licence (CC BY 4.0):
+
+  - modules/  thematic persona modules (see modules/LICENSE)
+  - packs/    country packs: base-population tables (see packs/LICENSE)
+
+The tables in packs/ and modules/ are built from published statistics. Each
+table or attribute cites its sources (organisation, title, year, URL) or is
+marked as an assumption with a justification. The original data remain under
+the terms of their publishers (for example the French Licence Ouverte /
+Open Licence of Etalab for INSEE data, and the Singapore Open Data Licence
+for SingStat data), which require citing the source.
+
+Personas generated with this software, and the results of studies run with
+it, belong to the user. Neither licence imposes anything on them.

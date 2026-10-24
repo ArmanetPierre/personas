@@ -1,0 +1,220 @@
+{
+ "id": "sg-education",
+ "title": "Plus haut diplôme par âge (résidents) ; par pass (non-résidents, hypothèse)",
+ "assumption": true,
+ "sources": [
+  {
+   "org": "DOS",
+   "title": "GHS 2025: Highest qualification attained by age, sex and ethnic group (C020018)",
+   "year": 2025,
+   "url": "https://tablebuilder.singstat.gov.sg/table/CT/C020018"
+  }
+ ],
+ "referenceYear": 2025,
+ "justification": "Résidents : GHS 2025, C020018 (moyenne hommes-femmes ; 18-19 ans = ligne 15-19, hors étudiants à temps plein). Non-résidents : hypothèses fondées sur les critères des pass (EP : diplôme universitaire ; S Pass : diploma ou plus ; WP : secondaire ou technique), docs/research/socle-sg.md § 9.",
+ "data": {
+  "labels": {
+   "below_secondary": "Below secondary",
+   "secondary": "Secondary",
+   "post_secondary": "Post-secondary (ITE, Nitec, A-level)",
+   "diploma": "Diploma or professional qualification",
+   "degree": "University degree"
+  },
+  "residents": [
+   {
+    "from": 18,
+    "to": 19,
+    "shares": {
+     "below_secondary": 0.0366,
+     "secondary": 0.3449,
+     "post_secondary": 0.4995,
+     "diploma": 0.119,
+     "degree": 0.0
+    }
+   },
+   {
+    "from": 20,
+    "to": 24,
+    "shares": {
+     "below_secondary": 0.0265,
+     "secondary": 0.1163,
+     "post_secondary": 0.2471,
+     "diploma": 0.4189,
+     "degree": 0.1912
+    }
+   },
+   {
+    "from": 25,
+    "to": 29,
+    "shares": {
+     "below_secondary": 0.0235,
+     "secondary": 0.054,
+     "post_secondary": 0.084,
+     "diploma": 0.2486,
+     "degree": 0.5898
+    }
+   },
+   {
+    "from": 30,
+    "to": 34,
+    "shares": {
+     "below_secondary": 0.0235,
+     "secondary": 0.0625,
+     "post_secondary": 0.0655,
+     "diploma": 0.227,
+     "degree": 0.6215
+    }
+   },
+   {
+    "from": 35,
+    "to": 39,
+    "shares": {
+     "below_secondary": 0.03,
+     "secondary": 0.0716,
+     "post_secondary": 0.0806,
+     "diploma": 0.2127,
+     "degree": 0.6051
+    }
+   },
+   {
+    "from": 40,
+    "to": 44,
+    "shares": {
+     "below_secondary": 0.047,
+     "secondary": 0.0895,
+     "post_secondary": 0.076,
+     "diploma": 0.2164,
+     "degree": 0.5712
+    }
+   },
+   {
+    "from": 45,
+    "to": 49,
+    "shares": {
+     "below_secondary": 0.0665,
+     "secondary": 0.11,
+     "post_secondary": 0.081,
+     "diploma": 0.2345,
+     "degree": 0.508
+    }
+   },
+   {
+    "from": 50,
+    "to": 54,
+    "shares": {
+     "below_secondary": 0.1116,
+     "secondary": 0.1456,
+     "post_secondary": 0.1111,
+     "diploma": 0.2016,
+     "degree": 0.4302
+    }
+   },
+   {
+    "from": 55,
+    "to": 59,
+    "shares": {
+     "below_secondary": 0.182,
+     "secondary": 0.2,
+     "post_secondary": 0.136,
+     "diploma": 0.1745,
+     "degree": 0.3075
+    }
+   },
+   {
+    "from": 60,
+    "to": 64,
+    "shares": {
+     "below_secondary": 0.3005,
+     "secondary": 0.233,
+     "post_secondary": 0.141,
+     "diploma": 0.1285,
+     "degree": 0.197
+    }
+   },
+   {
+    "from": 65,
+    "to": 69,
+    "shares": {
+     "below_secondary": 0.3868,
+     "secondary": 0.2469,
+     "post_secondary": 0.1499,
+     "diploma": 0.0935,
+     "degree": 0.1229
+    }
+   },
+   {
+    "from": 70,
+    "to": 74,
+    "shares": {
+     "below_secondary": 0.475,
+     "secondary": 0.227,
+     "post_secondary": 0.1285,
+     "diploma": 0.0715,
+     "degree": 0.098
+    }
+   },
+   {
+    "from": 75,
+    "to": 79,
+    "shares": {
+     "below_secondary": 0.574,
+     "secondary": 0.1985,
+     "post_secondary": 0.1065,
+     "diploma": 0.053,
+     "degree": 0.068
+    }
+   }
+  ],
+  "byPass": {
+   "ep": {
+    "below_secondary": 0.0,
+    "secondary": 0.0,
+    "post_secondary": 0.0,
+    "diploma": 0.1,
+    "degree": 0.9
+   },
+   "spass": {
+    "below_secondary": 0.0,
+    "secondary": 0.0,
+    "post_secondary": 0.1,
+    "diploma": 0.45,
+    "degree": 0.45
+   },
+   "wp_cmp": {
+    "below_secondary": 0.3,
+    "secondary": 0.35,
+    "post_secondary": 0.27,
+    "diploma": 0.08,
+    "degree": 0.0
+   },
+   "wp_other": {
+    "below_secondary": 0.2,
+    "secondary": 0.35,
+    "post_secondary": 0.33,
+    "diploma": 0.12,
+    "degree": 0.0
+   },
+   "mdw": {
+    "below_secondary": 0.25,
+    "secondary": 0.7,
+    "post_secondary": 0.05,
+    "diploma": 0.0,
+    "degree": 0.0
+   },
+   "dependant": {
+    "below_secondary": 0.0,
+    "secondary": 0.05,
+    "post_secondary": 0.1,
+    "diploma": 0.2,
+    "degree": 0.65
+   },
+   "student": {
+    "below_secondary": 0.0,
+    "secondary": 0.0,
+    "post_secondary": 0.5,
+    "diploma": 0.2,
+    "degree": 0.3
+   }
+  }
+ }
+}

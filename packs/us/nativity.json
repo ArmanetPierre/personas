@@ -1,0 +1,49 @@
+{
+ "id": "us-nativity",
+ "title": "Adultes nés aux États-Unis, naturalisés ou non citoyens, par race et origine hispanique",
+ "assumption": false,
+ "sources": [
+  {
+   "org": "U.S. Census Bureau",
+   "title": "American Community Survey 2024 1-year, B05003, B05003H, B05003I, B05003B, B05003D: Sex by Age by Nativity and Citizenship Status",
+   "year": 2024,
+   "url": "https://data.census.gov/table/ACSDT1Y2024.B05003, B05003H, B05003I, B05003B, B05003D"
+  }
+ ],
+ "referenceYear": 2024,
+ "notes": "Adultes de 18 ans et plus (B05003 par race). Black et Asian : race seule, Hispanic compris (écart négligeable) ; « other » : total moins les quatre groupes. Les natifs comprennent les personnes nées à Puerto Rico ou à l'étranger de parents américains. Approximation : pas de modulation par âge (l'ACS 1-year ne croise pas finement nativité et âge par race).",
+ "data": {
+  "labels": {
+   "us_born": "born in the United States",
+   "naturalized": "born abroad, naturalized U.S. citizen",
+   "noncitizen": "born abroad, not a U.S. citizen"
+  },
+  "byRace": {
+   "white": {
+    "us_born": 0.9532,
+    "naturalized": 0.032,
+    "noncitizen": 0.0148
+   },
+   "hispanic": {
+    "us_born": 0.5643,
+    "naturalized": 0.1728,
+    "noncitizen": 0.2629
+   },
+   "black": {
+    "us_born": 0.8629,
+    "naturalized": 0.088,
+    "noncitizen": 0.0492
+   },
+   "asian": {
+    "us_born": 0.2642,
+    "naturalized": 0.4671,
+    "noncitizen": 0.2686
+   },
+   "other": {
+    "us_born": 0.8826,
+    "naturalized": 0.0677,
+    "noncitizen": 0.0497
+   }
+  }
+ }
+}

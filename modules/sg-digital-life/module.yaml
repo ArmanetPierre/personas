@@ -1,0 +1,643 @@
+# Module "Everyday digital life" (Singapore): generic reusable layer for any app or SaaS project.
+# Applies to every adult of the sg socle. No socle_overrides, no affects_budget.
+# Format: docs/modules.md. Declaration order = draw order (own random stream).
+id: sg-digital-life
+version: "2026.2"
+changelog:
+  - version: "2026.2"
+    date: "2026-10-22"
+    changes:
+      - "First version (sg-2026.2): digital affinity (latent), screen time, messaging and social platforms, consumer platform apps, online shopping, consumer generative AI, Singpass app, need for digital help."
+      - "Draft revision (version unchanged, never accepted): generative AI recalibrated on Microsoft AI diffusion and Google/Ipsos headlines (never used about 30-40% of adults 18-79); senior autonomy weight raised; sourced headlines cited on messaging, shopping and Singpass attributes."
+label: Everyday digital life
+short_label: Digital life
+description: >-
+  Everyday digital habits of adults in Singapore, usable by any app or SaaS project: daily smartphone screen time,
+  messaging and social platforms, consumer platform apps used monthly (Grab, Shopee, Lazada, foodpanda), general
+  online shopping frequency (groceries excluded), consumer generative AI use, Singpass app use and need for help
+  with digital government and banking tasks. Conditioned on age, education, income, residency status (citizens, PRs,
+  EP/S Pass holders, work permit holders, domestic workers, dependants, students), dwelling (incl. dormitories),
+  device access, tech adoption and social media level. Does not condition on ethnicity, religion or home language.
+applies_to: [sg]
+requires: []
+
+sources:
+  imda_dsr_2023:
+    org: "IMDA"
+    title: "Singapore Digital Society Report 2023"
+    year: 2023
+    url: "https://www.imda.gov.sg/-/media/imda/files/infocomm-media-landscape/research-and-statistics/singapore-digital-society-report/singapore-digital-society-report-2023.pdf"
+    detail: "Residents 2022: smartphone ownership 97%, household internet 99%; seniors 60+: smartphone 89%, online payments 78%, mobile app payments 66%, communicate online 92%; 64% of residents prefer to transact digitally with the Government vs 24% of seniors 60+ (figures from a search summary, PDF not read)"
+  wearesocial_2026_sg:
+    org: "We Are Social / DataReportal"
+    title: "Digital 2026: Top digital and social media trends in Singapore"
+    year: 2025
+    url: "https://wearesocial.com/sg/blog/2025/11/digital-2026-top-digital-and-social-media-trends-in-singapore/"
+    detail: "Nov 2025: social media identities 90.6% of the population; about 17 h a week on social platforms; 7.4 platforms a month; WhatsApp monthly by about 4 in 5; ChatGPT monthly by more than a third"
+  datareportal_2025_sg:
+    org: "DataReportal / We Are Social (via adobo Magazine)"
+    title: "Digital 2025: Singapore (as summarised by adobo Magazine)"
+    year: 2025
+    url: "https://www.adobomagazine.com/insight/digital-2025-singaporeans-juggle-more-social-media-platforms-as-usage-declines/"
+    detail: "Jan 2025: 3h17 a day on mobile internet, 2h02 on social media; WhatsApp 80.1% and Facebook 71.9% monthly (not verified)"
+  meltwater_sg_social:
+    org: "Meltwater / We Are Social (Digital 2025)"
+    title: "Social Media Statistics in Singapore [Updated 2025]"
+    year: 2025
+    url: "https://www.meltwater.com/en/blog/social-media-statistics-singapore"
+    detail: "Jan 2025: 5.16 million social media user identities, 88.2% of the population; TikTok and YouTube take the most time; online purchases of consumer goods are 12.2% of retail spending (a share of sales, not a purchase frequency). Not opened, from a search summary (not verified)"
+  incube_chatgpt:
+    org: "NTU IN-cube via AI Singapore"
+    title: "Singapore sees surge in ChatGPT use: IN-cube survey"
+    year: 2023
+    url: "https://aisingapore.org/ai-governance/singapore-sees-surge-in-chatgpt-use-in-cube-survey/"
+    detail: "About 1,000 adults, June 2023: 33.4% never used ChatGPT (58.3% in February); 9.1% very often, 16.5% often"
+  msft_ai_diffusion_2026q2:
+    org: "Microsoft AI Economy Institute"
+    title: "Global AI Diffusion Q2 2026 Trends and Insights"
+    year: 2026
+    url: "https://www.microsoft.com/en-us/research/wp-content/uploads/2026/09/Microsoft-AI-Diffusion-Report-2026-Q2.pdf"
+    detail: "Singapore, population aged 15-64 using generative AI (anonymised Microsoft telemetry, adjusted for OS/device share, internet penetration and population): 58.6% early 2025, 60.9% H2 2025, 63.4% Q1 2026, 64.3% Q2 2026 (2nd worldwide behind the UAE). PDF unreadable through the fetch tool; figures read in a research summary (not verified)"
+  singaporewallstreet_msft:
+    org: "Singapore Wall Street (secondary source citing Microsoft)"
+    title: "Singapore Workers Rank Among World's Top AI Users"
+    year: 2026
+    url: "https://www.singaporewallstreet.com/artificial-intelligence/singapore-workers-rank-among-worlds-top-ai-users/2026/05/25/"
+    detail: "Page opened: Q1 2026, 63.4% of Singapore's working-age population used generative AI tools, against 60.9% at end 2025"
+  google_ipsos_sg_2024:
+    org: "Google / Ipsos (via HardwareZone)"
+    title: "Google x Ipsos report: Almost 6 in 10 Singaporeans used generative AI in 2024"
+    year: 2025
+    url: "https://www.hardwarezone.com.sg/incoming/tech-news-google-ipsos-report-2024-generative-ai-attitude-economic-benefit-usage-behaviours-singaporeans"
+    detail: "Page opened: 59% of Singapore residents used generative AI in 2024 (49% in 2023); n = 1,000, fieldwork 17 Sep to 8 Oct 2024; 75% of users use it at work. No age breakdown, no frequency"
+  imda_sgde_2025:
+    org: "IMDA"
+    title: "Annual Report & Singapore Digital Economy Report 2025 (factsheet)"
+    year: 2025
+    url: "https://www.imda.gov.sg/resources/press-releases-factsheets-and-speeches/factsheets/2025/ar-sgde-2025"
+    detail: "73.8% of workers report using AI tools at work (workers only, not all adults). Not opened, from a search summary (not verified). No Digital Society Report 2025 was found"
+  statcounter_ai_sg:
+    org: "StatCounter"
+    title: "AI Chatbot Market Share Singapore"
+    year: 2026
+    url: "https://gs.statcounter.com/ai-chatbot-market-share/all/singapore"
+    detail: "June 2026, share of AI chatbot referrals: ChatGPT 67.86%, Gemini 14.8% (not verified)"
+  blackbox_food_delivery:
+    org: "Blackbox Research via Asia Food Journal"
+    title: "Hungry for choice: food delivery shrinks to a two-player market"
+    year: 2026
+    url: "https://asiafoodjournal.com/hungry-for-choice-85-of-singaporeans-fear-rising-costs-as-food-delivery-shrinks-to-two-player-market-new-blackbox-study/"
+    detail: "July 2026, 1,001 active food delivery users: GrabFood reach 85%, foodpanda 66% (not representative of all adults; not verified)"
+  marketingagency_ecom:
+    org: "marketingagency.sg (aggregator, unsourced)"
+    title: "E-Commerce Statistics Singapore 2026"
+    year: 2026
+    url: "https://marketingagency.sg/ecommerce-statistics-singapore/"
+    detail: "Shopee 3.80 million and Lazada 2.40 million monthly active users (unsourced, low reliability)"
+  govtech_singpass:
+    org: "GovTech / MDDI"
+    title: "Singpass factsheet"
+    year: 2022
+    url: "https://www.mddi.gov.sg/newsroom/singpass-factsheet-02032022/"
+    detail: "Singpass covers 97% of citizens and PRs aged 15+; over 3.5 million app users in Feb 2022, about 85% of transactions through the app (not verified)"
+  govtech_singpass_page:
+    org: "GovTech Singapore"
+    title: "Singpass (tech.gov.sg)"
+    year: 2026
+    url: "https://www.tech.gov.sg/products-and-services/for-citizens/digital-services/singpass/"
+    detail: "Page opened (year not stated): 5 million Singpass users, over 4.2 million users of the Singpass app, over 41 million transactions a month, over 2,700 services; open to citizens, PRs and FIN holders aged 15+"
+  mom_fw_survey:
+    org: "MOM"
+    title: "Findings From A Survey With Foreign Workers"
+    year: 2015
+    url: "https://www.mom.gov.sg/~/media/mom/documents/foreign-manpower/findings-from-survey-with-foreign-workers.pdf?la=en"
+    detail: "Undated (about 2015): 80% of foreign workers use Wi-Fi at their accommodation; they keep in touch via Facebook, WhatsApp, IMO and Viber, often by voice messages (not verified)"
+
+conditions:
+  adult: {attr: socle.age, gt: 17}
+  has_phone: {attr: socle.has_smartphone, eq: true}
+  no_phone: {attr: socle.has_smartphone, eq: false}
+  dormitory: {attr: socle.dwelling, eq: dormitory}
+  student: {attr: socle.activity_status, eq: student}
+  senior: {attr: socle.age, gt: 59}
+  resident: {attr: socle.residency_status, in: [citizen, pr]}
+
+tables:
+  age_affinity:
+    label: "Age coefficient of the digital affinity index"
+    bands:
+      - {from: 18, to: 29, value: 1.15}
+      - {from: 30, to: 44, value: 1.15}
+      - {from: 45, to: 59, value: 0.95}
+      - {from: 60, to: 69, value: 0.65}
+      - {from: 70, to: 79, value: 0.4}
+    sources: [imda_dsr_2023]
+    assumption: true
+    justification: "Seniors 60+ are less digital than residents overall (IMDA: 24% of seniors prefer digital government transactions vs 64% of residents) although 89% own a smartphone; the shape of the gradient by age band is an assumption."
+  edu_affinity:
+    label: "Education coefficient of the digital affinity index"
+    values: {below_secondary: 0.6, secondary: 0.8, post_secondary: 0.95, diploma: 1.1, degree: 1.3}
+    assumption: true
+    justification: "No published breakdown by education; monotonic gradient assumed."
+  res_affinity:
+    label: "Residency coefficient of the digital affinity index"
+    values: {citizen: 1.0, pr: 1.0, ep: 1.25, spass: 0.9, wp: 0.6, mdw: 0.5, dependant: 0.9, student: 1.15}
+    sources: [mom_fw_survey]
+    assumption: true
+    justification: "Work permit holders and domestic workers: phone-first, less access to a computer, less time and autonomy for services (qualitative, undated MOM survey); EP holders are mostly degree-educated professionals. Coefficients are assumptions."
+  res_ecom:
+    label: "Residency coefficient for Grab, Shopee and Lazada use"
+    values: {citizen: 1.0, pr: 1.0, ep: 1.05, spass: 0.95, wp: 0.6, mdw: 0.45, dependant: 0.9, student: 0.95}
+    sources: [mom_fw_survey]
+    assumption: true
+    justification: "Suggested non-resident shares of about 25-40% for Shopee and Grab and low use among domestic workers (research summary); combined with the affinity index."
+  res_food:
+    label: "Residency coefficient for food delivery apps (foodpanda)"
+    values: {citizen: 1.0, pr: 1.0, ep: 1.15, spass: 0.8, wp: 0.2, mdw: 0.1, dependant: 0.8, student: 0.85}
+    assumption: true
+    justification: "Food delivery apps about 5-10% among work permit holders and domestic workers (research summary, assumption)."
+  age_food:
+    label: "Age coefficient for food delivery apps"
+    bands:
+      - {from: 18, to: 29, value: 1.35}
+      - {from: 30, to: 44, value: 1.25}
+      - {from: 45, to: 59, value: 0.8}
+      - {from: 60, to: 69, value: 0.35}
+      - {from: 70, to: 79, value: 0.15}
+    sources: [blackbox_food_delivery]
+    assumption: true
+    justification: "Food delivery reach is concentrated among under-45s; the gradient is an assumption."
+  sm_social:
+    label: "Coefficient of the socle social media level for social platforms"
+    values: {none: 0.0, occasional: 0.75, daily: 1.1, heavy: 1.3}
+    sources: [wearesocial_2026_sg]
+    assumption: true
+    justification: "7.4 platforms per month on average among users (Nov 2025); the number of platforms rises with the socle social media level (assumption). 'none' means no social platform, messaging only."
+  sm_msg:
+    label: "Coefficient of the socle social media level for messaging apps"
+    values: {none: 0.8, occasional: 0.95, daily: 1.0, heavy: 1.0}
+    assumption: true
+    justification: "Messaging is nearly universal among smartphone owners and only weakly tied to social media use."
+  age_wa:
+    label: "Age coefficient, WhatsApp"
+    bands:
+      - {from: 18, to: 59, value: 1.0}
+      - {from: 60, to: 69, value: 0.95}
+      - {from: 70, to: 79, value: 0.8}
+    sources: [datareportal_2025_sg]
+    assumption: true
+    justification: "WhatsApp 80.1% monthly among internet users; mild decline at old age is an assumption."
+  age_fb:
+    label: "Age coefficient, Facebook"
+    bands:
+      - {from: 18, to: 29, value: 0.8}
+      - {from: 30, to: 44, value: 1.0}
+      - {from: 45, to: 59, value: 1.15}
+      - {from: 60, to: 69, value: 1.0}
+      - {from: 70, to: 79, value: 0.8}
+    sources: [datareportal_2025_sg]
+    assumption: true
+    justification: "Facebook 71.9% monthly (Jan 2025); skew toward 35+ per research summary, shape assumed."
+  age_mid:
+    label: "Age coefficient, Instagram"
+    bands:
+      - {from: 18, to: 29, value: 1.35}
+      - {from: 30, to: 44, value: 1.1}
+      - {from: 45, to: 59, value: 0.75}
+      - {from: 60, to: 69, value: 0.4}
+      - {from: 70, to: 79, value: 0.25}
+    assumption: true
+    justification: "Skew toward ages 18-34 (research summary); no Singapore age breakdown found."
+  age_young:
+    label: "Age coefficient, TikTok and Xiaohongshu"
+    bands:
+      - {from: 18, to: 29, value: 1.5}
+      - {from: 30, to: 44, value: 1.1}
+      - {from: 45, to: 59, value: 0.6}
+      - {from: 60, to: 69, value: 0.3}
+      - {from: 70, to: 79, value: 0.15}
+    sources: [wearesocial_2026_sg]
+    assumption: true
+    justification: "TikTok averages 1h39 a day per user (Nov 2025) but no age breakdown was found; strong youth skew assumed."
+  age_tg:
+    label: "Age coefficient, Telegram"
+    bands:
+      - {from: 18, to: 29, value: 1.15}
+      - {from: 30, to: 44, value: 1.1}
+      - {from: 45, to: 59, value: 0.9}
+      - {from: 60, to: 69, value: 0.6}
+      - {from: 70, to: 79, value: 0.4}
+    assumption: true
+    justification: "No Singapore reach data for Telegram; mild youth skew assumed."
+  age_work:
+    label: "Age coefficient, LinkedIn"
+    bands:
+      - {from: 18, to: 29, value: 0.9}
+      - {from: 30, to: 44, value: 1.3}
+      - {from: 45, to: 59, value: 1.0}
+      - {from: 60, to: 69, value: 0.4}
+      - {from: 70, to: 79, value: 0.15}
+    assumption: true
+    justification: "No Singapore reach data for LinkedIn; peaks at mid-career ages (assumption)."
+  age_flat:
+    label: "Age coefficient, WeChat"
+    bands:
+      - {from: 18, to: 44, value: 1.0}
+      - {from: 45, to: 79, value: 1.1}
+    assumption: true
+    justification: "No data; WeChat use is driven by nationality and family ties rather than age."
+  edu_linkedin:
+    label: "Education coefficient, LinkedIn"
+    values: {below_secondary: 0.1, secondary: 0.3, post_secondary: 0.6, diploma: 1.0, degree: 1.8}
+    assumption: true
+    justification: "LinkedIn toward degree holders (research summary); no published breakdown."
+  res_linkedin:
+    label: "Residency coefficient, LinkedIn"
+    values: {citizen: 1.0, pr: 1.1, ep: 1.6, spass: 0.8, wp: 0.05, mdw: 0.0, dependant: 0.7, student: 0.8}
+    assumption: true
+    justification: "EP holders are professionals who use it for work; work permit holders and domestic workers almost not (assumption)."
+  age_light_screen:
+    label: "Age coefficient, lighter screen time bands"
+    bands:
+      - {from: 18, to: 29, value: 0.6}
+      - {from: 30, to: 44, value: 0.9}
+      - {from: 45, to: 59, value: 1.0}
+      - {from: 60, to: 69, value: 1.5}
+      - {from: 70, to: 79, value: 2.0}
+    assumption: true
+    justification: "No published screen-time bands; seniors toward the lower bands (research summary)."
+  age_heavy_screen:
+    label: "Age coefficient, heavier screen time bands"
+    bands:
+      - {from: 18, to: 29, value: 1.6}
+      - {from: 30, to: 44, value: 1.1}
+      - {from: 45, to: 59, value: 0.8}
+      - {from: 60, to: 69, value: 0.6}
+      - {from: 70, to: 79, value: 0.45}
+    assumption: true
+    justification: "Young adults and students in the 4-6 h and over-6 h bands (research summary); shape assumed."
+  res_heavy_screen:
+    label: "Residency coefficient, heavier screen time bands"
+    values: {citizen: 1.0, pr: 1.0, ep: 0.95, spass: 1.0, wp: 1.25, mdw: 1.1, dependant: 1.0, student: 1.2}
+    sources: [mom_fw_survey]
+    assumption: true
+    justification: "The phone is the main device of many work permit holders and heavy evening use is assumed (research summary); no measurement."
+
+attributes:
+  - key: digital_affinity
+    label: Digital affinity index (1 = average adult)
+    type: number
+    value:
+      min:
+        - 1.8
+        - max:
+            - 0.35
+            - mul:
+                - {lookup: age_affinity, by: socle.age}
+                - {lookup: edu_affinity, by: socle.education}
+                - {pick: socle.tech_adoption, values: {innovator: 1.5, early_adopter: 1.25, early_majority: 1.0, late_majority: 0.75, laggard: 0.5}, default: 1.0}
+                - {lookup: res_affinity, by: socle.residency_status}
+                - cases:
+                    - {when: {attr: socle.living_standard_ratio, lt: 0.6}, value: 0.85}
+                    - {when: {attr: socle.living_standard_ratio, gt: 1.5}, value: 1.1}
+                    - {else: 1.0}
+                - {if: no_phone, then: 0.35, else: 1.0}
+                - {if: {attr: socle.has_computer, eq: false}, then: 0.85, else: 1.0}
+                - {exp: {mul: [0.3, {normal: {}}]}}
+    display: {template: "{value}"}
+    sources: [imda_dsr_2023]
+    assumption: true
+    justification: "Latent index (not shown on the fiche) shared by apps, shopping, generative AI, Singpass and help need so that attributes stay coherent. Built from age, education, tech adoption, residency, living standard and device access; clamped to 0.35-1.8. All coefficients are assumptions around the IMDA senior-versus-all contrasts."
+
+  - key: daily_screen_time
+    label: Daily smartphone screen time
+    type: enum
+    when: has_phone
+    values:
+      - {code: under_2h, label: "under 2 hours"}
+      - {code: between_2_4h, label: "2 to 4 hours"}
+      - {code: between_4_6h, label: "4 to 6 hours"}
+      - {code: over_6h, label: "over 6 hours"}
+    distribution:
+      weights:
+        under_2h:
+          mul:
+            - {pick: socle.social_media, values: {none: 0.6, occasional: 0.35, daily: 0.15, heavy: 0.05}, default: 0.2}
+            - {lookup: age_light_screen, by: socle.age}
+        between_2_4h:
+          pick: socle.social_media
+          values: {none: 0.3, occasional: 0.4, daily: 0.38, heavy: 0.2}
+          default: 0.35
+        between_4_6h:
+          mul:
+            - {pick: socle.social_media, values: {none: 0.08, occasional: 0.2, daily: 0.32, heavy: 0.4}, default: 0.25}
+            - {lookup: age_heavy_screen, by: socle.age}
+            - {lookup: res_heavy_screen, by: socle.residency_status}
+            - {pick: socle.tech_adoption, values: {innovator: 1.15, early_adopter: 1.1, early_majority: 1.0, late_majority: 0.85, laggard: 0.7}, default: 1.0}
+        over_6h:
+          mul:
+            - {pick: socle.social_media, values: {none: 0.02, occasional: 0.05, daily: 0.15, heavy: 0.35}, default: 0.1}
+            - {lookup: age_heavy_screen, by: socle.age}
+            - {lookup: res_heavy_screen, by: socle.residency_status}
+            - {pick: socle.tech_adoption, values: {innovator: 1.15, early_adopter: 1.1, early_majority: 1.0, late_majority: 0.85, laggard: 0.7}, default: 1.0}
+      sampler: random
+    display: {empty: "no smartphone"}
+    sources: [datareportal_2025_sg, wearesocial_2026_sg]
+    assumption: true
+    justification: "Internet users average 3h17 a day on mobile and about 2 h on social media (DataReportal 2025); no published band distribution (no survey of screen-time bands found), so the median is placed at 3-4 h for adults and shifted by social media level, age, residency and tech adoption (conditionings are assumptions). Only smartphone owners have a value."
+
+  - key: messaging_social_platforms
+    label: Main messaging and social platforms used
+    type: set
+    items:
+      - code: whatsapp
+        label: WhatsApp
+        rate: {mul: [0.88, {lookup: age_wa, by: socle.age}, {lookup: sm_msg, by: socle.social_media}, {if: no_phone, then: 0.35, else: 1.0}]}
+      - code: facebook
+        label: Facebook
+        rate: {mul: [0.75, {lookup: age_fb, by: socle.age}, {lookup: sm_social, by: socle.social_media}, {if: no_phone, then: 0.35, else: 1.0}]}
+      - code: instagram
+        label: Instagram
+        rate: {mul: [0.6, {lookup: age_mid, by: socle.age}, {lookup: sm_social, by: socle.social_media}, {if: no_phone, then: 0.35, else: 1.0}]}
+      - code: tiktok
+        label: TikTok
+        rate:
+          mul:
+            - 0.42
+            - {lookup: age_young, by: socle.age}
+            - {lookup: sm_social, by: socle.social_media}
+            - {pick: socle.nationality, values: {bangladesh: 1.4, india: 1.2, myanmar: 1.2}, default: 1.0}
+            - {if: no_phone, then: 0.35, else: 1.0}
+      - code: telegram
+        label: Telegram
+        rate:
+          mul:
+            - 0.42
+            - {lookup: age_tg, by: socle.age}
+            - {lookup: sm_msg, by: socle.social_media}
+            - {pick: socle.nationality, values: {bangladesh: 1.5, india: 1.4, china: 0.6}, default: 1.0}
+            - {if: no_phone, then: 0.35, else: 1.0}
+      - code: xiaohongshu
+        label: Xiaohongshu
+        rate:
+          mul:
+            - 0.1
+            - {lookup: age_young, by: socle.age}
+            - {pick: socle.sex, values: {F: 1.6, M: 0.6}, default: 1.0}
+            - {pick: socle.nationality, values: {china: 4.0, singapore: 1.0, east_asia: 1.0}, default: 0.5}
+            - {lookup: sm_social, by: socle.social_media}
+            - {if: no_phone, then: 0.35, else: 1.0}
+      - code: linkedin
+        label: LinkedIn
+        rate:
+          mul:
+            - 0.16
+            - {lookup: age_work, by: socle.age}
+            - {pick: socle.pcs, values: {"1": 1.8, "2": 1.9, "3": 1.4, "4": 0.8, "5": 0.4}, default: 0.1}
+            - {lookup: edu_linkedin, by: socle.education}
+            - {lookup: res_linkedin, by: socle.residency_status}
+            - {lookup: sm_social, by: socle.social_media}
+            - {if: no_phone, then: 0.35, else: 1.0}
+      - code: wechat
+        label: WeChat
+        rate:
+          mul:
+            - 0.1
+            - {lookup: age_flat, by: socle.age}
+            - {pick: socle.nationality, values: {china: 5.0, malaysia: 1.5, singapore: 1.0}, default: 0.5}
+            - {if: no_phone, then: 0.35, else: 1.0}
+      - code: other_messaging
+        label: Other messaging apps
+        card_label: "other messaging apps (e.g. imo, Viber, Signal)"
+        rate:
+          mul:
+            - 0.12
+            - {pick: socle.residency_status, values: {wp: 3.5, mdw: 3.5, spass: 1.3, dependant: 1.2}, default: 1.0}
+            - {if: dormitory, then: 1.5, else: 1.0}
+            - {if: no_phone, then: 0.35, else: 1.0}
+    rate_cap: 0.95
+    display: {template: "{value}", empty: "no messaging or social platform"}
+    sources: [datareportal_2025_sg, wearesocial_2026_sg, meltwater_sg_social, mom_fw_survey]
+    assumption: true
+    justification: "Sourced headlines: social media identities equal 88.2% of the population in Jan 2025 (Meltwater / We Are Social) and 90.6% in Nov 2025; national monthly reach is documented only for WhatsApp (80.1%) and Facebook (71.9%) among internet users; foreign workers use WhatsApp, Facebook, IMO and Viber. Reach of the other platforms and all conditionings (age, social media level, nationality for Xiaohongshu, WeChat and Telegram, pcs and education for LinkedIn) are assumptions; no per-platform age breakdown was found. The set stays empty for people with no social media level and no phone with some probability; nationality is used instead of ethnicity."
+
+  - key: platform_apps_monthly
+    label: Consumer platform apps used monthly
+    type: set
+    items:
+      - {code: grab, label: Grab, card_label: "Grab (rides, food, payments)", rate: {mul: [0.8, {attr: digital_affinity}, {lookup: res_ecom, by: socle.residency_status}]}}
+      - {code: shopee, label: Shopee, rate: {mul: [0.72, {attr: digital_affinity}, {lookup: res_ecom, by: socle.residency_status}]}}
+      - {code: lazada, label: Lazada, rate: {mul: [0.45, {attr: digital_affinity}, {lookup: res_ecom, by: socle.residency_status}]}}
+      - code: foodpanda
+        label: foodpanda
+        rate:
+          mul:
+            - 0.38
+            - {attr: digital_affinity}
+            - {lookup: age_food, by: socle.age}
+            - {lookup: res_food, by: socle.residency_status}
+            - {if: dormitory, then: 0.5, else: 1.0}
+    rate_cap: 0.95
+    display: {template: "{value}", empty: "none of Grab, Shopee, Lazada, foodpanda"}
+    sources: [blackbox_food_delivery, marketingagency_ecom, imda_dsr_2023]
+    assumption: true
+    justification: "Reach figures exist only for narrow populations (GrabFood 85% and foodpanda 66% of active food delivery users; Shopee about 3.8 million and Lazada 2.4 million monthly users, unsourced). Adult resident targets of Shopee 70-75%, Grab 75-80%, Lazada 40-50%, foodpanda 30-40% are assumptions, lowered for seniors, people without a smartphone and non-residents. Deliveroo has left the market and is not included. This is app use, not the socle's drawn Grab subscription."
+
+  - key: online_shopping_frequency
+    label: Online shopping frequency (general e-commerce, excluding groceries)
+    type: enum
+    values:
+      - {code: never, label: "never or almost never"}
+      - {code: few_times_a_year, label: "a few times a year"}
+      - {code: monthly, label: "about monthly"}
+      - {code: weekly_or_more, label: "weekly or more"}
+    distribution:
+      weights:
+        never:
+          mul:
+            - {div: [0.10, {mul: [{attr: digital_affinity}, {attr: digital_affinity}]}]}
+            - {pick: socle.residency_status, values: {mdw: 2.5, wp: 1.5}, default: 1.0}
+        few_times_a_year:
+          mul:
+            - 0.25
+            - {pick: socle.residency_status, values: {mdw: 1.6, wp: 1.8}, default: 1.0}
+        monthly: 0.4
+        weekly_or_more:
+          mul:
+            - 0.25
+            - {mul: [{attr: digital_affinity}, {attr: digital_affinity}]}
+            - {pick: socle.residency_status, values: {mdw: 0.2, wp: 0.5}, default: 1.0}
+            - {if: student, then: 1.2, else: 1.0}
+      sampler: random
+    display: {template: "{value}"}
+    sources: [meltwater_sg_social, marketingagency_ecom, imda_dsr_2023]
+    assumption: true
+    justification: "No reliable breakdown of purchase frequency. Sourced context only: online purchases are 12.2% of retail spending (Meltwater / We Are Social, Jan 2025; a share of sales, not a frequency) and 78% of seniors 60+ make online payments (IMDA 2023, indirect). Adult resident target: never about 10%, few times a year 25%, monthly 40%, weekly or more 25% (the 72% weekly shopping-app figure is unsourced and treated as an upper bound). Never rises with low digital affinity (seniors, no smartphone); work permit holders and domestic workers mostly a few times a year or never. Online grocery is covered by achats-groupes-communaute and excluded."
+
+  - key: genai_use_frequency
+    label: Consumer generative AI use (ChatGPT, Gemini, Meta AI, Copilot)
+    type: enum
+    values:
+      - {code: never, label: "has never used it"}
+      - {code: tried_rarely, label: "has tried it a few times"}
+      - {code: monthly, label: "monthly"}
+      - {code: weekly, label: "weekly"}
+      - {code: daily, label: "daily"}
+    distribution:
+      weights:
+        never: {div: [0.20, {mul: [{attr: digital_affinity}, {attr: digital_affinity}]}]}
+        tried_rarely: {div: [0.15, {attr: digital_affinity}]}
+        monthly: 0.17
+        weekly:
+          mul:
+            - 0.23
+            - {attr: digital_affinity}
+            - {if: student, then: 1.3, else: 1.0}
+        daily:
+          mul:
+            - 0.15
+            - {attr: digital_affinity}
+            - {attr: digital_affinity}
+            - {if: student, then: 1.3, else: 1.0}
+      sampler: random
+    display: {template: "{value}"}
+    sources: [incube_chatgpt, msft_ai_diffusion_2026q2, singaporewallstreet_msft, google_ipsos_sg_2024, imda_sgde_2025, wearesocial_2026_sg, statcounter_ai_sg]
+    assumption: true
+    justification: "Sourced headlines: 60.9% (H2 2025), 63.4% (Q1 2026) and 64.3% (Q2 2026) of the population aged 15-64 used generative AI (Microsoft telemetry; the 63.4% figure confirmed on an opened secondary page, the Microsoft PDF itself not read); 59% of residents in 2024 against 49% in 2023 (Google/Ipsos, n = 1,000, opened); 73.8% of workers use AI tools at work (IMDA, workers only, not verified); June 2023: 33.4% never used ChatGPT. No published 'never used' split by age, residency or education, and no Digital Society Report 2025 was found. Recalibrated (never weight 0.30 to 0.20 over affinity squared) so that 'has never used it' is about 30-40% across adults 18-79, i.e. 60-70% have tried it, consistent with the 61-64% of 15-64 year-olds and the 59% of Google/Ipsos 2024; telemetry probably under-covers 65+, work permit holders and domestic workers, so 'never' is higher for them and lower for degree holders aged 18-34 through the affinity index (assumption). Frequency split (tried 15%, monthly 17%, weekly 23%, daily 15% at average affinity) and all conditionings are assumptions. The tool mix (ChatGPT about two thirds, Gemini second) is not an attribute and should be applied at the prompt level. Not linked to productivite-reunions.ai_work_usage (no dependency declared)."
+
+  - key: singpass_app_use
+    label: Singpass app and government digital services use
+    type: enum
+    values:
+      - {code: none, label: "does not use the Singpass app"}
+      - {code: occasional, label: "occasionally"}
+      - {code: monthly, label: "about monthly"}
+      - {code: weekly_or_more, label: "weekly or more"}
+    distribution:
+      weights:
+        none:
+          mul:
+            - {pick: socle.residency_status, values: {citizen: 0.04, pr: 0.04, ep: 0.08, spass: 0.2, wp: 0.55, mdw: 0.7, dependant: 0.3, student: 0.35}, default: 0.2}
+            - {div: [1, {mul: [{attr: digital_affinity}, {attr: digital_affinity}]}]}
+        occasional:
+          mul:
+            - {pick: socle.residency_status, values: {citizen: 0.27, pr: 0.27, ep: 0.4, spass: 0.45, wp: 0.35, mdw: 0.27, dependant: 0.45, student: 0.45}, default: 0.4}
+            - {div: [1, {attr: digital_affinity}]}
+        monthly:
+          pick: socle.residency_status
+          values: {citizen: 0.38, pr: 0.38, ep: 0.35, spass: 0.27, wp: 0.08, mdw: 0.03, dependant: 0.2, student: 0.17}
+          default: 0.2
+        weekly_or_more:
+          mul:
+            - {pick: socle.residency_status, values: {citizen: 0.31, pr: 0.31, ep: 0.17, spass: 0.08, wp: 0.02, mdw: 0.0, dependant: 0.05, student: 0.03}, default: 0.05}
+            - {attr: digital_affinity}
+      sampler: random
+    display: {template: "{value}"}
+    sources: [govtech_singpass_page, govtech_singpass, imda_dsr_2023]
+    assumption: true
+    justification: "Sourced headlines: Singpass covers 97% of citizens and PRs aged 15+ (GovTech/MDDI 2022, not verified); 5 million Singpass users, over 4.2 million app users and over 41 million transactions a month, about 8 per user (GovTech page, opened, year not stated). Roughly 4.2 million app users against an order of magnitude of 3.6 million citizens and PRs aged 15+ (rough assumption) supports a high share of app users among residents. There is no published frequency distribution. Citizens and PRs: 'none' only for low affinity (no smartphone, oldest seniors). EP and S Pass holders: moderate use for work-pass and tax matters. Work permit holders and domestic workers: mostly none or occasional (employer-handled, MOM apps). Dormitory apps are excluded. Conditionings by residency and affinity are assumptions."
+
+  - key: digital_help_need
+    label: Need for help with digital government and banking tasks
+    type: enum
+    values:
+      - {code: independent, label: "manages on their own"}
+      - {code: occasional_help, label: "needs occasional help"}
+      - {code: frequent_help, label: "needs frequent help"}
+    distribution:
+      weights:
+        independent:
+          mul:
+            - 0.95
+            - {mul: [{attr: digital_affinity}, {attr: digital_affinity}]}
+            - {pick: singpass_app_use, values: {none: 0.5, occasional: 0.8, monthly: 1.0, weekly_or_more: 1.15}, default: 1.0}
+        occasional_help:
+          mul:
+            - 0.12
+            - {pick: socle.residency_status, values: {wp: 1.8, mdw: 2.0}, default: 1.0}
+        frequent_help:
+          mul:
+            - {div: [0.03, {mul: [{attr: digital_affinity}, {attr: digital_affinity}]}]}
+            - {if: {all: [senior, {attr: socle.household_type, eq: alone}]}, then: 1.3, else: 1.0}
+      sampler: random
+    display: {template: "{value}"}
+    sources: [imda_dsr_2023]
+    assumption: true
+    justification: "No direct measure of help needed. Only 24% of seniors 60+ prefer to transact digitally with the Government vs 64% of residents, but 89% own a smartphone, 78% pay online and 92% communicate online (IMDA 2023, from a search summary, PDF not read): the 24% preference is too low a proxy for seniors who handle routine tasks themselves, hence the independent weight raised from 0.85 to 0.95. Targets: under 50 about 85-90% independent, 60-69 about 55-65%, 70-79 about 30%; seniors living alone need frequent help more often; domestic workers and work permit holders more often occasional help. Not conditioned on ethnicity or home language."
+
+card:
+  - when: has_phone
+    template: "Screen time: {daily_screen_time} a day on the smartphone"
+  - when: adult
+    template: "Messaging and social platforms: {messaging_social_platforms}"
+  - when: adult
+    template: "Platform apps used monthly: {platform_apps_monthly}"
+  - when: adult
+    template: "Online shopping (excluding groceries): {online_shopping_frequency}"
+  - when: adult
+    template: "Generative AI: {genai_use_frequency}"
+  - when: adult
+    template: "Singpass and government digital services: {singpass_app_use}; {digital_help_need}"
+
+segments:
+  - {id: digitalLifeScreenTime, attribute: daily_screen_time, label: Daily smartphone screen time}
+  - {id: digitalLifeShopping, attribute: online_shopping_frequency, label: Online shopping frequency}
+  - {id: digitalLifeGenAI, attribute: genai_use_frequency, label: Generative AI use}
+  - {id: digitalLifeSingpass, attribute: singpass_app_use, label: Singpass app use}
+  - {id: digitalLifeHelpNeed, attribute: digital_help_need, label: Need for digital help}
+
+eligibility_helpers:
+  gov_digital_active: "has_smartphone and sg-digital-life.singpass_app_use in [monthly, weekly_or_more]"
+  self_serve_onboarding: "has_smartphone and sg-digital-life.digital_help_need == independent"
+  needs_digital_support: "sg-digital-life.digital_help_need == frequent_help"
+  seniors_needing_help: "age >= 60 and sg-digital-life.digital_help_need != independent"
+  genai_regular_user: "sg-digital-life.genai_use_frequency in [weekly, daily]"
+  genai_non_user: "sg-digital-life.genai_use_frequency in [never, tried_rarely]"
+  heavy_screen_users: "sg-digital-life.daily_screen_time in [between_4_6h, over_6h]"
+  frequent_online_shoppers: "sg-digital-life.online_shopping_frequency in [monthly, weekly_or_more]"
+  young_heavy_social: "age <= 34 and social_media == heavy and has_smartphone"
+
+validation:
+  margins:
+    - {attribute: daily_screen_time, title: "Daily smartphone screen time (expected from social media level, age, residency)"}
+    - {attribute: online_shopping_frequency, title: "Online shopping frequency (expected from digital affinity)"}
+    - {attribute: genai_use_frequency, title: "Generative AI use (expected from digital affinity)"}
+    - {attribute: singpass_app_use, title: "Singpass app use (expected from residency and affinity)"}
+    - {attribute: digital_help_need, title: "Need for digital help (expected from affinity and Singpass use)"}
+  shares:
+    - label: "WhatsApp among smartphone owners (DataReportal: 80.1% of internet users, monthly)"
+      among: has_phone
+      share_of: {attr: messaging_social_platforms, in: [whatsapp]}
+      range: [0.72, 0.90]
+    - label: "Facebook among smartphone owners (DataReportal: 71.9% of internet users, monthly)"
+      among: has_phone
+      share_of: {attr: messaging_social_platforms, in: [facebook]}
+      range: [0.58, 0.80]
+    - label: "Generative AI tried at least once, adults 18-79 (Microsoft: 61-64% of 15-64 year-olds; Google/Ipsos 2024: 59% of residents; i.e. never used about 30-40%)"
+      among: adult
+      share_of: {attr: genai_use_frequency, in: [tried_rarely, monthly, weekly, daily]}
+      range: [0.60, 0.72]
+    - label: "Generative AI tried at least once among under-65s (Microsoft: 61-64% of working-age people)"
+      among: {attr: socle.age, lt: 65}
+      share_of: {attr: genai_use_frequency, in: [tried_rarely, monthly, weekly, daily]}
+      range: [0.62, 0.80]
+    - label: "Singpass app used (not 'none') by citizens and PRs with a smartphone (GovTech: 97% Singpass coverage, over 4.2 million app users)"
+      among: {all: [resident, has_phone]}
+      share_of: {not: {attr: singpass_app_use, eq: none}}
+      range: [0.88, 0.99]
+    - label: "Seniors 60+ (citizens, PRs) who manage digital tasks on their own (IMDA: 24% of seniors 60+ prefer digital government transactions but 78% pay online; loose proxy)"
+      among: {all: [resident, senior]}
+      share_of: {attr: digital_help_need, eq: independent}
+      range: [0.25, 0.60]
+    - label: "Shopee among citizens and PRs (aggregator: about 3.8 million monthly users)"
+      among: resident
+      share_of: {attr: platform_apps_monthly, in: [shopee]}
+      range: [0.58, 0.80]
+    - label: "Grab among citizens and PRs (assumed 75-80%)"
+      among: resident
+      share_of: {attr: platform_apps_monthly, in: [grab]}
+      range: [0.62, 0.85]
+    - label: "Shopee among work permit holders (assumed 25-40%)"
+      among: {attr: socle.residency_status, eq: wp}
+      share_of: {attr: platform_apps_monthly, in: [shopee]}
+      range: [0.15, 0.45]

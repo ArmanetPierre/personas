@@ -1,0 +1,50 @@
+# Projet fictif en multi-rôles : le parent paie pour un enfant lecteur ; les adultes lecteurs utilisent et paient
+# pour eux-mêmes. Modules NON ENCORE CRÉÉS, à proposer avec l'assistant (npm run module:propose) :
+# - `lecture-enfant` (module ENFANT, `applies_to: [fr-enfants]`) : lit ou non pour le plaisir selon l'âge et le sexe ;
+# - `lecture-loisir` (module adulte) : lecteur régulier, occasionnel, non-lecteur.
+# Tant qu'ils n'existent pas, utiliser examples/kids-reading-no-module.yaml.
+id: kids-reading
+name: Petit Lecteur
+pitch: >-
+  Petit Lecteur est une application pour téléphone ou tablette qui propose des histoires adaptées au niveau de
+  lecture, lisibles sans connexion internet, en français ou en anglais. Elle suit les progrès, propose des
+  questions de compréhension et lit le texte à voix haute quand on bloque sur un mot.
+targetAudience: Enfants de 6 à 12 ans qui apprennent à lire (parent payeur), adultes qui veulent lire davantage.
+businessModel: Gratuit jusqu'à 20 histoires, Premium mensuel ensuite.
+price:
+  currency: EUR
+  offers:
+    - id: premium
+      label: Premium
+      amount: 2.99
+      unit: month
+  tiers: [1.99, 2.99, 4.99]
+  freemium:
+    free: lecture et suivi des progrès jusqu'à 20 histoires
+    paid: bibliothèque illimitée, lecture à voix haute, plusieurs profils (Premium)
+competitors: [Lalilo, Storytel Kids, les livres de la bibliothèque municipale]
+alternatives: [des livres papier et une lecture le soir]
+roles:
+  - id: parent
+    label: Parents d'enfants lecteurs
+    perspective: payer_for_child
+    pitch: >-
+      Petit Lecteur est une application pour téléphone ou tablette qui propose à un enfant des histoires adaptées
+      à son niveau de lecture, sans connexion internet. Elle suit ses progrès et lit le texte à voix haute quand il
+      bloque sur un mot. Gratuite jusqu'à 20 histoires ; au-delà, Premium à 2,99 €/mois, payé par le parent.
+    child:
+      ages: { min: 7, max: 15 }
+      modules: [lecture-enfant]
+      eligibility: lecture-enfant.reads_for_fun == true
+    target:
+      socle: fr
+      eligibility: children >= 1 and age <= 55
+      n: 60
+  - id: adult-reader
+    label: Adultes lecteurs
+    perspective: both
+    target:
+      socle: fr
+      modules: [lecture-loisir]
+      eligibility: lecture-loisir.reads_monthly == true
+      n: 40

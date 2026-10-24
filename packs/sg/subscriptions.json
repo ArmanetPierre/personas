@@ -1,0 +1,529 @@
+{
+ "id": "sg-subscriptions",
+ "title": "Abonnements courants à Singapour : prix mensuels en S$ (TTC) et taux de détention par âge",
+ "assumption": true,
+ "sources": [
+  {
+   "org": "Netflix",
+   "title": "Plans and pricing (Singapore)",
+   "year": 2026,
+   "url": "https://help.netflix.com/en/node/24926/sg"
+  },
+  {
+   "org": "Spotify",
+   "title": "Spotify Premium Singapore",
+   "year": 2026,
+   "url": "https://www.spotify.com/sg-en/intro/"
+  },
+  {
+   "org": "Disney+",
+   "title": "What is Disney+ (Singapore)",
+   "year": 2025,
+   "url": "https://www.disneyplus.com/en-sg/explore/what-is-disneyplus"
+  },
+  {
+   "org": "WhistleOut Singapore",
+   "title": "Best SIM-only mobile plans",
+   "year": 2026,
+   "url": "https://www.whistleout.com.sg/MobilePhones/Best-SIM-Only-Mobile-Phone-Plans-SLP3"
+  },
+  {
+   "org": "SingSaver",
+   "title": "Best home fibre broadband plans",
+   "year": 2026,
+   "url": "https://www.singsaver.com.sg/telco/blog/best-home-fibre-broadband-plan"
+  },
+  {
+   "org": "Reuters Institute",
+   "title": "Digital News Report 2026: Singapore",
+   "year": 2026,
+   "url": "https://reutersinstitute.politics.ox.ac.uk/digital-news-report/2026/singapore"
+  },
+  {
+   "org": "DOS",
+   "title": "Household Expenditure Survey 2023 (tables 17967, 18010, 18013)",
+   "year": 2023,
+   "url": "https://tablebuilder.singstat.gov.sg/table/CT/17967"
+  }
+ ],
+ "justification": "Prix relevés sur les sites des services ou des comparateurs (2025-2026, docs/research/socle-sg.md § 11). Les taux de détention ne sont pas publiés : hypothèses, sauf l'achat d'information (Reuters) et la dépense moyenne de streaming (HES 2023). Le champ « monthlyEur » porte le montant dans la devise du pack (S$), nom de champ historique.",
+ "data": {
+  "items": [
+   {
+    "id": "mobile",
+    "category": "mobile",
+    "household": false,
+    "incomeElasticity": 0.0,
+    "basis": "prix sourcés (WhistleOut 2026 : MVNO 5-12 S$, 5G 15-25 S$, opérateurs historiques 30-120 S$) ; part par gamme en hypothèse (cohérente avec 85 S$ de mobile par ménage, HES 2023)",
+    "penetration": [
+     {
+      "from": 18,
+      "to": 29,
+      "p": 0.99
+     },
+     {
+      "from": 30,
+      "to": 49,
+      "p": 0.99
+     },
+     {
+      "from": 50,
+      "to": 64,
+      "p": 0.98
+     },
+     {
+      "from": 65,
+      "to": 79,
+      "p": 0.95
+     }
+    ],
+    "offers": [
+     {
+      "name": "SIM-only mobile plan (MVNO)",
+      "monthlyEur": 10,
+      "weight": 45
+     },
+     {
+      "name": "5G SIM-only plan",
+      "monthlyEur": 20,
+      "weight": 30
+     },
+     {
+      "name": "Telco mobile plan",
+      "monthlyEur": 45,
+      "weight": 25
+     }
+    ]
+   },
+   {
+    "id": "fibre",
+    "category": "internet",
+    "household": true,
+    "incomeElasticity": 0.1,
+    "basis": "prix sourcés (offres 1 Gbit/s 30-50 S$, SingSaver 2026) ; 98,5 % des ménages ont internet, dont une part par le mobile seul (hypothèse)",
+    "penetration": [
+     {
+      "from": 18,
+      "to": 29,
+      "p": 0.9
+     },
+     {
+      "from": 30,
+      "to": 49,
+      "p": 0.93
+     },
+     {
+      "from": 50,
+      "to": 64,
+      "p": 0.93
+     },
+     {
+      "from": 65,
+      "to": 79,
+      "p": 0.85
+     }
+    ],
+    "offers": [
+     {
+      "name": "Home fibre broadband",
+      "monthlyEur": 35,
+      "weight": 60
+     },
+     {
+      "name": "Home fibre broadband",
+      "monthlyEur": 45,
+      "weight": 30
+     },
+     {
+      "name": "Home fibre broadband",
+      "monthlyEur": 60,
+      "weight": 10
+     }
+    ],
+    "requires": "internet"
+   },
+   {
+    "id": "netflix",
+    "category": "video",
+    "household": true,
+    "incomeElasticity": 0.4,
+    "basis": "prix sourcés (Netflix, avril 2025) ; pénétration hypothèse (≈ 40 % des ménages ; dépense moyenne de streaming 8,80 S$ par ménage, HES 2023, partage et offres groupées)",
+    "penetration": [
+     {
+      "from": 18,
+      "to": 29,
+      "p": 0.45
+     },
+     {
+      "from": 30,
+      "to": 49,
+      "p": 0.45
+     },
+     {
+      "from": 50,
+      "to": 64,
+      "p": 0.3
+     },
+     {
+      "from": 65,
+      "to": 79,
+      "p": 0.15
+     }
+    ],
+    "offers": [
+     {
+      "name": "Netflix Basic",
+      "monthlyEur": 15.98,
+      "weight": 35
+     },
+     {
+      "name": "Netflix Standard",
+      "monthlyEur": 22.98,
+      "weight": 45
+     },
+     {
+      "name": "Netflix Premium",
+      "monthlyEur": 29.98,
+      "weight": 20
+     }
+    ],
+    "requires": "internet"
+   },
+   {
+    "id": "disney",
+    "category": "video",
+    "household": true,
+    "incomeElasticity": 0.4,
+    "basis": "prix sourcés (Disney+, novembre 2025) ; pénétration hypothèse (≈ 15 % des ménages)",
+    "penetration": [
+     {
+      "from": 18,
+      "to": 29,
+      "p": 0.15
+     },
+     {
+      "from": 30,
+      "to": 49,
+      "p": 0.18
+     },
+     {
+      "from": 50,
+      "to": 64,
+      "p": 0.1
+     },
+     {
+      "from": 65,
+      "to": 79,
+      "p": 0.05
+     }
+    ],
+    "offers": [
+     {
+      "name": "Disney+ Standard",
+      "monthlyEur": 18.98,
+      "weight": 70
+     },
+     {
+      "name": "Disney+ Premium",
+      "monthlyEur": 22.98,
+      "weight": 30
+     }
+    ],
+    "requires": "internet"
+   },
+   {
+    "id": "spotify",
+    "category": "music",
+    "household": false,
+    "incomeElasticity": 0.3,
+    "basis": "prix sourcés (Spotify SG) ; pénétration hypothèse (20-25 % des 18-39 ans, ≈ 10 % des 40-59 ans)",
+    "penetration": [
+     {
+      "from": 18,
+      "to": 29,
+      "p": 0.25
+     },
+     {
+      "from": 30,
+      "to": 49,
+      "p": 0.14
+     },
+     {
+      "from": 50,
+      "to": 64,
+      "p": 0.07
+     },
+     {
+      "from": 65,
+      "to": 79,
+      "p": 0.03
+     }
+    ],
+    "offers": [
+     {
+      "name": "Spotify Premium Individual",
+      "monthlyEur": 11.98,
+      "weight": 60
+     },
+     {
+      "name": "Spotify Premium Duo",
+      "monthlyEur": 16.98,
+      "weight": 10
+     },
+     {
+      "name": "Spotify Premium Family",
+      "monthlyEur": 20.98,
+      "weight": 10
+     },
+     {
+      "name": "Spotify Premium Student",
+      "monthlyEur": 6.48,
+      "weight": 20
+     }
+    ],
+    "requires": "smartphone"
+   },
+   {
+    "id": "youtube",
+    "category": "video",
+    "household": false,
+    "incomeElasticity": 0.3,
+    "basis": "prix sourcés (hausse de septembre 2026) ; pénétration hypothèse (8-10 %)",
+    "penetration": [
+     {
+      "from": 18,
+      "to": 29,
+      "p": 0.12
+     },
+     {
+      "from": 30,
+      "to": 49,
+      "p": 0.1
+     },
+     {
+      "from": 50,
+      "to": 64,
+      "p": 0.06
+     },
+     {
+      "from": 65,
+      "to": 79,
+      "p": 0.03
+     }
+    ],
+    "offers": [
+     {
+      "name": "YouTube Premium",
+      "monthlyEur": 15.98,
+      "weight": 80
+     },
+     {
+      "name": "YouTube Premium Family",
+      "monthlyEur": 31.98,
+      "weight": 20
+     }
+    ],
+    "requires": "internet"
+   },
+   {
+    "id": "icloud",
+    "category": "cloud storage",
+    "household": false,
+    "incomeElasticity": 0.2,
+    "basis": "prix sourcés (Apple) ; pénétration hypothèse (≈ 35 % des adultes, la moitié des smartphones sont des iPhone)",
+    "penetration": [
+     {
+      "from": 18,
+      "to": 29,
+      "p": 0.4
+     },
+     {
+      "from": 30,
+      "to": 49,
+      "p": 0.4
+     },
+     {
+      "from": 50,
+      "to": 64,
+      "p": 0.3
+     },
+     {
+      "from": 65,
+      "to": 79,
+      "p": 0.15
+     }
+    ],
+    "offers": [
+     {
+      "name": "iCloud+ 50 GB",
+      "monthlyEur": 1.48,
+      "weight": 40
+     },
+     {
+      "name": "iCloud+ 200 GB",
+      "monthlyEur": 3.98,
+      "weight": 40
+     },
+     {
+      "name": "iCloud+ 2 TB",
+      "monthlyEur": 13.98,
+      "weight": 20
+     }
+    ],
+    "requires": "smartphone"
+   },
+   {
+    "id": "amazon",
+    "category": "shopping",
+    "household": false,
+    "incomeElasticity": 0.3,
+    "basis": "prix sourcé (2025) ; pénétration hypothèse (≈ 10 %)",
+    "penetration": [
+     {
+      "from": 18,
+      "to": 29,
+      "p": 0.12
+     },
+     {
+      "from": 30,
+      "to": 49,
+      "p": 0.12
+     },
+     {
+      "from": 50,
+      "to": 64,
+      "p": 0.08
+     },
+     {
+      "from": 65,
+      "to": 79,
+      "p": 0.03
+     }
+    ],
+    "offers": [
+     {
+      "name": "Amazon Prime",
+      "monthlyEur": 4.99,
+      "weight": 1
+     }
+    ],
+    "requires": "internet"
+   },
+   {
+    "id": "grab",
+    "category": "delivery",
+    "household": false,
+    "incomeElasticity": 0.4,
+    "basis": "prix et pénétration en hypothèse (aucun prix officiel trouvé, 3-8 S$ selon un agrégateur)",
+    "penetration": [
+     {
+      "from": 18,
+      "to": 29,
+      "p": 0.12
+     },
+     {
+      "from": 30,
+      "to": 49,
+      "p": 0.08
+     },
+     {
+      "from": 50,
+      "to": 64,
+      "p": 0.04
+     },
+     {
+      "from": 65,
+      "to": 79,
+      "p": 0.01
+     }
+    ],
+    "offers": [
+     {
+      "name": "GrabUnlimited",
+      "monthlyEur": 6.99,
+      "weight": 1
+     }
+    ],
+    "requires": "smartphone"
+   },
+   {
+    "id": "gym",
+    "category": "sport",
+    "household": false,
+    "incomeElasticity": 0.8,
+    "basis": "prix sourcés (Anytime Fitness 80-100 S$, ActiveSG 15-30 S$) ; pénétration hypothèse (≈ 15 % des 20-49 ans en salle privée, ≈ 10 % ActiveSG)",
+    "penetration": [
+     {
+      "from": 18,
+      "to": 29,
+      "p": 0.18
+     },
+     {
+      "from": 30,
+      "to": 49,
+      "p": 0.15
+     },
+     {
+      "from": 50,
+      "to": 64,
+      "p": 0.08
+     },
+     {
+      "from": 65,
+      "to": 79,
+      "p": 0.04
+     }
+    ],
+    "offers": [
+     {
+      "name": "Gym membership",
+      "monthlyEur": 95,
+      "weight": 70
+     },
+     {
+      "name": "ActiveSG monthly gym pass",
+      "monthlyEur": 30,
+      "weight": 30
+     }
+    ]
+   },
+   {
+    "id": "news",
+    "category": "news",
+    "household": false,
+    "incomeElasticity": 0.5,
+    "basis": "prix non officiel (agrégateur, 2026) ; 17 % des internautes paient pour de l'information en ligne (Reuters 2026), répartis par âge en hypothèse",
+    "penetration": [
+     {
+      "from": 18,
+      "to": 29,
+      "p": 0.04
+     },
+     {
+      "from": 30,
+      "to": 49,
+      "p": 0.08
+     },
+     {
+      "from": 50,
+      "to": 64,
+      "p": 0.12
+     },
+     {
+      "from": 65,
+      "to": 79,
+      "p": 0.12
+     }
+    ],
+    "offers": [
+     {
+      "name": "The Straits Times digital",
+      "monthlyEur": 29.9,
+      "weight": 1
+     }
+    ],
+    "requires": "internet"
+   }
+  ]
+ }
+}

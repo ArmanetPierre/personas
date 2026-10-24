@@ -1,0 +1,179 @@
+{
+ "id": "sg-religion",
+ "title": "Religion par ethnie (résidents 15+) ; par nationalité (non-résidents, hypothèse)",
+ "assumption": true,
+ "sources": [
+  {
+   "org": "DOS",
+   "title": "GHS 2025: Religion by ethnic group (C020053)",
+   "year": 2025,
+   "url": "https://tablebuilder.singstat.gov.sg/table/CT/C020053"
+  }
+ ],
+ "referenceYear": 2025,
+ "justification": "Résidents : religion par ethnie (GHS 2025, C020053 ; catholiques et autres chrétiens regroupés). Non-résidents (clé = nationalité) : hypothèses fondées sur la composition religieuse des pays d'origine (Bangladesh ≈ 90 % musulmans, Philippines ≈ 85-90 % chrétiens…), docs/research/socle-sg.md § 4. Les Malaisiens suivent la table de leur ethnie.",
+ "data": {
+  "labels": {
+   "buddhism": "Buddhism",
+   "taoism": "Taoism",
+   "christianity": "Christianity",
+   "islam": "Islam",
+   "hinduism": "Hinduism",
+   "sikhism": "Sikhism",
+   "other": "Other religion",
+   "none": "No religion"
+  },
+  "byGroup": {
+   "chinese": {
+    "none": 0.3027,
+    "buddhism": 0.4006,
+    "taoism": 0.0969,
+    "islam": 0.004,
+    "hinduism": 0.0,
+    "sikhism": 0.0,
+    "christianity": 0.1948,
+    "other": 0.001
+   },
+   "malay": {
+    "none": 0.004,
+    "buddhism": 0.001,
+    "taoism": 0.0,
+    "islam": 0.986,
+    "hinduism": 0.002,
+    "sikhism": 0.001,
+    "christianity": 0.006,
+    "other": 0.0
+   },
+   "indian": {
+    "none": 0.032,
+    "buddhism": 0.009,
+    "taoism": 0.001,
+    "islam": 0.225,
+    "hinduism": 0.588,
+    "sikhism": 0.034,
+    "christianity": 0.108,
+    "other": 0.003
+   },
+   "others": {
+    "none": 0.2358,
+    "buddhism": 0.2188,
+    "taoism": 0.005,
+    "islam": 0.0859,
+    "hinduism": 0.013,
+    "sikhism": 0.0,
+    "christianity": 0.4336,
+    "other": 0.008
+   },
+   "bangladesh": {
+    "buddhism": 0.0,
+    "taoism": 0.0,
+    "christianity": 0.0,
+    "islam": 0.9,
+    "hinduism": 0.09,
+    "sikhism": 0.0,
+    "other": 0.01,
+    "none": 0.0
+   },
+   "india": {
+    "buddhism": 0.0,
+    "taoism": 0.0,
+    "christianity": 0.07,
+    "islam": 0.08,
+    "hinduism": 0.78,
+    "sikhism": 0.02,
+    "other": 0.0,
+    "none": 0.05
+   },
+   "indonesia": {
+    "buddhism": 0.02,
+    "taoism": 0.0,
+    "christianity": 0.09,
+    "islam": 0.88,
+    "hinduism": 0.0,
+    "sikhism": 0.0,
+    "other": 0.01,
+    "none": 0.0
+   },
+   "philippines": {
+    "buddhism": 0.0,
+    "taoism": 0.0,
+    "christianity": 0.88,
+    "islam": 0.05,
+    "hinduism": 0.0,
+    "sikhism": 0.0,
+    "other": 0.0,
+    "none": 0.07
+   },
+   "myanmar": {
+    "buddhism": 0.85,
+    "taoism": 0.0,
+    "christianity": 0.07,
+    "islam": 0.05,
+    "hinduism": 0.03,
+    "sikhism": 0.0,
+    "other": 0.0,
+    "none": 0.0
+   },
+   "china": {
+    "buddhism": 0.22,
+    "taoism": 0.02,
+    "christianity": 0.06,
+    "islam": 0.0,
+    "hinduism": 0.0,
+    "sikhism": 0.0,
+    "other": 0.0,
+    "none": 0.7
+   },
+   "vietnam": {
+    "buddhism": 0.33,
+    "taoism": 0.0,
+    "christianity": 0.07,
+    "islam": 0.0,
+    "hinduism": 0.0,
+    "sikhism": 0.0,
+    "other": 0.0,
+    "none": 0.6
+   },
+   "east_asia": {
+    "buddhism": 0.28,
+    "taoism": 0.0,
+    "christianity": 0.17,
+    "islam": 0.0,
+    "hinduism": 0.0,
+    "sikhism": 0.0,
+    "other": 0.0,
+    "none": 0.55
+   },
+   "western": {
+    "buddhism": 0.0,
+    "taoism": 0.0,
+    "christianity": 0.42,
+    "islam": 0.03,
+    "hinduism": 0.0,
+    "sikhism": 0.0,
+    "other": 0.05,
+    "none": 0.5
+   },
+   "other": {
+    "buddhism": 0.0,
+    "taoism": 0.0,
+    "christianity": 0.35,
+    "islam": 0.2,
+    "hinduism": 0.0,
+    "sikhism": 0.0,
+    "other": 0.1,
+    "none": 0.35
+   },
+   "other_asia": {
+    "buddhism": 0.65,
+    "taoism": 0.0,
+    "christianity": 0.1,
+    "islam": 0.1,
+    "hinduism": 0.15,
+    "sikhism": 0.0,
+    "other": 0.0,
+    "none": 0.0
+   }
+  }
+ }
+}

@@ -1,0 +1,797 @@
+{
+ "id": "sg-residency",
+ "title": "Population adulte (18-79 ans) par statut de résidence, âge et sexe",
+ "assumption": true,
+ "sources": [
+  {
+   "org": "DOS",
+   "title": "General Household Survey 2025: Resident Population by Age Group, Ethnic Group, Sex and Residential Status (C020001)",
+   "year": 2025,
+   "url": "https://tablebuilder.singstat.gov.sg/table/CT/C020001"
+  },
+  {
+   "org": "DOS",
+   "title": "Share Of Non-Resident Population By Pass Types, At End June (M810791)",
+   "year": 2026,
+   "url": "https://tablebuilder.singstat.gov.sg/table/TS/M810791"
+  },
+  {
+   "org": "Strategy Group / NPTD",
+   "title": "Population in Brief 2026",
+   "year": 2026,
+   "url": "https://www.strategygroup.gov.sg/media-centre/publications/population-in-brief/"
+  },
+  {
+   "org": "Ministry of Manpower (MOM)",
+   "title": "Foreign workforce numbers",
+   "year": 2026,
+   "url": "https://www.mom.gov.sg/documents-and-publications/foreign-workforce-numbers"
+  }
+ ],
+ "referenceYear": 2026,
+ "justification": "Citoyens et PR : effectifs officiels par âge et sexe (GHS 2025, C020001), 18-19 ans = 2/5 des 15-19 ans. Non-résidents : effectifs 2026 = parts officielles par pass (M810791) × 1 976 999 non-résidents ; la répartition par âge et sexe de chaque pass n'est pas publiée (MOM) : hypothèses justifiées dans docs/research/socle-sg.md § 2.3 (règles d'âge des MDW, salaires minimaux EP croissants avec l'âge, 70 % de femmes parmi les LTVP). Mineurs exclus : 38 % des DP/LTVP et 50 % des Student's Pass (hypothèse).",
+ "notes": "Total ≈ 5,2 millions d'adultes, dont ≈ 35 % de non-résidents (WP CMP ≈ 9 %, WP hors CMP ≈ 8 %, MDW ≈ 6 %).",
+ "data": {
+  "labels": {
+   "citizen": "Singapore citizen",
+   "pr": "Permanent resident",
+   "ep": "Employment Pass",
+   "spass": "S Pass",
+   "wp": "Work Permit",
+   "mdw": "Migrant domestic worker",
+   "dependant": "Dependant's Pass or LTVP",
+   "student": "Student's Pass"
+  },
+  "statuses": [
+   {
+    "code": "citizen",
+    "bands": [
+     {
+      "from": 18,
+      "to": 19,
+      "M": 38729,
+      "F": 36925
+     },
+     {
+      "from": 20,
+      "to": 24,
+      "M": 103259,
+      "F": 96265
+     },
+     {
+      "from": 25,
+      "to": 29,
+      "M": 119756,
+      "F": 110729
+     },
+     {
+      "from": 30,
+      "to": 34,
+      "M": 131661,
+      "F": 125885
+     },
+     {
+      "from": 35,
+      "to": 39,
+      "M": 125181,
+      "F": 124996
+     },
+     {
+      "from": 40,
+      "to": 44,
+      "M": 117265,
+      "F": 122049
+     },
+     {
+      "from": 45,
+      "to": 49,
+      "M": 112606,
+      "F": 120980
+     },
+     {
+      "from": 50,
+      "to": 54,
+      "M": 122574,
+      "F": 131029
+     },
+     {
+      "from": 55,
+      "to": 59,
+      "M": 122339,
+      "F": 129319
+     },
+     {
+      "from": 60,
+      "to": 64,
+      "M": 134243,
+      "F": 138190
+     },
+     {
+      "from": 65,
+      "to": 69,
+      "M": 126268,
+      "F": 132547
+     },
+     {
+      "from": 70,
+      "to": 74,
+      "M": 98401,
+      "F": 107533
+     },
+     {
+      "from": 75,
+      "to": 79,
+      "M": 67333,
+      "F": 80168
+     }
+    ]
+   },
+   {
+    "code": "pr",
+    "bands": [
+     {
+      "from": 18,
+      "to": 19,
+      "M": 4257,
+      "F": 4646
+     },
+     {
+      "from": 20,
+      "to": 24,
+      "M": 7831,
+      "F": 11331
+     },
+     {
+      "from": 25,
+      "to": 29,
+      "M": 12710,
+      "F": 20540
+     },
+     {
+      "from": 30,
+      "to": 34,
+      "M": 23680,
+      "F": 38610
+     },
+     {
+      "from": 35,
+      "to": 39,
+      "M": 26671,
+      "F": 43277
+     },
+     {
+      "from": 40,
+      "to": 44,
+      "M": 29428,
+      "F": 43030
+     },
+     {
+      "from": 45,
+      "to": 49,
+      "M": 31062,
+      "F": 37367
+     },
+     {
+      "from": 50,
+      "to": 54,
+      "M": 27118,
+      "F": 28257
+     },
+     {
+      "from": 55,
+      "to": 59,
+      "M": 19101,
+      "F": 19024
+     },
+     {
+      "from": 60,
+      "to": 64,
+      "M": 12802,
+      "F": 11440
+     },
+     {
+      "from": 65,
+      "to": 69,
+      "M": 7246,
+      "F": 6358
+     },
+     {
+      "from": 70,
+      "to": 74,
+      "M": 4713,
+      "F": 3970
+     },
+     {
+      "from": 75,
+      "to": 79,
+      "M": 2882,
+      "F": 2437
+     }
+    ]
+   },
+   {
+    "code": "wp",
+    "bands": [
+     {
+      "from": 18,
+      "to": 19,
+      "M": 14615,
+      "F": 298
+     },
+     {
+      "from": 20,
+      "to": 24,
+      "M": 36536,
+      "F": 746
+     },
+     {
+      "from": 25,
+      "to": 29,
+      "M": 97652,
+      "F": 1993
+     },
+     {
+      "from": 30,
+      "to": 34,
+      "M": 102302,
+      "F": 2088
+     },
+     {
+      "from": 35,
+      "to": 39,
+      "M": 83702,
+      "F": 1708
+     },
+     {
+      "from": 40,
+      "to": 44,
+      "M": 60451,
+      "F": 1234
+     },
+     {
+      "from": 45,
+      "to": 49,
+      "M": 37201,
+      "F": 759
+     },
+     {
+      "from": 50,
+      "to": 54,
+      "M": 18600,
+      "F": 380
+     },
+     {
+      "from": 55,
+      "to": 59,
+      "M": 9300,
+      "F": 190
+     },
+     {
+      "from": 60,
+      "to": 64,
+      "M": 2558,
+      "F": 52
+     },
+     {
+      "from": 65,
+      "to": 69,
+      "M": 1395,
+      "F": 28
+     },
+     {
+      "from": 70,
+      "to": 74,
+      "M": 465,
+      "F": 9
+     },
+     {
+      "from": 75,
+      "to": 79,
+      "M": 233,
+      "F": 5
+     }
+    ],
+    "sector": "cmp"
+   },
+   {
+    "code": "wp",
+    "bands": [
+     {
+      "from": 18,
+      "to": 19,
+      "M": 8304,
+      "F": 3559
+     },
+     {
+      "from": 20,
+      "to": 24,
+      "M": 20760,
+      "F": 8897
+     },
+     {
+      "from": 25,
+      "to": 29,
+      "M": 52315,
+      "F": 22421
+     },
+     {
+      "from": 30,
+      "to": 34,
+      "M": 58128,
+      "F": 24912
+     },
+     {
+      "from": 35,
+      "to": 39,
+      "M": 49409,
+      "F": 21175
+     },
+     {
+      "from": 40,
+      "to": 44,
+      "M": 37783,
+      "F": 16193
+     },
+     {
+      "from": 45,
+      "to": 49,
+      "M": 29064,
+      "F": 12456
+     },
+     {
+      "from": 50,
+      "to": 54,
+      "M": 17438,
+      "F": 7474
+     },
+     {
+      "from": 55,
+      "to": 59,
+      "M": 11626,
+      "F": 4982
+     },
+     {
+      "from": 60,
+      "to": 64,
+      "M": 3197,
+      "F": 1370
+     },
+     {
+      "from": 65,
+      "to": 69,
+      "M": 1744,
+      "F": 747
+     },
+     {
+      "from": 70,
+      "to": 74,
+      "M": 581,
+      "F": 249
+     },
+     {
+      "from": 75,
+      "to": 79,
+      "M": 291,
+      "F": 125
+     }
+    ],
+    "sector": "other"
+   },
+   {
+    "code": "mdw",
+    "bands": [
+     {
+      "from": 18,
+      "to": 19,
+      "M": 0,
+      "F": 0
+     },
+     {
+      "from": 20,
+      "to": 24,
+      "M": 0,
+      "F": 9489
+     },
+     {
+      "from": 25,
+      "to": 29,
+      "M": 0,
+      "F": 44282
+     },
+     {
+      "from": 30,
+      "to": 34,
+      "M": 0,
+      "F": 66423
+     },
+     {
+      "from": 35,
+      "to": 39,
+      "M": 0,
+      "F": 69586
+     },
+     {
+      "from": 40,
+      "to": 44,
+      "M": 0,
+      "F": 56934
+     },
+     {
+      "from": 45,
+      "to": 49,
+      "M": 0,
+      "F": 37956
+     },
+     {
+      "from": 50,
+      "to": 54,
+      "M": 0,
+      "F": 18978
+     },
+     {
+      "from": 55,
+      "to": 59,
+      "M": 0,
+      "F": 9489
+     },
+     {
+      "from": 60,
+      "to": 64,
+      "M": 0,
+      "F": 1740
+     },
+     {
+      "from": 65,
+      "to": 69,
+      "M": 0,
+      "F": 949
+     },
+     {
+      "from": 70,
+      "to": 74,
+      "M": 0,
+      "F": 316
+     },
+     {
+      "from": 75,
+      "to": 79,
+      "M": 0,
+      "F": 158
+     }
+    ]
+   },
+   {
+    "code": "ep",
+    "bands": [
+     {
+      "from": 18,
+      "to": 19,
+      "M": 371,
+      "F": 191
+     },
+     {
+      "from": 20,
+      "to": 24,
+      "M": 927,
+      "F": 478
+     },
+     {
+      "from": 25,
+      "to": 29,
+      "M": 15580,
+      "F": 8026
+     },
+     {
+      "from": 30,
+      "to": 34,
+      "M": 28563,
+      "F": 14714
+     },
+     {
+      "from": 35,
+      "to": 39,
+      "M": 28563,
+      "F": 14714
+     },
+     {
+      "from": 40,
+      "to": 44,
+      "M": 23369,
+      "F": 12039
+     },
+     {
+      "from": 45,
+      "to": 49,
+      "M": 15580,
+      "F": 8026
+     },
+     {
+      "from": 50,
+      "to": 54,
+      "M": 9088,
+      "F": 4682
+     },
+     {
+      "from": 55,
+      "to": 59,
+      "M": 5193,
+      "F": 2675
+     },
+     {
+      "from": 60,
+      "to": 64,
+      "M": 1428,
+      "F": 736
+     },
+     {
+      "from": 65,
+      "to": 69,
+      "M": 779,
+      "F": 401
+     },
+     {
+      "from": 70,
+      "to": 74,
+      "M": 260,
+      "F": 134
+     },
+     {
+      "from": 75,
+      "to": 79,
+      "M": 130,
+      "F": 67
+     }
+    ]
+   },
+   {
+    "code": "spass",
+    "bands": [
+     {
+      "from": 18,
+      "to": 19,
+      "M": 1669,
+      "F": 1366
+     },
+     {
+      "from": 20,
+      "to": 24,
+      "M": 4172,
+      "F": 3414
+     },
+     {
+      "from": 25,
+      "to": 29,
+      "M": 21418,
+      "F": 17524
+     },
+     {
+      "from": 30,
+      "to": 34,
+      "M": 24339,
+      "F": 19914
+     },
+     {
+      "from": 35,
+      "to": 39,
+      "M": 18498,
+      "F": 15134
+     },
+     {
+      "from": 40,
+      "to": 44,
+      "M": 12656,
+      "F": 10355
+     },
+     {
+      "from": 45,
+      "to": 49,
+      "M": 7788,
+      "F": 6372
+     },
+     {
+      "from": 50,
+      "to": 54,
+      "M": 3894,
+      "F": 3186
+     },
+     {
+      "from": 55,
+      "to": 59,
+      "M": 1947,
+      "F": 1593
+     },
+     {
+      "from": 60,
+      "to": 64,
+      "M": 535,
+      "F": 438
+     },
+     {
+      "from": 65,
+      "to": 69,
+      "M": 292,
+      "F": 239
+     },
+     {
+      "from": 70,
+      "to": 74,
+      "M": 97,
+      "F": 80
+     },
+     {
+      "from": 75,
+      "to": 79,
+      "M": 49,
+      "F": 40
+     }
+    ]
+   },
+   {
+    "code": "dependant",
+    "bands": [
+     {
+      "from": 18,
+      "to": 19,
+      "M": 1261,
+      "F": 2941
+     },
+     {
+      "from": 20,
+      "to": 24,
+      "M": 3151,
+      "F": 7353
+     },
+     {
+      "from": 25,
+      "to": 29,
+      "M": 4412,
+      "F": 10294
+     },
+     {
+      "from": 30,
+      "to": 34,
+      "M": 9375,
+      "F": 21876
+     },
+     {
+      "from": 35,
+      "to": 39,
+      "M": 11581,
+      "F": 27023
+     },
+     {
+      "from": 40,
+      "to": 44,
+      "M": 9375,
+      "F": 21876
+     },
+     {
+      "from": 45,
+      "to": 49,
+      "M": 5515,
+      "F": 12868
+     },
+     {
+      "from": 50,
+      "to": 54,
+      "M": 3309,
+      "F": 7721
+     },
+     {
+      "from": 55,
+      "to": 59,
+      "M": 1654,
+      "F": 3860
+     },
+     {
+      "from": 60,
+      "to": 64,
+      "M": 3033,
+      "F": 7077
+     },
+     {
+      "from": 65,
+      "to": 69,
+      "M": 1654,
+      "F": 3860
+     },
+     {
+      "from": 70,
+      "to": 74,
+      "M": 551,
+      "F": 1287
+     },
+     {
+      "from": 75,
+      "to": 79,
+      "M": 276,
+      "F": 643
+     }
+    ]
+   },
+   {
+    "code": "student",
+    "bands": [
+     {
+      "from": 18,
+      "to": 19,
+      "M": 7418,
+      "F": 7418
+     },
+     {
+      "from": 20,
+      "to": 24,
+      "M": 12857,
+      "F": 12857
+     },
+     {
+      "from": 25,
+      "to": 29,
+      "M": 3214,
+      "F": 3214
+     },
+     {
+      "from": 30,
+      "to": 34,
+      "M": 742,
+      "F": 742
+     },
+     {
+      "from": 35,
+      "to": 39,
+      "M": 247,
+      "F": 247
+     },
+     {
+      "from": 40,
+      "to": 44,
+      "M": 247,
+      "F": 247
+     },
+     {
+      "from": 45,
+      "to": 49,
+      "M": 0,
+      "F": 0
+     },
+     {
+      "from": 50,
+      "to": 54,
+      "M": 0,
+      "F": 0
+     },
+     {
+      "from": 55,
+      "to": 59,
+      "M": 0,
+      "F": 0
+     },
+     {
+      "from": 60,
+      "to": 64,
+      "M": 0,
+      "F": 0
+     },
+     {
+      "from": 65,
+      "to": 69,
+      "M": 0,
+      "F": 0
+     },
+     {
+      "from": 70,
+      "to": 74,
+      "M": 0,
+      "F": 0
+     },
+     {
+      "from": 75,
+      "to": 79,
+      "M": 0,
+      "F": 0
+     }
+    ]
+   }
+  ]
+ }
+}

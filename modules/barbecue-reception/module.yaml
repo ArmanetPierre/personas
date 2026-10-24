@@ -1,0 +1,329 @@
+# Module « Barbecue et réceptions à domicile » (Singapour) : recevoir chez soi, tablées, barbecues, accès à un grill, congélateur, aisance avec les grosses pièces.
+# S'applique à tout adulte du socle sg. Très peu de chiffres publiés : seul l'accès au grill découle de données structurelles (logement).
+# Employées de maison (mdw) et résidents de dortoir : ne reçoivent pas (attributs de réception à null), aucun accès à un grill.
+id: barbecue-reception
+version: "2026.3"
+changelog:
+  - version: "2026.3"
+    date: "2026-10-20"
+    changes: ["Attributs sensibles déclarés (religion/ethnie du socle), avec justification ; distributions inchangées."]
+  - version: "2026.2"
+    date: "2026-10-16"
+    changes:
+      - "Première version (socle sg) : accès à un grill, fréquence de réception, ttablée, barbecues par mois, congélateur, aisance avec les grosses pièces."
+      - "Corrections : facteur modéré nationality western (hosting_propensity, bbq_per_month, large_cut_cooking_ease) ; facteur religion retiré de bbq_per_month ; barbecues par mois recalés (environ 30 % d'au moins un par mois avec pit de condo ou grill privé, environ 12 % avec pit public, presque aucun sans accès) ; tablées réduites (médiane 6, environ 13 % à 10 et plus) ; libellés de fiche dédoublonnés."
+      - "Recalage des tablées : médianes par logement légèrement réduites et coefficient des hôtes occasionnels ramené de 1,3 à 1,2, pour ramener la part des tablées de 10 et plus dans la fourchette."
+label: Barbecue and hosting at home
+short_label: BBQ
+description: >-
+  Hosting meals and parties at home in Singapore: frequency, usual table size, barbecues per month, grill access
+  by dwelling (condo shared pit, landed private grill, public NParks pit, none), household freezer capacity and
+  ease of cooking large cuts (3.5 kg pork belly, suckling pig). Conditioned on dwelling, household type, children
+  under 12, age, sex, ethnicity, nationality and living standard. Near zero for migrant domestic workers and dormitory residents.
+applies_to: [sg]
+requires: []
+
+sources:
+  singstat_ghs_dwelling_2025:
+    org: "SingStat"
+    title: "Resident Households by Type of Dwelling (General Household Survey 2025), via data.gov.sg"
+    year: 2025
+    url: "https://data.gov.sg/datasets/d_edf8bb4773c25dd16b8b6875fd0b52da/view"
+    detail: "HDB 77.2 %, condominiums and other apartments 17.9 %, landed 4.7 % of resident households; average household size 3.06 (figures from a search summary, page not opened)"
+  nparks_east_coast_bbq:
+    org: "NParks"
+    title: "Barbecuing at East Coast Park"
+    year: 2026
+    url: "https://www.nparks.gov.sg/visit/parks/east-coast-park/activities/barbecuing"
+    detail: "74 BBQ pits, S$12-20 per pit per day, advance booking required"
+  nparks_pasir_ris_bbq:
+    org: "NParks"
+    title: "Barbecuing at Pasir Ris Park"
+    year: 2026
+    url: "https://www.nparks.gov.sg/visit/parks/pasir-ris-park/activities/barbecuing"
+    detail: "About 65 pits, about S$20 per day, booked up to 2 months ahead, one permit per person (search summary, not verified)"
+  ezbbq_condo_hdb_guide:
+    org: "EZ BBQ (caterer blog)"
+    title: "How to Host a BBQ at Your HDB or Condo in Singapore"
+    year: 2026
+    url: "https://www.ezbbq.com.sg/blogs/happenings/how-to-host-a-bbq-at-your-hdb-or-condo-in-singapore-without-breaking-rules"
+    detail: "Most condos have bookable BBQ pits; HDB flats have no private grill (marketing material, not verified)"
+
+conditions:
+  can_host: {all: [{not: {attr: socle.residency_status, in: [mdw]}}, {not: {attr: socle.dwelling, in: [dormitory]}}]}
+  hosts: {attr: home_hosting_frequency, in: [few_per_year, monthly, twice_monthly, weekly]}
+  not_dormitory: {not: {attr: socle.dwelling, in: [dormitory]}}
+
+tables:
+  host_age_factor:
+    label: "Age coefficient for hosting at home"
+    bands:
+      - {from: 18, to: 29, value: 0.8}
+      - {from: 30, to: 49, value: 1.3}
+      - {from: 50, to: 64, value: 1.0}
+      - {from: 65, to: 79, value: 0.7}
+    assumption: true
+    justification: "No survey; hosting assumed to peak at 30-50 (families with children, larger homes)."
+  living_factor:
+    label: "Living standard coefficient (ratio to national median)"
+    bands:
+      - {from: 0, to: 0.7, value: 0.6}
+      - {from: 0.7, to: 1.2, value: 1.0}
+      - {from: 1.2, to: 2.0, value: 1.4}
+      - {from: 2.0, to: 100, value: 1.8}
+    assumption: true
+    justification: "Hosting, grills and freezers assumed to rise with living standard; no published figure."
+  bbq_age_factor:
+    label: "Age coefficient for barbecuing"
+    bands:
+      - {from: 18, to: 24, value: 0.9}
+      - {from: 25, to: 49, value: 1.1}
+      - {from: 50, to: 64, value: 0.8}
+      - {from: 65, to: 79, value: 0.5}
+    assumption: true
+    justification: "Assumption: barbecues are more frequent among working-age adults and families."
+  table_median_by_dwelling:
+    label: "Median table size by dwelling (people, including the household)"
+    values: {hdb_1_2: 4, hdb_3: 5, hdb_4: 5.25, hdb_5_exec: 5.75, condo: 6.25, landed: 7.5, other: 5, dormitory: 4}
+    sources: [singstat_ghs_dwelling_2025]
+    assumption: true
+    justification: "Average household size 3.06 is the floor; larger tables (4-6 in HDB, 6-7.5 in condo or landed among hosts) are an assumption, calibrated so that the median over hosts is about 6 and about 12-15 % of hosts receive 10 people or more."
+  freezer_median_by_dwelling:
+    label: "Median household freezer capacity by dwelling (litres)"
+    values: {hdb_1_2: 40, hdb_3: 55, hdb_4: 65, hdb_5_exec: 75, condo: 85, landed: 110, other: 50, dormitory: 0}
+    assumption: true
+    justification: "Order of magnitude of usual fridge-freezers (40-120 L); no Singapore source found."
+
+attributes:
+  - key: bbq_grill_access
+    label: Access to a grill
+    type: enum
+    values:
+      - {code: condo_shared_pit, label: "condo BBQ pit (shared, to book)"}
+      - {code: landed_private_grill, label: "private grill at a landed home"}
+      - {code: public_pit, label: "public NParks pit (to book)"}
+      - {code: none, label: "no grill access"}
+    distribution:
+      given: [socle.residency_status, socle.dwelling]
+      table:
+        mdw:
+          default: {none: 1}
+        default:
+          condo: {condo_shared_pit: 0.88, none: 0.12}
+          landed: {landed_private_grill: 0.75, public_pit: 0.1, none: 0.15}
+          dormitory: {none: 1}
+          other: {public_pit: 0.1, none: 0.9}
+          default: {public_pit: 0.1, none: 0.9}
+    sources: [singstat_ghs_dwelling_2025, nparks_east_coast_bbq, nparks_pasir_ris_bbq, ezbbq_condo_hdb_guide]
+    assumption: true
+    justification: "Dwelling split is documented (SingStat GHS 2025); public pits require booking (NParks). Shares with a pit (about 88 % of condos, 75 % of landed homes) and of HDB residents who book a public pit (about 10 %) are assumptions. mdw and dormitory: none."
+
+  - key: hosting_propensity
+    label: Hosting propensity (index)
+    type: number
+    when: can_host
+    value:
+      min:
+        - 4
+        - max:
+            - 0.15
+            - mul:
+                - {pick: socle.dwelling, values: {condo: 1.3, landed: 1.5, hdb_1_2: 0.6, hdb_3: 0.8, hdb_4: 1.0, hdb_5_exec: 1.05}, default: 0.8}
+                - {pick: socle.household_type, values: {couple_with_children: 1.3, single_parent: 0.9, couple_no_child: 1.1, with_parents: 1.2, alone: 0.7, other: 0.5}, default: 1}
+                - {add: [1, {mul: [0.12, {attr: socle.children_under_12}]}]}
+                - {lookup: host_age_factor, by: socle.age}
+                - {lookup: living_factor, by: socle.living_standard_ratio}
+                - {pick: socle.ethnicity, values: {malay: 1.15, indian: 1.1}, default: 1}
+                - {pick: socle.nationality, values: {western: 1.15}, default: 1}
+    assumption: true
+    justification: "Internal multiplicative index (dwelling × household × children × age × living standard × ethnicity × nationality); no published survey. The modest western-nationality coefficient (1.15) reflects a home-entertaining habit among Western expatriates, kept deliberately small (not a stereotype). Used only to weight hosting frequency."
+    sensitive: true
+    sensitive_justification: "Ethnicity enters this internal hosting index with small coefficients (malay 1.15, indian 1.1) reflecting larger family gatherings; the index only weights hosting frequency and table size, never preferences or opinions. Kept deliberately mild to avoid stereotypes; the narrative checks stay active."
+
+  - key: home_hosting_frequency
+    label: How often they host meals or parties at home
+    type: enum
+    when: can_host
+    values:
+      - {code: never, label: "never hosts"}
+      - {code: few_per_year, label: "a few times a year"}
+      - {code: monthly, label: "about once a month"}
+      - {code: twice_monthly, label: "about twice a month"}
+      - {code: weekly, label: "about every week"}
+    distribution:
+      weights:
+        never: {div: [30, {attr: hosting_propensity}]}
+        few_per_year: 40
+        monthly: {mul: [14, {attr: hosting_propensity}]}
+        twice_monthly: {mul: [5, {attr: hosting_propensity}]}
+        weekly: {mul: [1.5, {attr: hosting_propensity}]}
+    assumption: true
+    justification: "No Singapore survey on hosting frequency; pessimistic distribution (most hosts a few times a year or less), tilted by the propensity index. mdw and dormitory residents are excluded (null)."
+    display: {empty: "does not host at home"}
+
+  - key: typical_table_size
+    label: Usual number of guests when hosting (including the household)
+    type: number
+    unit: people
+    when: {all: [can_host, hosts]}
+    value:
+      round:
+        min:
+          - 24
+          - max:
+              - 2
+              - mul:
+                  - {lognormal: {median: {lookup: table_median_by_dwelling, by: socle.dwelling}, sigma: 0.3}}
+                  - {pick: home_hosting_frequency, values: {few_per_year: 1.2, monthly: 1.0, twice_monthly: 0.9, weekly: 0.8}, default: 1}
+                  - {pick: socle.ethnicity, values: {malay: 1.15, indian: 1.1}, default: 1}
+    sources: [singstat_ghs_dwelling_2025]
+    assumption: true
+    justification: "Household size (3.06) is the floor; bigger tables by dwelling are an assumption, calibrated on a median of about 6 and about 12-15 % of hosts at 10 people or more. Occasional hosts gather bigger groups (festive family gatherings, coefficient 1.2), frequent hosts smaller ones."
+    sensitive: true
+    sensitive_justification: "Ethnicity enters the table-size model with the same small coefficients as the hosting index (larger family gatherings); it only scales the number of guests. Kept deliberately mild to avoid stereotypes; the narrative checks stay active."
+    display: {template: "{value} people", empty: "does not host"}
+
+  - key: bbq_per_month
+    label: Barbecues per month (at home or at a booked pit)
+    type: number
+    unit: per month
+    value:
+      round_to: 0.5
+      value:
+        mul:
+          - bernoulli:
+              min:
+                - 0.8
+                - mul:
+                    - {pick: bbq_grill_access, values: {condo_shared_pit: 0.68, landed_private_grill: 0.72, public_pit: 0.3, none: 0.01}, default: 0.01}
+                    - {pick: home_hosting_frequency, values: {never: 0.4, few_per_year: 0.6, monthly: 1.0, twice_monthly: 1.5, weekly: 2.0}, default: 0.1}
+                    - {lookup: bbq_age_factor, by: socle.age}
+                    - {pick: socle.nationality, values: {western: 1.2}, default: 1}
+                    - {add: [1, {mul: [0.1, {attr: socle.children_under_12}]}]}
+          - {min: [6, {max: [0.5, {lognormal: {median: 1, sigma: 0.7}}]}]}
+    sources: [nparks_east_coast_bbq]
+    assumption: true
+    justification: "Nothing published on barbecue frequency (NParks only documents that pits exist and must be booked). Calibrated by assumption: about 25-35 % of personas with a condo pit or private grill barbecue at least once a month, about 10-15 % of those using a public pit, almost nobody without access. When they barbecue, an occasional single outing (0.5 per month) is common (about a third), regular ones are 1-3 a month. Western expatriates get a modest coefficient (1.2, barbecue culture of large cuts), not a stereotype. No religion factor: halal barbecues are common (Malay families at East Coast or Pasir Ris pits); dietary constraints belong to another module."
+    display: {template: "{value} per month", empty: "no barbecues"}
+
+  - key: freezer_capacity_litres
+    label: Household freezer capacity (litres)
+    type: number
+    unit: L
+    when: not_dormitory
+    value:
+      round_to: 5
+      value:
+        add:
+          - mul:
+              - {lookup: freezer_median_by_dwelling, by: socle.dwelling}
+              - {pick: socle.household_type, values: {alone: 0.85, couple_with_children: 1.2, single_parent: 1.05}, default: 1}
+              - {exp: {mul: [0.25, {normal: {}}]}}
+          - mul:
+              - bernoulli:
+                  min:
+                    - 0.4
+                    - mul:
+                        - 0.04
+                        - {pick: socle.dwelling, values: {landed: 4, condo: 2}, default: 1}
+                        - {lookup: living_factor, by: socle.living_standard_ratio}
+              - {lognormal: {median: 200, sigma: 0.25}}
+    assumption: true
+    justification: "No Singapore source. Fridge-freezer freezer of 40-120 L depending on dwelling, plus a minority with a separate chest freezer (150-300 L), more likely in landed homes and richer households."
+    display: {template: "about {value} L", empty: "no household freezer (dormitory)"}
+
+  - key: large_cut_cooking_ease
+    label: Ease of cooking large cuts (3.5 kg pork belly, suckling pig)
+    type: enum
+    when: can_host
+    values:
+      - {code: not_at_all, label: "not at all comfortable"}
+      - {code: with_difficulty, label: "manages with difficulty"}
+      - {code: comfortable, label: "comfortable"}
+      - {code: expert, label: "expert"}
+    distribution:
+      weights:
+        not_at_all:
+          cases:
+            - {when: {attr: bbq_per_month, gt: 1.4}, value: 3}
+            - {when: {attr: bbq_per_month, gt: 0}, value: 12}
+            - {else: 45}
+        with_difficulty:
+          cases:
+            - {when: {attr: bbq_per_month, gt: 1.4}, value: 20}
+            - {when: {attr: bbq_per_month, gt: 0}, value: 38}
+            - {else: 35}
+        comfortable:
+          mul:
+            - cases:
+                - {when: {attr: bbq_per_month, gt: 1.4}, value: 50}
+                - {when: {attr: bbq_per_month, gt: 0}, value: 40}
+                - {else: 17}
+            - {pick: socle.sex, values: {M: 1.2, F: 0.85}, default: 1}
+            - {pick: socle.nationality, values: {western: 1.2}, default: 1}
+        expert:
+          mul:
+            - cases:
+                - {when: {attr: bbq_per_month, gt: 1.4}, value: 15}
+                - {when: {attr: bbq_per_month, gt: 0}, value: 4}
+                - {else: 1.5}
+            - {pick: socle.sex, values: {M: 1.3, F: 0.7}, default: 1}
+            - {pick: socle.nationality, values: {western: 1.3}, default: 1}
+    assumption: true
+    justification: "No source. Derived from barbecue experience; expert stays rare (under 5 %), not_at_all dominates among personas who never barbecue. Modest coefficients for western nationality (1.2 comfortable, 1.3 expert): large-cut barbecue tradition among Australian and European expatriates, not a stereotype."
+
+card:
+  - when: {attr: bbq_grill_access, present: true}
+    template: "Grill access: {bbq_grill_access}"
+  - when: can_host
+    template: "Hosting at home: {home_hosting_frequency}; usual table: {typical_table_size}"
+  - when: {attr: bbq_per_month, present: true}
+    template: "Barbecues: {bbq_per_month}"
+  - when: not_dormitory
+    template: "Freezer: {freezer_capacity_litres}"
+  - when: can_host
+    template: "Cooking a 3.5 kg pork belly or suckling pig: {large_cut_cooking_ease}"
+
+segments:
+  - {id: bbqGrillAccess, attribute: bbq_grill_access, label: Grill access, compare: 4}
+  - {id: bbqHostingFrequency, attribute: home_hosting_frequency, label: Hosting frequency at home}
+  - {id: bbqLargeCutEase, attribute: large_cut_cooking_ease, label: Ease with large cuts}
+
+validation:
+  margins:
+    - {attribute: bbq_grill_access, title: "Grill access (expected by dwelling)"}
+    - {attribute: home_hosting_frequency, title: "Hosting frequency (expected from propensity)"}
+    - {attribute: large_cut_cooking_ease, title: "Ease with large cuts"}
+  shares:
+    - label: "Condo residents with a shared BBQ pit (assumption: about 88 %)"
+      among: {attr: socle.dwelling, eq: condo}
+      share_of: {attr: bbq_grill_access, eq: condo_shared_pit}
+      range: [0.78, 0.92]
+    - label: "Landed residents with a private grill (assumption: about 75 %, lower with mdw)"
+      among: {attr: socle.dwelling, eq: landed}
+      share_of: {attr: bbq_grill_access, eq: landed_private_grill}
+      range: [0.6, 0.8]
+    - label: "HDB residents using a public pit (assumption: about 10 %)"
+      among: {attr: socle.dwelling, in: [hdb_1_2, hdb_3, hdb_4, hdb_5_exec]}
+      share_of: {attr: bbq_grill_access, eq: public_pit}
+      range: [0.06, 0.12]
+    - label: "At least one barbecue a month among personas with a condo pit or private grill (assumption: 25-35 %)"
+      among: {attr: bbq_grill_access, in: [condo_shared_pit, landed_private_grill]}
+      share_of: {attr: bbq_per_month, gt: 0.9}
+      range: [0.22, 0.38]
+    - label: "At least one barbecue a month among public pit users (assumption: 10-15 %)"
+      among: {attr: bbq_grill_access, eq: public_pit}
+      share_of: {attr: bbq_per_month, gt: 0.9}
+      range: [0.07, 0.18]
+    - label: "Hosts receiving 10 people or more (assumption: 12-15 %)"
+      among: hosts
+      share_of: {attr: typical_table_size, gt: 9.5}
+      range: [0.09, 0.18]
+
+eligibility_helpers:
+  grill_at_home_or_condo: "barbecue-reception.bbq_grill_access in [condo_shared_pit, landed_private_grill]"
+  regular_hosts: "barbecue-reception.home_hosting_frequency in [monthly, twice_monthly, weekly]"
+  large_table_hosts: "barbecue-reception.typical_table_size >= 6"
+  target_grill_club: "age >= 30 and age <= 45 and barbecue-reception.bbq_grill_access in [condo_shared_pit, landed_private_grill] and barbecue-reception.typical_table_size >= 6 and barbecue-reception.home_hosting_frequency in [monthly, twice_monthly, weekly]"
+  active_barbecuers: "barbecue-reception.bbq_per_month >= 1"
+  comfortable_with_large_cuts: "barbecue-reception.large_cut_cooking_ease in [comfortable, expert]"

@@ -1,0 +1,121 @@
+{
+ "id": "tax-benefits",
+ "title": "Modèle socio-fiscal simplifié : impôt sur le revenu, RSA, allocations familiales, aides au logement",
+ "assumption": true,
+ "justification": "Les barèmes légaux (impôt, RSA, allocations familiales) sont des montants officiels, mais leur application est simplifiée : prime d'activité réduite à sa formule de base (montant forfaitaire + 61 % des revenus d'activité − ressources, sans bonification individuelle ni forfait logement ; montant forfaitaire 638,28 € APPROX), minimum vieillesse (Aspa) appliqué comme un plancher dès 65 ans, pas d'AAH, pas de complément familial ni d'allocation de rentrée scolaire, RSA calculé sans forfait logement, aides au logement approchées par une formule dégressive unique (montants maximaux de l'ordre de ceux de la zone 2). L'objectif est un revenu disponible plausible, pas un microsimulateur (type Ines/OpenFisca).",
+ "sources": [
+  {
+   "org": "Service-Public.gouv.fr (DILA)",
+   "title": "Barème de l'impôt sur le revenu (revenus 2025)",
+   "year": 2026,
+   "url": "https://www.service-public.gouv.fr/particuliers/vosdroits/F1419"
+  },
+  {
+   "org": "Service-Public.gouv.fr (DILA)",
+   "title": "Revenu de solidarité active (RSA) : montants au 1er avril 2026",
+   "year": 2026,
+   "url": "https://www.service-public.gouv.fr/particuliers/vosdroits/F19778"
+  },
+  {
+   "org": "Service-Public.gouv.fr (DILA)",
+   "title": "Allocations familiales : montants au 1er avril 2026",
+   "year": 2026,
+   "url": "https://www.service-public.gouv.fr/particuliers/vosdroits/F13213"
+  },
+  {
+   "org": "Service-Public.gouv.fr (DILA)",
+   "title": "Allocation de solidarité aux personnes âgées (Aspa) : montants au 1er janvier 2026",
+   "year": 2026,
+   "url": "https://www.service-public.gouv.fr/particuliers/vosdroits/F16871"
+  }
+ ],
+ "referenceYear": 2026,
+ "notes": "Décote : paramètres de l'imposition des revenus 2024 (seuils 1 982 € / 3 277 €, base 897 € / 1 483 €, taux 45,25 %), non revalorisés faute de source vérifiée pour 2026. Abattement forfaitaire de 10 % appliqué à tous les revenus imposables (salaires et pensions), sans plafond. Les allocations familiales sont prises au taux plein (tranche de revenus la plus basse), sans majoration pour âge. Revenus du patrimoine : HYPOTHÈSE, part des revenus du ménage croissante avec l'âge (2 % avant 35 ans, 14 % après 65 ans, dispersion log-normale), pour retrouver l'ordre de grandeur de leur poids dans le revenu disponible ; l'INSEE ne publie pas cette part dans la note sur 2024.",
+ "data": {
+  "incomeTax": {
+   "abatement": 0.1,
+   "brackets": [
+    {
+     "upTo": 11600,
+     "rate": 0
+    },
+    {
+     "upTo": 29579,
+     "rate": 0.11
+    },
+    {
+     "upTo": 84577,
+     "rate": 0.3
+    },
+    {
+     "upTo": 181917,
+     "rate": 0.41
+    },
+    {
+     "upTo": null,
+     "rate": 0.45
+    }
+   ],
+   "decote": {
+    "single": {
+     "threshold": 1982,
+     "base": 897
+    },
+    "couple": {
+     "threshold": 3277,
+     "base": 1483
+    },
+    "rate": 0.4525
+   }
+  },
+  "rsa": {
+   "base": 651.69,
+   "secondAdult": 0.5,
+   "perChild": 0.3,
+   "thirdChildOn": 0.4
+  },
+  "familyAllowance": {
+   "two": 152.25,
+   "three": 347.32,
+   "perExtra": 195.07
+  },
+  "housingAid": {
+   "maxSingle": 280,
+   "maxCouple": 340,
+   "perChild": 65,
+   "taperRate": 0.3,
+   "floorIncomePerUc": 650
+  },
+  "aspa": {
+   "single": 1043.59,
+   "couple": 1620.18
+  },
+  "activityBonus": {
+   "base": 638.28,
+   "earnedRate": 0.61,
+   "minPayment": 15
+  },
+  "patrimonyRate": [
+   {
+    "from": 18,
+    "to": 34,
+    "rate": 0.02
+   },
+   {
+    "from": 35,
+    "to": 49,
+    "rate": 0.05
+   },
+   {
+    "from": 50,
+    "to": 64,
+    "rate": 0.09
+   },
+   {
+    "from": 65,
+    "to": 79,
+    "rate": 0.14
+   }
+  ]
+ }
+}

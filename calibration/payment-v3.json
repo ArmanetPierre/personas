@@ -1,0 +1,24 @@
+{
+  "note": "Paramètres de conversion M2 par famille de modèle (docs/plateforme.md § 7.4). Une famille absente : « modèle non calibré ». La série v3 n'a été jouée que sur Sonnet.",
+  "byModelFamily": {
+    "claude-sonnet": {
+      "version": "payment-v3/0",
+      "status": "uncalibrated",
+      "formula": "logit(M2) = a + b · logit(G') + c · log(P / p_b), G' = (n·G + 0,5) / (n + 1)",
+      "params": {
+        "a": 0,
+        "b": 1,
+        "c": 0
+      },
+      "uncertainty": {
+        "logitHalfWidth": 2.8,
+        "note": "Demi-largeur de l'intervalle sur l'échelle logit, combinée à l'incertitude d'échantillonnage : ±2,8 ≈ facteur 16 sur les cotes, le plus grand écart observé en v2 entre G et le réel (ChatGPT ×2, Canva ×5, Yuka ÷16)."
+      },
+      "domain": null,
+      "looErrorFactor": null,
+      "fittedOn": [],
+      "provenance": "Paramètres par défaut, non calibrés (docs/protocol-v3.md § 3) : M2 ≈ part de « oui » au palier bas. À remplacer par npm run calibration:fit sur une série v3 (ChatGPT, Yuka, Canva en nommé rétrodaté, n ≥ 100, puis Duolingo).",
+      "updatedAt": "2026-10-15"
+    }
+  }
+}

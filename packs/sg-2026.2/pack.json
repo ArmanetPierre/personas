@@ -1,0 +1,28 @@
+{
+ "country": "SG",
+ "version": "sg-2026.2",
+ "generator": "sg",
+ "locale": "en",
+ "currency": "SGD",
+ "extends": "sg",
+ "population": "Adults aged 18 to 79 who usually live in Singapore: citizens, permanent residents and non-residents (Employment Pass, S Pass, Work Permit, migrant domestic workers, dependants, students); tourists excluded",
+ "ageMin": 18,
+ "ageMax": 79,
+ "referenceYear": 2026,
+ "rngStreams": "module",
+ "label": "Singapore, all residents (18-79)",
+ "shortLabel": "Singapore",
+ "memberLabel": {"one": "persona of the Singapore population", "many": "personas of the Singapore population"},
+ "description": "Socle Singapour v2 : tables de sg-2026.1 (héritées de packs/sg) sauf les noms d'usage, désormais conditionnés par la religion en plus de l'ethnie ou de la nationalité (packs/sg-2026.2/first-names.json). Même chaîne de tirage et mêmes distributions marginales que sg-2026.1 : seul le nom d'usage change à graine et rang égaux. Personas tirées à la demande et mises en cache en base (ids sg-2026.2-s<graine>-<rang>), modules tirés dans leur propre flux.",
+ "changelog": [
+  {
+   "version": "sg-2026.2",
+   "date": "2026-10-16",
+   "changes": [
+    "Nom d'usage tiré selon le groupe (ethnie ou nationalité) × religion × sexe × génération : Indiens musulmans, sikhs, chrétiens et hindous ; Chinois chrétiens (prénom biblique) et autres Chinois ; Chinois musulmans ; Malays musulmans et non musulmans ; Others (Arabes, bouddhistes, Népalais) ; Bangladais, Indiens, Philippins, Indonésiens, Birmans, Thaïs et Occidentaux par religion.",
+    "Aucun autre attribut ne change : la religion était déjà tirée avant le nom, l'ordre et les tirages aléatoires sont ceux de sg-2026.1 (un tirage de nom, dans une liste différente).",
+    "sg-2026.1 (packs/sg) reste chargeable et reproductible à l'identique ; packs/socles.json fait pointer `sg` vers sg-2026.2."
+   ]
+  }
+ ]
+}

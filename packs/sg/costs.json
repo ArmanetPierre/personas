@@ -1,0 +1,168 @@
+{
+ "id": "sg-costs",
+ "title": "Dépenses du ménage (S$ par mois) : logement, charges, alimentation, transport, santé, envois d'argent",
+ "assumption": true,
+ "sources": [
+  {
+   "org": "DOS",
+   "title": "Household Expenditure Survey 2023 (tables 17967, 18010, 18013)",
+   "year": 2023,
+   "url": "https://tablebuilder.singstat.gov.sg/table/CT/17967"
+  },
+  {
+   "org": "HDB",
+   "title": "Median Rent by Town and Flat Type (data.gov.sg)",
+   "year": 2025,
+   "url": "https://data.gov.sg/collections/156/view"
+  },
+  {
+   "org": "MND",
+   "title": "Written answer on loans serviced by HDB homeowners",
+   "year": 2023,
+   "url": "https://mnd.gov.sg/newsroom/speeches/view/written-answer-by-ministry-of-national-development-on-loans-serviced-by-hdb-homeowners"
+  },
+  {
+   "org": "Public Transport Council",
+   "title": "Fare Review Exercise 2025",
+   "year": 2025,
+   "url": "https://www.ptc.gov.sg/media-centre/newsroom/fare-review-exercise-2025/"
+  },
+  {
+   "org": "DOS",
+   "title": "Household Expenditure Survey 2023: households owning a car by dwelling (18013)",
+   "year": 2023,
+   "url": "https://tablebuilder.singstat.gov.sg/table/CT/18013"
+  },
+  {
+   "org": "TWC2",
+   "title": "Struggles and sacrifices as cost of living rises",
+   "year": 2023,
+   "url": "https://twc2.org.sg/2023/08/01/struggles-and-sacrifices-as-cost-of-living-rises/"
+  }
+ ],
+ "referenceYear": 2025,
+ "justification": "Loyers HDB entiers : médianes 2025 par type (HDB, data.gov.sg) ; chambres et condos : annonces et contrats URA (sources de marché). Mensualités de prêt HDB : 600-1 900 S$ selon le type (MND et hypothèse 2025), payées surtout par le CPF (cpf.json). Dépenses courantes contraintes par adulte-équivalent tirées du HES 2023 (alimentation à domicile, hawker, food court et fast-food ≈ 960 S$ par ménage, hors restaurants et voyages qui relèvent du reste-à-vivre ; santé et assurances payées pour moitié par MediSave, transports en commun ≈ 120 S$ par adulte : pass mensuel 122 S$ ; colocation des WP hors dortoir ≈ 450 S$ le lit en chambre partagée, hypothèse), voiture : 36 % des ménages (HES 2023, par logement), coût ≈ 1 900-2 700 S$ par mois (hypothèse, COE 2025-2026). Enfants adultes au foyer : participation de 400 S$ par mois (hypothèse, cohérente avec la contribution de 15 % du revenu net d'un jeune adulte chez ses parents et les 513 S$ mensuels de contributions des enfants aux ménages de seniors, HES 2023). Envois d'argent : 60-80 % du revenu net chez les WP de la construction, 70-90 % chez les MDW, 25-50 % chez les S Pass (hypothèses, TWC2 et sources secondaires).",
+ "data": {
+  "mortgage": {
+   "hdb_1_2": {
+    "median": 350,
+    "sigma": 0.3
+   },
+   "hdb_3": {
+    "median": 750,
+    "sigma": 0.3
+   },
+   "hdb_4": {
+    "median": 1250,
+    "sigma": 0.3
+   },
+   "hdb_5_exec": {
+    "median": 1600,
+    "sigma": 0.3
+   },
+   "condo": {
+    "median": 4200,
+    "sigma": 0.4
+   },
+   "landed": {
+    "median": 7000,
+    "sigma": 0.45
+   },
+   "other": {
+    "median": 1500,
+    "sigma": 0.5
+   }
+  },
+  "rentWhole": {
+   "hdb_1_2": {
+    "median": 2330,
+    "sigma": 0.12
+   },
+   "hdb_3": {
+    "median": 2800,
+    "sigma": 0.12
+   },
+   "hdb_4": {
+    "median": 3400,
+    "sigma": 0.12
+   },
+   "hdb_5_exec": {
+    "median": 3600,
+    "sigma": 0.12
+   },
+   "condo": {
+    "median": 4000,
+    "sigma": 0.35
+   },
+   "landed": {
+    "median": 8000,
+    "sigma": 0.4
+   },
+   "other": {
+    "median": 2500,
+    "sigma": 0.4
+   }
+  },
+  "rentRoom": {
+   "median": 900,
+   "sigma": 0.25
+  },
+  "rentShared": {
+   "median": 450,
+   "sigma": 0.3
+  },
+  "rentSocial": {
+   "median": 120,
+   "sigma": 0.6
+  },
+  "conservancy": {
+   "hdb_1_2": 35,
+   "hdb_3": 60,
+   "hdb_4": 75,
+   "hdb_5_exec": 95,
+   "condo": 350,
+   "landed": 50,
+   "other": 30
+  },
+  "utilities": {
+   "hdb_1_2": 85,
+   "hdb_3": 135,
+   "hdb_4": 180,
+   "hdb_5_exec": 210,
+   "condo": 230,
+   "landed": 430,
+   "other": 120
+  },
+  "foodPerUc": 480,
+  "transportPerUc": 120,
+  "carShareByDwelling": {
+   "hdb_1_2": 0.042,
+   "hdb_3": 0.13,
+   "hdb_4": 0.271,
+   "hdb_5_exec": 0.452,
+   "condo": 0.639,
+   "landed": 0.853,
+   "other": 0.1
+  },
+  "carMonthly": {
+   "median": 1900,
+   "sigma": 0.3
+  },
+  "healthInsurancePerUc": 150,
+  "otherCurrentPerUc": 300,
+  "currentIncomeElasticity": 0.35,
+  "remittanceShare": {
+   "wp_cmp": 0.6,
+   "wp_other": 0.45,
+   "mdw": 0.7,
+   "spass": 0.2,
+   "ep": 0.1,
+   "dependant": 0,
+   "student": 0
+  },
+  "withParentsContribution": 0.15,
+  "adultChildContribution": 400,
+  "dormitoryLiving": 300,
+  "liveInLiving": 120
+ }
+}

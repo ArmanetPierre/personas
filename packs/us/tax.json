@@ -1,0 +1,191 @@
+{
+ "id": "us-tax",
+ "title": "Impôt fédéral sur le revenu 2026, FICA, crédits d'impôt (CTC, EITC), seuil de pauvreté, SNAP",
+ "assumption": false,
+ "sources": [
+  {
+   "org": "Internal Revenue Service",
+   "title": "Rev. Proc. 2025-32: tax year 2026 inflation adjustments (incl. One Big Beautiful Bill Act amendments)",
+   "year": 2025,
+   "url": "https://www.irs.gov/pub/irs-drop/rp-25-32.pdf"
+  },
+  {
+   "org": "Internal Revenue Service",
+   "title": "Enhanced deduction for seniors (2025-2028)",
+   "year": 2025,
+   "url": "https://www.irs.gov/newsroom/check-your-eligibility-for-the-new-enhanced-deduction-for-seniors"
+  },
+  {
+   "org": "Internal Revenue Service",
+   "title": "Self-employment tax (Social Security and Medicare taxes); Topic 560 Additional Medicare Tax",
+   "year": 2026,
+   "url": "https://www.irs.gov/businesses/small-businesses-self-employed/self-employment-tax-social-security-and-medicare-taxes"
+  },
+  {
+   "org": "HHS ASPE",
+   "title": "2026 Poverty Guidelines",
+   "year": 2026,
+   "url": "https://aspe.hhs.gov/topics/poverty-economic-mobility/poverty-guidelines"
+  },
+  {
+   "org": "USDA Food and Nutrition Service",
+   "title": "SNAP Cost-of-Living Adjustment FY2027 (allotments, income limits, deductions)",
+   "year": 2026,
+   "url": "https://fns-prod.azureedge.us/snap/allotment/cola"
+  },
+  {
+   "org": "USDA Food and Nutrition Service",
+   "title": "Trends in SNAP Participation Rates FY2020 and FY2022",
+   "year": 2024,
+   "url": "https://fns-prod.azureedge.us/research/snap/national-participation-rates/fy20and22"
+  }
+ ],
+ "referenceYear": 2026,
+ "notes": "Barème 2026 (Rev. Proc. 2025-32, après l'OBBBA) : le barème « single » sert aussi aux chefs de famille (head of household), avec leur déduction standard. Déduction des seniors de 6 000 $ par personne de 65 ans et plus (2025-2028), réduite de 6 % du revenu au-delà de 75 000 / 150 000 $. Taux d'entrée et de sortie de l'EITC : taux légaux (IRC § 32). FICA des indépendants : 15,3 % de 92,35 % du revenu, sans la déduction de la moitié (approximation). SNAP FY2027 (depuis le 1er octobre 2026), règle simplifiée : revenu brut sous 130 % du seuil, allocation = maximum − 30 % du revenu net (déduction standard, 20 % des revenus du travail ; pas de déduction de logement) ; recours de 80 % (88 % des éligibles en 2022, effectifs en baisse en 2026). Ni impôt sur les plus-values, ni déductions détaillées, ni crédits des États.",
+ "data": {
+  "brackets": {
+   "single": [
+    {
+     "upTo": 12400,
+     "rate": 0.1
+    },
+    {
+     "upTo": 50400,
+     "rate": 0.12
+    },
+    {
+     "upTo": 105700,
+     "rate": 0.22
+    },
+    {
+     "upTo": 201775,
+     "rate": 0.24
+    },
+    {
+     "upTo": 256225,
+     "rate": 0.32
+    },
+    {
+     "upTo": 640600,
+     "rate": 0.35
+    },
+    {
+     "upTo": null,
+     "rate": 0.37
+    }
+   ],
+   "joint": [
+    {
+     "upTo": 24800,
+     "rate": 0.1
+    },
+    {
+     "upTo": 100800,
+     "rate": 0.12
+    },
+    {
+     "upTo": 211400,
+     "rate": 0.22
+    },
+    {
+     "upTo": 403550,
+     "rate": 0.24
+    },
+    {
+     "upTo": 512450,
+     "rate": 0.32
+    },
+    {
+     "upTo": 768700,
+     "rate": 0.35
+    },
+    {
+     "upTo": null,
+     "rate": 0.37
+    }
+   ]
+  },
+  "standardDeduction": {
+   "single": 16100,
+   "joint": 32200,
+   "headOfHousehold": 24150,
+   "extra65": 1650,
+   "seniorDeduction": 6000,
+   "seniorPhaseOutSingle": 75000,
+   "seniorPhaseOutJoint": 150000
+  },
+  "fica": {
+   "socialSecurityRate": 0.062,
+   "wageBase": 184500,
+   "medicareRate": 0.0145,
+   "additionalMedicareRate": 0.009,
+   "additionalThresholdSingle": 200000,
+   "additionalThresholdJoint": 250000,
+   "selfEmployedFactor": 0.9235
+  },
+  "childTaxCredit": {
+   "perChild": 2200,
+   "refundableMax": 1700,
+   "refundableRate": 0.15,
+   "refundableFloor": 2500,
+   "phaseOutSingle": 200000,
+   "phaseOutJoint": 400000,
+   "phaseOutRate": 0.05
+  },
+  "eitc": [
+   {
+    "children": 0,
+    "phaseInRate": 0.0765,
+    "earnedAmount": 8680,
+    "maxCredit": 664,
+    "phaseOutRate": 0.0765,
+    "phaseOutSingle": 10860,
+    "phaseOutJoint": 18140
+   },
+   {
+    "children": 1,
+    "phaseInRate": 0.34,
+    "earnedAmount": 13020,
+    "maxCredit": 4427,
+    "phaseOutRate": 0.1598,
+    "phaseOutSingle": 23890,
+    "phaseOutJoint": 31160
+   },
+   {
+    "children": 2,
+    "phaseInRate": 0.4,
+    "earnedAmount": 18290,
+    "maxCredit": 7316,
+    "phaseOutRate": 0.2106,
+    "phaseOutSingle": 23890,
+    "phaseOutJoint": 31160
+   },
+   {
+    "children": 3,
+    "phaseInRate": 0.45,
+    "earnedAmount": 18290,
+    "maxCredit": 8231,
+    "phaseOutRate": 0.2106,
+    "phaseOutSingle": 23890,
+    "phaseOutJoint": 31160
+   }
+  ],
+  "poverty": {
+   "base": 15960,
+   "perPerson": 5680
+  },
+  "snap": {
+   "maxAllotment": [
+    306,
+    562,
+    808,
+    1023
+   ],
+   "perExtraPerson": 225,
+   "grossLimitPoverty": 1.3,
+   "benefitReduction": 0.3,
+   "standardDeduction": 217,
+   "participation": 0.8
+  }
+ }
+}

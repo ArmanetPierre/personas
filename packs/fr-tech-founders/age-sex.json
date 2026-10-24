@@ -1,0 +1,69 @@
+{
+ "id": "age-sex",
+ "title": "Âge × sexe de la population ciblée (25-45 ans, métiers du numérique)",
+ "assumption": true,
+ "justification": "Aucune pyramide par âge détaillé et sexe n'est publiée pour cette population. Construction : pyramide INSEE 2026 des 25-45 ans (pack fr), part de femmes des professions du numérique (24 %, INSEE 2025) appliquée à chaque tranche, et profil d'âge déformé vers les plus jeunes (×1,25 à 25-29 ans, ×0,85 à 40-45 ans) parce que l'intention d'entreprendre décroît avec l'âge (IEF 2025 : 56 % des 18-29 ans dans la chaîne entrepreneuriale, contre 27 % des 30 ans et plus en 2023).",
+ "sources": [
+  {
+   "org": "INSEE",
+   "title": "Bilan démographique 2025 / Données nationales - Population — POP3 : Population au 1er janvier par sexe et âge détaillé (en années révolues)",
+   "year": 2026,
+   "url": "https://www.insee.fr/fr/statistiques/8999013",
+   "detail": "fichier 3_Pop1janv_age.xlsx, colonnes France métropolitaine, agrégation des âges détaillés"
+  },
+  {
+   "org": "INSEE",
+   "title": "Métiers du numérique, fiche 4.3, Économie et société à l'ère du numérique, Insee Références, édition 2025",
+   "year": 2025,
+   "url": "https://www.insee.fr/fr/statistiques/8616855"
+  },
+  {
+   "org": "Bpifrance / Ifop",
+   "title": "Indice entrepreneurial français 2025",
+   "year": 2025,
+   "url": "https://bpifrance-creation.fr/observatoire/etudes-thematiques/indice-entrepreneurial-francais/ief-2025"
+  },
+  {
+   "org": "Bpifrance Création / Ifop",
+   "title": "Indice entrepreneurial français 2023 (communiqué et infographie)",
+   "year": 2023,
+   "url": "https://bpifrance-creation.fr/system/files/Bpifrance_IEF2023_GENERAL_INFOGRAPHIE_202311.pdf"
+  }
+ ],
+ "referenceYear": 2026,
+ "notes": "Part de femmes plus élevée dans le design et la communication (52 %) que dans l'informatique (≈ 16 %), mais le tirage du métier est indépendant du sexe (simplification).",
+ "data": {
+  "bands": [
+   {
+    "from": 25,
+    "to": 29,
+    "M": 3680755,
+    "F": 1162344
+   },
+   {
+    "from": 30,
+    "to": 34,
+    "M": 3291831,
+    "F": 1039526
+   },
+   {
+    "from": 35,
+    "to": 39,
+    "M": 3205291,
+    "F": 1012197
+   },
+   {
+    "from": 40,
+    "to": 44,
+    "M": 2738318,
+    "F": 864732
+   },
+   {
+    "from": 45,
+    "to": 45,
+    "M": 531620,
+    "F": 167880
+   }
+  ]
+ }
+}

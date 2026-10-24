@@ -1,0 +1,29 @@
+{
+ "id": "sg-living-standard",
+ "title": "Déciles du niveau de vie annuel des personas (revenu disponible du ménage par adulte-équivalent, S$)",
+ "assumption": true,
+ "sources": [
+  {
+   "org": "DOS",
+   "title": "Key Household Income Trends 2025 (M810361, M810871)",
+   "year": 2025,
+   "url": "https://tablebuilder.singstat.gov.sg/table/TS/M810871"
+  }
+ ],
+ "justification": "SingStat publie le revenu du travail et le revenu marchand des ménages résidents par membre (médiane 2025 : 4 160 S$ de revenu marchand par membre et par mois, cotisation employeur CPF comprise), mais pas de niveau de vie après impôt, transferts et CPF salarié pour toute la population résidente (non-résidents compris). Les bornes sont donc celles du générateur lui-même (50 000 tirages, graine 1, calculées par packs/sg/calibrate-living-standard.ts), cohérentes par construction avec les revenus tirés ; elles servent aux quintiles de segmentation et à la médiane de référence.",
+ "notes": "Calculé le 2026-10-16 sur 50000 tirages.",
+ "data": {
+  "deciles": [
+   10700,
+   16000,
+   20000,
+   24800,
+   30900,
+   39600,
+   50000,
+   64800,
+   93600
+  ],
+  "median": 30900
+ }
+}

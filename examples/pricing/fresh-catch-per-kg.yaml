@@ -1,0 +1,35 @@
+# Démonstration du format de prix : au kg et au pack, en SGD, avec panier minimum.
+# Projet fictif de démonstration (population fr), pas une étude réelle.
+id: demo-pricing-fresh-catch
+name: Fresh Catch Club
+pitch: >-
+  Fresh Catch Club est un club d'achat de poisson et de fruits de mer à Singapour. Chaque semaine, vous commandez
+  du lundi au mercredi des poissons entiers (bar de 1,5 kg, dorade, saumon entier), des crevettes ou un pack
+  famille, et vous êtes livré le samedi matin, ou vous passez le chercher avec une remise. Les prix sont fixés au
+  kg, 30 à 40 % sous ceux des poissonneries premium, parce que le poisson est acheté directement aux fermes
+  aquacoles et vendu en volume. Les poissons sont vendus entiers : un saumon nourrit 8 à 10 personnes.
+targetAudience: Familles de 30 à 45 ans en condo, qui cuisinent pour 6 à 12 personnes le week-end.
+businessModel: Vente au kg et au pack, panier minimum de 150 SGD, livraison groupée le samedi.
+price:
+  currency: SGD
+  offers:
+    - id: kg
+      label: Poisson au poids (prix moyen)
+      amount: 24
+      unit: quantity
+      quantity: { unit: kg, per: le kg }
+      expectedFrequency: une commande toutes les 2 à 4 semaines, de 6 à 8 kg
+      purchasesPerMonth: 10
+    - id: family
+      label: Pack Famille (5 kg, 8 à 10 personnes)
+      amount: 156
+      unit: quantity
+      quantity: { unit: pack, per: le pack }
+  reference: kg
+  tiers: [18, 24, 32]
+  minimumOrder:
+    amount: 150
+    note: livraison offerte ; entre 100 et 150 SGD, 15 SGD de livraison
+  fx: { eurPerUnit: 0.69, date: "2026-10-01", source: "taux indicatif" }
+competitors: [une poissonnerie premium, Cold Storage, le poissonnier du marché]
+alternatives: [supermarché, restaurant ou traiteur]

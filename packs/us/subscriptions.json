@@ -1,0 +1,881 @@
+{
+ "id": "us-subscriptions",
+ "title": "Abonnements courants aux États-Unis : prix mensuels en $ (hors taxes) et taux de détention par âge",
+ "assumption": true,
+ "sources": [
+  {
+   "org": "FOX 5 New York",
+   "title": "Netflix raising prices again on all plans (March 2026)",
+   "year": 2026,
+   "url": "https://www.fox5ny.com/news/netflix-raising-prices-again-all-plans-how-much-more-youll-be-paying"
+  },
+  {
+   "org": "12 On Your Side (Gray TV)",
+   "title": "Disney+ and Hulu are raising streaming prices again (September 2026)",
+   "year": 2026,
+   "url": "https://www.12onyourside.com/2026/09/23/disney-hulu-are-raising-streaming-prices-again/"
+  },
+  {
+   "org": "9to5Mac",
+   "title": "Peacock is the latest streaming service to increase prices (August 2026)",
+   "year": 2026,
+   "url": "https://9to5mac.com/2026/08/18/peacock-is-the-latest-streaming-service-to-increase-prices-details-here/"
+  },
+  {
+   "org": "9to5Google",
+   "title": "Spotify US price increase on all plans (January 2026)",
+   "year": 2026,
+   "url": "https://9to5google.com/2026/01/15/spotify-us-subscribers-price-hike-all-plans-2026/"
+  },
+  {
+   "org": "Apple",
+   "title": "iCloud+ plans and pricing (United States)",
+   "year": 2026,
+   "url": "https://support.apple.com/en-us/108047"
+  },
+  {
+   "org": "Microsoft",
+   "title": "Compare all Microsoft 365 plans (United States)",
+   "year": 2026,
+   "url": "https://www.microsoft.com/en-us/microsoft-365/buy/compare-all-microsoft-365-products"
+  },
+  {
+   "org": "Anthropic",
+   "title": "Claude pricing",
+   "year": 2026,
+   "url": "https://claude.com/pricing"
+  },
+  {
+   "org": "Pew Research Center",
+   "title": "83% of U.S. adults use streaming services; far fewer subscribe to cable or satellite TV",
+   "year": 2025,
+   "url": "https://www.pewresearch.org/short-reads/2025/07/01/83-of-us-adults-use-streaming-services-far-fewer-subscribe-to-cable-or-satellite-tv/"
+  },
+  {
+   "org": "Pew Research Center",
+   "title": "Americans and AI 2026, appendix (ChatGPT and other chatbots by age)",
+   "year": 2026,
+   "url": "https://www.pewresearch.org/internet/2026/06/17/americans-and-ai-appendix-detailed-chart-and-tables/markdown"
+  },
+  {
+   "org": "Health & Fitness Association",
+   "title": "81 million Americans were members of a fitness facility in 2025 (2026 Consumer Report)",
+   "year": 2026,
+   "url": "https://www.healthandfitness.org/81-million-americans-were-members-of-a-fitness-facility-in-2025-new-hfa-report-finds/"
+  },
+  {
+   "org": "Reuters Institute",
+   "title": "Digital News Report 2026: United States",
+   "year": 2026,
+   "url": "https://reutersinstitute.politics.ox.ac.uk/digital-news-report/2026/united-states"
+  },
+  {
+   "org": "Deloitte",
+   "title": "Digital Media Trends: Digital Media Monitor (fall 2026)",
+   "year": 2026,
+   "url": "https://www.deloitte.com/us/en/insights/industry/technology/digital-media-trends-consumption-habits-survey/digital-media-monitor-dashboard.html"
+  },
+  {
+   "org": "Benton Institute (BroadbandNow survey)",
+   "title": "The cost of staying connected in 2026",
+   "year": 2026,
+   "url": "https://www.benton.org/headlines/cost-staying-connected-2026"
+  },
+  {
+   "org": "US Mobile",
+   "title": "Best cell phone plans, August 2026 (carrier and prepaid prices)",
+   "year": 2026,
+   "url": "https://www.usmobile.com/blog/best-cell-phone-plans-august-2026/"
+  },
+  {
+   "org": "Bureau of Labor Statistics",
+   "title": "Consumer Expenditure Survey 2024, table 1101 (income quintiles) and table 1300 (age of reference person)",
+   "year": 2025,
+   "url": "https://www.bls.gov/cex/tables/calendar-year/mean-item-share-average-standard-error/cu-income-quintiles-before-taxes-2024.xlsx"
+  }
+ ],
+ "referenceYear": 2026,
+ "justification": "Prix relevés en 2026 sur les sites des services ou dans la presse spécialisée (docs/research/socle-us.md § 9). Les taux de détention par service ne sont pas publiés de façon officielle : hypothèses ancrées sur l'usage déclaré (Pew 2025), les effectifs d'abonnés publiés et la dépense de streaming (76 $ par mois par foyer abonné, Deloitte 2026). Le champ « monthlyEur » porte le montant dans la devise du pack (USD), nom de champ historique.",
+ "data": {
+  "items": [
+   {
+    "id": "mobile",
+    "category": "mobile",
+    "household": false,
+    "incomeElasticity": 0.0,
+    "basis": "prix relevés (US Mobile, 2026 : MVNO 15-45 $, forfaits illimités des opérateurs 55-105 $ par ligne) ; répartition en hypothèse, cohérente avec 113 $ de téléphonie mobile par ménage et par mois (CE 2024)",
+    "penetration": [
+     {
+      "from": 18,
+      "to": 29,
+      "p": 0.97
+     },
+     {
+      "from": 30,
+      "to": 49,
+      "p": 0.97
+     },
+     {
+      "from": 50,
+      "to": 64,
+      "p": 0.95
+     },
+     {
+      "from": 65,
+      "to": 79,
+      "p": 0.9
+     }
+    ],
+    "offers": [
+     {
+      "name": "Prepaid or low-cost carrier plan (Mint, Visible, Cricket)",
+      "monthlyEur": 30,
+      "weight": 0.3
+     },
+     {
+      "name": "Unlimited plan from a major carrier (T-Mobile, Verizon, AT&T)",
+      "monthlyEur": 75,
+      "weight": 0.55
+     },
+     {
+      "name": "Premium unlimited plan",
+      "monthlyEur": 95,
+      "weight": 0.15
+     }
+    ]
+   },
+   {
+    "id": "internet",
+    "category": "internet",
+    "household": true,
+    "incomeElasticity": 0.1,
+    "basis": "prix moyen 81 $ équipement compris (BroadbandNow 2026) ; détenu par les foyers qui ont internet à domicile",
+    "penetration": [
+     {
+      "from": 18,
+      "to": 29,
+      "p": 0.99
+     },
+     {
+      "from": 30,
+      "to": 49,
+      "p": 0.99
+     },
+     {
+      "from": 50,
+      "to": 64,
+      "p": 0.99
+     },
+     {
+      "from": 65,
+      "to": 79,
+      "p": 0.99
+     }
+    ],
+    "offers": [
+     {
+      "name": "Home broadband (cable or DSL)",
+      "monthlyEur": 65,
+      "weight": 0.5
+     },
+     {
+      "name": "Fiber home internet",
+      "monthlyEur": 75,
+      "weight": 0.3
+     },
+     {
+      "name": "Basic home internet",
+      "monthlyEur": 50,
+      "weight": 0.2
+     }
+    ],
+    "requires": "internet"
+   },
+   {
+    "id": "netflix",
+    "category": "video",
+    "household": true,
+    "incomeElasticity": 0.3,
+    "basis": "prix sourcés (mars 2026) ; détention par foyer en hypothèse, sous l'usage déclaré (72 % des adultes regardent Netflix, comptes partagés compris : Pew 2025)",
+    "penetration": [
+     {
+      "from": 18,
+      "to": 29,
+      "p": 0.6
+     },
+     {
+      "from": 30,
+      "to": 49,
+      "p": 0.65
+     },
+     {
+      "from": 50,
+      "to": 64,
+      "p": 0.58
+     },
+     {
+      "from": 65,
+      "to": 79,
+      "p": 0.42
+     }
+    ],
+    "offers": [
+     {
+      "name": "Netflix Standard with ads",
+      "monthlyEur": 8.99,
+      "weight": 0.4
+     },
+     {
+      "name": "Netflix Standard",
+      "monthlyEur": 19.99,
+      "weight": 0.45
+     },
+     {
+      "name": "Netflix Premium",
+      "monthlyEur": 26.99,
+      "weight": 0.15
+     }
+    ],
+    "requires": "internet"
+   },
+   {
+    "id": "prime",
+    "category": "shopping",
+    "household": true,
+    "incomeElasticity": 0.3,
+    "basis": "prix sourcés (139 $ par an ou 14,99 $ par mois) ; détention en hypothèse (201 millions de membres, CIRP 2025 ; Prime Video regardé par 67 % des adultes, Pew 2025)",
+    "penetration": [
+     {
+      "from": 18,
+      "to": 29,
+      "p": 0.55
+     },
+     {
+      "from": 30,
+      "to": 49,
+      "p": 0.65
+     },
+     {
+      "from": 50,
+      "to": 64,
+      "p": 0.6
+     },
+     {
+      "from": 65,
+      "to": 79,
+      "p": 0.45
+     }
+    ],
+    "offers": [
+     {
+      "name": "Amazon Prime (annual plan)",
+      "monthlyEur": 11.58,
+      "weight": 0.7
+     },
+     {
+      "name": "Amazon Prime (monthly)",
+      "monthlyEur": 14.99,
+      "weight": 0.3
+     }
+    ]
+   },
+   {
+    "id": "disney",
+    "category": "video",
+    "household": true,
+    "incomeElasticity": 0.3,
+    "basis": "prix sourcés (septembre 2026) ; détention en hypothèse (Disney+ regardé par 48 %, Hulu par 52 % des adultes, Pew 2025)",
+    "penetration": [
+     {
+      "from": 18,
+      "to": 29,
+      "p": 0.45
+     },
+     {
+      "from": 30,
+      "to": 49,
+      "p": 0.5
+     },
+     {
+      "from": 50,
+      "to": 64,
+      "p": 0.35
+     },
+     {
+      "from": 65,
+      "to": 79,
+      "p": 0.2
+     }
+    ],
+    "offers": [
+     {
+      "name": "Disney+ and Hulu bundle with ads",
+      "monthlyEur": 12.99,
+      "weight": 0.5
+     },
+     {
+      "name": "Disney+ with ads",
+      "monthlyEur": 12.49,
+      "weight": 0.3
+     },
+     {
+      "name": "Disney+ and Hulu Premium bundle",
+      "monthlyEur": 21.99,
+      "weight": 0.2
+     }
+    ],
+    "requires": "internet"
+   },
+   {
+    "id": "max",
+    "category": "video",
+    "household": true,
+    "incomeElasticity": 0.3,
+    "basis": "prix relevés (octobre 2025, non officiels) ; détention en hypothèse (Max regardé par 41 % des adultes, Pew 2025)",
+    "penetration": [
+     {
+      "from": 18,
+      "to": 29,
+      "p": 0.3
+     },
+     {
+      "from": 30,
+      "to": 49,
+      "p": 0.32
+     },
+     {
+      "from": 50,
+      "to": 64,
+      "p": 0.25
+     },
+     {
+      "from": 65,
+      "to": 79,
+      "p": 0.15
+     }
+    ],
+    "offers": [
+     {
+      "name": "HBO Max Basic with ads",
+      "monthlyEur": 10.99,
+      "weight": 0.5
+     },
+     {
+      "name": "HBO Max Standard",
+      "monthlyEur": 18.49,
+      "weight": 0.5
+     }
+    ],
+    "requires": "internet"
+   },
+   {
+    "id": "peacock_paramount",
+    "category": "video",
+    "household": true,
+    "incomeElasticity": 0.2,
+    "basis": "prix relevés (Peacock août 2026, Paramount+ janvier 2026) ; détention en hypothèse (41 % et 44 % des adultes les regardent, Pew 2025)",
+    "penetration": [
+     {
+      "from": 18,
+      "to": 29,
+      "p": 0.3
+     },
+     {
+      "from": 30,
+      "to": 49,
+      "p": 0.32
+     },
+     {
+      "from": 50,
+      "to": 64,
+      "p": 0.28
+     },
+     {
+      "from": 65,
+      "to": 79,
+      "p": 0.2
+     }
+    ],
+    "offers": [
+     {
+      "name": "Peacock Premium",
+      "monthlyEur": 12.99,
+      "weight": 0.5
+     },
+     {
+      "name": "Paramount+ Essential",
+      "monthlyEur": 8.99,
+      "weight": 0.5
+     }
+    ],
+    "requires": "internet"
+   },
+   {
+    "id": "paytv",
+    "category": "pay TV",
+    "household": true,
+    "incomeElasticity": 0.1,
+    "basis": "abonnement câble ou satellite : 16 / 23 / 44 / 64 % des adultes par âge (Pew 2025) ; facture médiane 125 $ (doxo 2026), YouTube TV 82,99 $",
+    "penetration": [
+     {
+      "from": 18,
+      "to": 29,
+      "p": 0.15
+     },
+     {
+      "from": 30,
+      "to": 49,
+      "p": 0.23
+     },
+     {
+      "from": 50,
+      "to": 64,
+      "p": 0.42
+     },
+     {
+      "from": 65,
+      "to": 79,
+      "p": 0.6
+     }
+    ],
+    "offers": [
+     {
+      "name": "Cable or satellite TV package",
+      "monthlyEur": 125,
+      "weight": 0.8
+     },
+     {
+      "name": "YouTube TV",
+      "monthlyEur": 82.99,
+      "weight": 0.2
+     }
+    ]
+   },
+   {
+    "id": "music",
+    "category": "music",
+    "household": false,
+    "incomeElasticity": 0.3,
+    "basis": "prix sourcés (Spotify février 2026, Apple Music juillet 2026) ; 51 % des 13 ans et plus paient un abonnement audio (Edison 2025), 112 millions d'abonnés à la musique en streaming (MusicWatch 2025) : détention individuelle en hypothèse",
+    "penetration": [
+     {
+      "from": 18,
+      "to": 29,
+      "p": 0.42
+     },
+     {
+      "from": 30,
+      "to": 49,
+      "p": 0.32
+     },
+     {
+      "from": 50,
+      "to": 64,
+      "p": 0.17
+     },
+     {
+      "from": 65,
+      "to": 79,
+      "p": 0.06
+     }
+    ],
+    "offers": [
+     {
+      "name": "Spotify Premium",
+      "monthlyEur": 12.99,
+      "weight": 0.5
+     },
+     {
+      "name": "Spotify Premium Student",
+      "monthlyEur": 6.99,
+      "weight": 0.1
+     },
+     {
+      "name": "Spotify Premium Family",
+      "monthlyEur": 21.99,
+      "weight": 0.15
+     },
+     {
+      "name": "Apple Music",
+      "monthlyEur": 11.99,
+      "weight": 0.25
+     }
+    ],
+    "requires": "smartphone"
+   },
+   {
+    "id": "youtube",
+    "category": "video",
+    "household": false,
+    "incomeElasticity": 0.3,
+    "basis": "prix relevés (avril 2026) ; détention en hypothèse",
+    "penetration": [
+     {
+      "from": 18,
+      "to": 29,
+      "p": 0.12
+     },
+     {
+      "from": 30,
+      "to": 49,
+      "p": 0.1
+     },
+     {
+      "from": 50,
+      "to": 64,
+      "p": 0.06
+     },
+     {
+      "from": 65,
+      "to": 79,
+      "p": 0.03
+     }
+    ],
+    "offers": [
+     {
+      "name": "YouTube Premium",
+      "monthlyEur": 15.99,
+      "weight": 0.8
+     },
+     {
+      "name": "YouTube Premium Family",
+      "monthlyEur": 26.99,
+      "weight": 0.2
+     }
+    ],
+    "requires": "internet"
+   },
+   {
+    "id": "cloud",
+    "category": "cloud storage",
+    "household": false,
+    "incomeElasticity": 0.2,
+    "basis": "prix sourcés (Apple) ; détention en hypothèse (≈ la moitié des smartphones sont des iPhone)",
+    "penetration": [
+     {
+      "from": 18,
+      "to": 29,
+      "p": 0.45
+     },
+     {
+      "from": 30,
+      "to": 49,
+      "p": 0.45
+     },
+     {
+      "from": 50,
+      "to": 64,
+      "p": 0.33
+     },
+     {
+      "from": 65,
+      "to": 79,
+      "p": 0.18
+     }
+    ],
+    "offers": [
+     {
+      "name": "iCloud+ 50 GB",
+      "monthlyEur": 0.99,
+      "weight": 0.45
+     },
+     {
+      "name": "iCloud+ 200 GB",
+      "monthlyEur": 2.99,
+      "weight": 0.35
+     },
+     {
+      "name": "iCloud+ 2 TB",
+      "monthlyEur": 9.99,
+      "weight": 0.1
+     },
+     {
+      "name": "Google One 100 GB",
+      "monthlyEur": 1.99,
+      "weight": 0.1
+     }
+    ],
+    "requires": "smartphone"
+   },
+   {
+    "id": "office",
+    "category": "software",
+    "household": false,
+    "incomeElasticity": 0.4,
+    "basis": "prix sourcés (Microsoft) ; détention en hypothèse",
+    "penetration": [
+     {
+      "from": 18,
+      "to": 29,
+      "p": 0.08
+     },
+     {
+      "from": 30,
+      "to": 49,
+      "p": 0.12
+     },
+     {
+      "from": 50,
+      "to": 64,
+      "p": 0.12
+     },
+     {
+      "from": 65,
+      "to": 79,
+      "p": 0.1
+     }
+    ],
+    "offers": [
+     {
+      "name": "Microsoft 365 Personal",
+      "monthlyEur": 9.99,
+      "weight": 0.5
+     },
+     {
+      "name": "Microsoft 365 Family",
+      "monthlyEur": 12.99,
+      "weight": 0.5
+     }
+    ],
+    "requires": "internet"
+   },
+   {
+    "id": "ai",
+    "category": "AI assistant",
+    "household": false,
+    "incomeElasticity": 0.6,
+    "basis": "prix relevés (2026) ; moins de 10 % des adultes paient un assistant d'IA (Epoch AI, fin 2025 ; 4,6 % pour OpenAI), usage de ChatGPT 61 / 55 / 37 / 19 % par âge (Pew 2026) : détention en hypothèse",
+    "penetration": [
+     {
+      "from": 18,
+      "to": 29,
+      "p": 0.1
+     },
+     {
+      "from": 30,
+      "to": 49,
+      "p": 0.07
+     },
+     {
+      "from": 50,
+      "to": 64,
+      "p": 0.04
+     },
+     {
+      "from": 65,
+      "to": 79,
+      "p": 0.01
+     }
+    ],
+    "offers": [
+     {
+      "name": "ChatGPT Plus",
+      "monthlyEur": 20,
+      "weight": 0.7
+     },
+     {
+      "name": "Google AI Pro",
+      "monthlyEur": 19.99,
+      "weight": 0.15
+     },
+     {
+      "name": "Claude Pro",
+      "monthlyEur": 20,
+      "weight": 0.15
+     }
+    ]
+   },
+   {
+    "id": "gaming",
+    "category": "gaming",
+    "household": false,
+    "incomeElasticity": 0.3,
+    "basis": "prix relevés (avril et mai 2026) ; détention en hypothèse",
+    "penetration": [
+     {
+      "from": 18,
+      "to": 29,
+      "p": 0.18
+     },
+     {
+      "from": 30,
+      "to": 49,
+      "p": 0.13
+     },
+     {
+      "from": 50,
+      "to": 64,
+      "p": 0.05
+     },
+     {
+      "from": 65,
+      "to": 79,
+      "p": 0.01
+     }
+    ],
+    "offers": [
+     {
+      "name": "Xbox Game Pass Premium",
+      "monthlyEur": 14.99,
+      "weight": 0.35
+     },
+     {
+      "name": "Xbox Game Pass Ultimate",
+      "monthlyEur": 22.99,
+      "weight": 0.2
+     },
+     {
+      "name": "PlayStation Plus Essential",
+      "monthlyEur": 10.99,
+      "weight": 0.45
+     }
+    ]
+   },
+   {
+    "id": "delivery",
+    "category": "delivery",
+    "household": false,
+    "incomeElasticity": 0.5,
+    "basis": "prix relevés (2026) ; détention en hypothèse",
+    "penetration": [
+     {
+      "from": 18,
+      "to": 29,
+      "p": 0.2
+     },
+     {
+      "from": 30,
+      "to": 49,
+      "p": 0.18
+     },
+     {
+      "from": 50,
+      "to": 64,
+      "p": 0.1
+     },
+     {
+      "from": 65,
+      "to": 79,
+      "p": 0.04
+     }
+    ],
+    "offers": [
+     {
+      "name": "DoorDash DashPass",
+      "monthlyEur": 9.99,
+      "weight": 0.4
+     },
+     {
+      "name": "Uber One",
+      "monthlyEur": 9.99,
+      "weight": 0.35
+     },
+     {
+      "name": "Instacart+",
+      "monthlyEur": 9.99,
+      "weight": 0.1
+     },
+     {
+      "name": "Walmart+",
+      "monthlyEur": 12.95,
+      "weight": 0.15
+     }
+    ],
+    "requires": "smartphone"
+   },
+   {
+    "id": "gym",
+    "category": "fitness",
+    "household": false,
+    "incomeElasticity": 0.6,
+    "basis": "26,1 % des 6 ans et plus sont membres d'une salle (35,5 % des 18-24 ans, HFA 2026) ; prix Planet Fitness relevés, salle classique en hypothèse",
+    "penetration": [
+     {
+      "from": 18,
+      "to": 29,
+      "p": 0.33
+     },
+     {
+      "from": 30,
+      "to": 49,
+      "p": 0.27
+     },
+     {
+      "from": 50,
+      "to": 64,
+      "p": 0.22
+     },
+     {
+      "from": 65,
+      "to": 79,
+      "p": 0.18
+     }
+    ],
+    "offers": [
+     {
+      "name": "Planet Fitness Classic",
+      "monthlyEur": 15,
+      "weight": 0.35
+     },
+     {
+      "name": "Planet Fitness Black Card",
+      "monthlyEur": 24.99,
+      "weight": 0.25
+     },
+     {
+      "name": "Gym membership",
+      "monthlyEur": 55,
+      "weight": 0.4
+     }
+    ]
+   },
+   {
+    "id": "news",
+    "category": "news",
+    "household": false,
+    "incomeElasticity": 0.6,
+    "basis": "16 % des internautes ont payé pour de l'information en ligne (Reuters Institute 2026) ; prix relevés ou en hypothèse",
+    "penetration": [
+     {
+      "from": 18,
+      "to": 29,
+      "p": 0.1
+     },
+     {
+      "from": 30,
+      "to": 49,
+      "p": 0.13
+     },
+     {
+      "from": 50,
+      "to": 64,
+      "p": 0.17
+     },
+     {
+      "from": 65,
+      "to": 79,
+      "p": 0.2
+     }
+    ],
+    "offers": [
+     {
+      "name": "New York Times digital subscription",
+      "monthlyEur": 25,
+      "weight": 0.4
+     },
+     {
+      "name": "Local newspaper digital subscription",
+      "monthlyEur": 15,
+      "weight": 0.35
+     },
+     {
+      "name": "Wall Street Journal digital subscription",
+      "monthlyEur": 39,
+      "weight": 0.25
+     }
+    ],
+    "requires": "internet"
+   }
+  ]
+ }
+}
