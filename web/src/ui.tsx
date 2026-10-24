@@ -243,7 +243,8 @@ export function Cols({ widths }: { widths: Array<number | string | null> }) {
   return (
     <colgroup>
       {widths.map((w, i) => (
-        <col key={i} style={w === null ? undefined : { width: typeof w === "number" ? `${w}px` : w }} />
+        // --col-k (styles.css) élargit les colonnes à pas fixe sur grands écrans, avec l'échelle typographique ; 1 ailleurs
+        <col key={i} style={w === null ? undefined : { width: typeof w === "number" ? `calc(${w}px * var(--col-k, 1))` : w }} />
       ))}
     </colgroup>
   );

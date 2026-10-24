@@ -18,7 +18,7 @@ export function PersonaPage({ id }: { id: string }) {
       <ErrorBox error={error} />
       {!data && !error && <Loading />}
       {data && (
-        <div className="panel" style={{ maxWidth: 860 }}>
+        <div className="panel persona-panel">
           <PersonaCardView p={data} />
         </div>
       )}

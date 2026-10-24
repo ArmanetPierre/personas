@@ -156,6 +156,8 @@ legend { padding: 0 6px; font-weight: 600; font-size: var(--fs-md); }
   letter-spacing: -0.025em; max-width: 22ch; margin-top: 6px;
 }
 .verdict b { font-weight: 720; font-variation-settings: "wdth" 100; }
+/* Un libellé de prix long (plusieurs offres) ne doit jamais sortir de la page : l’insécable reste entre chiffre et devise */
+.verdict .nowrap, .verdict-compact .nowrap { white-space: normal; }
 .verdict-sub { font-size: 17px; color: var(--ink-2); margin-top: 14px; max-width: 60ch; }
 .facts { display: grid; grid-template-columns: auto 1fr; gap: 6px 14px; font-size: var(--fs-md); margin: 0; }
 .facts dt { color: var(--muted); }
@@ -252,6 +254,7 @@ details.obj li q { color: var(--ink); }
 .facts-list dt { color: var(--muted); }
 .facts-list dd { margin: 0; }
 .narrative { font-size: var(--fs-lg); line-height: 1.6; max-width: 66ch; }
+.persona-panel { max-width: 860px; }
 .answer-block { padding: 14px 0; border-top: 1px solid var(--hairline); }
 .answer-block:first-child { border-top: 0; padding-top: 0; }
 .answer-block h3 { margin-bottom: 6px; }
@@ -821,3 +824,63 @@ code.expr { white-space: pre-wrap; overflow-wrap: anywhere; }
   .rsl-thumb.dragging input[type="range"]::-webkit-slider-thumb { transform: none; }
   .rsl-thumb.dragging input[type="range"]::-moz-range-thumb { transform: none; }
 }
+
+/* ─── Grands écrans (≥ 1600 px) : contenu centré jusqu’à 1760 px, échelle typographique légèrement augmentée.
+   Rien ne change en dessous de 1600 px (1280 px et mobile identiques). Les clamp() valent la taille de base à 1600 px
+   et atteignent leur maximum vers 2560 px. Les jetons sont redéfinis ici et non dans tokens.css, partagé avec le Hub. ─── */
+@media (min-width: 1600px) {
+  :root {
+    --fs-2xs: clamp(11px, calc(0.1042vw + 9.33px), 12px);
+    --fs-xs: clamp(12px, calc(0.1042vw + 10.33px), 13px);
+    --fs-sm: clamp(13px, calc(0.1563vw + 10.5px), 14.5px);
+    --fs-md: clamp(14px, calc(0.2083vw + 10.67px), 16px);
+    --fs-lg: clamp(16px, calc(0.2083vw + 12.67px), 18px);
+    --fs-xl: clamp(20px, calc(0.3125vw + 15px), 23px);
+    --fs-2xl: clamp(26px, calc(0.4167vw + 19.33px), 30px);
+    --fs-3xl: clamp(34px, calc(0.625vw + 24px), 40px);
+    --rail: clamp(232px, calc(2.917vw + 185.3px), 260px);
+    /* Tailles restées en dur dans l’échelle de base (15, 17, 22 et 24 px) */
+    --fs-15: clamp(15px, calc(0.2083vw + 11.67px), 17px);
+    --fs-17: clamp(17px, calc(0.2083vw + 13.67px), 19px);
+    --fs-22: clamp(22px, calc(0.3125vw + 17px), 25px);
+    --fs-24: clamp(24px, calc(0.4167vw + 17.33px), 28px);
+    /* Colonnes de tableau à largeur fixe (Cols, ui.tsx) : suivent l'échelle typographique par paliers */
+    --col-k: 1.06;
+  }
+  body { font-size: var(--fs-15); }
+  h2 { font-size: var(--fs-24); }
+  h3, .verdict-sub, .rec-lead, .empty-state-title { font-size: var(--fs-17); }
+  .tabs a, .crit-list.big, .heat th.dimh, .cmp tr.group td, .table tr.group-row th, .tg-val { font-size: var(--fs-15); }
+  .verdict-compact, .kpi-table td.kpi, .brand-name { font-size: var(--fs-22); }
+
+  main { padding: 40px clamp(48px, 3vw, 72px) 112px; }
+  .page { max-width: 1760px; margin-inline: auto; }
+
+  /* Titre-verdict : prolonge la croissance au-delà de 44 px, sans dépasser 54 px */
+  .verdict { font-size: clamp(44px, calc(1.042vw + 27.33px), 54px); max-width: 26ch; }
+  .study-hero .verdict { font-size: clamp(30px, calc(0.625vw + 20px), 36px); max-width: 48ch; }
+  .verdict-sub { max-width: 72ch; }
+  .lede { max-width: 76ch; }
+  .section-head p { max-width: 84ch; }
+  .plain-facts { max-width: 1200px; }
+
+  /* Colonnes latérales (fiche d’étude, de module) un peu plus larges ; grilles qui ajoutent des colonnes */
+  .study-head, .module-head { grid-template-columns: minmax(0, 1fr) 340px; gap: 48px; }
+  .grid-2, .grid-2-1, .cardgrid { gap: 20px; }
+  .cards { grid-template-columns: repeat(auto-fill, minmax(340px, 1fr)); gap: 16px; }
+  .evcharts { grid-template-columns: repeat(auto-fill, minmax(min(100%, 340px), 1fr)); gap: 16px 28px; }
+  .margins { grid-template-columns: repeat(auto-fill, minmax(320px, 1fr)); gap: 16px 36px; }
+  .hbars { grid-template-columns: minmax(160px, 280px) minmax(0, 1fr); }
+  .stackrow { grid-template-columns: 200px minmax(0, 1fr) 64px; }
+  .ci-bars { grid-template-columns: minmax(0, 280px) minmax(0, 1fr) 140px; }
+  .strip-list li { grid-template-columns: minmax(0, 1fr) 150px 140px; }
+  .kpis { gap: 36px; }
+  .gauge, .paym, .tone-gauge { max-width: 680px; }
+  .sharebar { max-width: 560px; }
+
+  /* Fiche persona : panneau plus large et récit sur deux colonnes de longueur confortable */
+  .persona-panel { max-width: 1320px; }
+  .persona-panel .narrative { max-width: none; columns: 2 34em; column-gap: 48px; }
+}
+@media (min-width: 2000px) { :root { --col-k: 1.1; } }
+@media (min-width: 2400px) { :root { --col-k: 1.16; } }

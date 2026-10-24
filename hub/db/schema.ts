@@ -88,6 +88,12 @@ export interface StoredPreview {
   previewFormat?: number;
   /** Filtres prêts à l'emploi (format 2) : nom, phrase, libellé en clair (fr), part des personas virtuelles concernées. */
   eligibilityHelpers?: Array<{ name: string; expression: string; label: string; rate: number }>;
+  /**
+   * Recalcul refusé pour une raison déterministe (validation, lint ou aperçu du moteur courant) : l'aperçu
+   * ci-dessus est l'ancien, conservé tel quel, et la version n'est plus recalculée tant que PREVIEW_FORMAT
+   * ne dépasse pas `format` (refreshStalePreviews, src/publish.ts).
+   */
+  refresh?: { format: number; status: "skipped"; reason: string; at: string };
 }
 
 export const moduleVersions = hub.table(

@@ -241,11 +241,25 @@ export async function signMissingVersions(db: HubDb, signer: Signer): Promise<nu
 export interface PreviewRefreshResult {
   /** Versions dont l'aperçu a été recalculé. */
   refreshed: number;
-  /** Versions en échec (journalisées, laissées telles quelles). */
+  /** Versions en échec (journalisées ; contenu et aperçu laissés tels quels). */
   failed: number;
+  /** Parmi les échecs : refus déterministes, marqués dans l'aperçu conservé et plus retentés pour ce format. */
+  skipped: number;
   /** Versions à recalculer trouvées au départ. */
   stale: number;
   ms: number;
+}
+
+/** Longueur maximale de la raison stockée dans le marqueur `refresh`. */
+const REFRESH_REASON_MAX = 4000;
+
+/** Message d'erreur sur une ligne de journal : l'en-tête puis les premières erreurs (`- …`), et le nombre restant. */
+export function errorSummary(message: string, maxIssues = 5): string {
+  const lines = message.split("\n").map((l) => l.trim()).filter(Boolean);
+  const [head = "", ...issues] = lines;
+  const shown = issues.slice(0, maxIssues).map((l) => (l.length > 300 ? `${l.slice(0, 299)}…` : l));
+  const rest = issues.length - shown.length;
+  return [head, ...shown, ...(rest > 0 ? [`(+ ${rest} autre${rest > 1 ? "s" : ""})`] : [])].join(" ");
 }
 
 /**
@@ -258,6 +272,11 @@ export interface PreviewRefreshResult {
  * Une qualité existante n'est pas recalculée : le classement ne bouge pas en silence.
  * Une version à la fois, en rendant la main entre deux (le serveur continue de répondre) ; un échec
  * est journalisé et n'arrête pas les suivantes. Idempotent : une fois au format courant, plus rien à faire.
+ *
+ * Échec déterministe (PublishError : validation, lint, aperçu refusés par le moteur courant) sur une version
+ * qui a déjà un aperçu : l'ancien aperçu est conservé tel quel, avec un marqueur `refresh` (statut `skipped`,
+ * raison complète) qui la retire des versions à recalculer pour ce format. Une erreur transitoire (base,
+ * délai) n'écrit rien : la version est retentée au démarrage suivant. Sans aperçu, rien à marquer : retentée.
  */
 export async function refreshStalePreviews(db: HubDb, opts: { log?: (line: Record<string, unknown>) => void } = {}): Promise<PreviewRefreshResult> {
   const log = opts.log ?? (() => {});
@@ -269,10 +288,11 @@ export async function refreshStalePreviews(db: HubDb, opts: { log?: (line: Recor
     .where(ne(moduleVersions.status, "removed"))
     .orderBy(asc(moduleVersions.publishedAt));
   // Archivé (legacy) sans aperçu : l'aperçu a déjà échoué à la publication sur le socle courant, on ne réessaie pas à chaque démarrage
-  const stale = rows.filter((r) => (r.preview ? (r.preview.previewFormat ?? 1) < PREVIEW_FORMAT : !r.tags.includes("legacy")));
+  const stale = rows.filter((r) => (r.preview ? (r.preview.previewFormat ?? 1) < PREVIEW_FORMAT && !((r.preview.refresh?.format ?? 0) >= PREVIEW_FORMAT) : !r.tags.includes("legacy")));
   const base = depResolver(db);
   let refreshed = 0;
   let failed = 0;
+  let skipped = 0;
   for (const r of stale) {
     await new Promise((res) => setImmediate(res));
     const ref = `${r.ns}/${r.slug}`;
@@ -281,7 +301,7 @@ export async function refreshStalePreviews(db: HubDb, opts: { log?: (line: Recor
     const resolve: DepResolver = (depRef, version) => base(depRef, version ?? pinned.get(depRef) ?? null);
     try {
       const checked = await checkModuleForPublication(r.yaml, resolve);
-      if (!checked.preview) throw new Error("aperçu impossible sur le socle courant");
+      if (!checked.preview) throw new PublishError(422, "invalid", "Aperçu impossible sur le socle courant (module archivé).");
       await db
         .update(moduleVersions)
         .set({ preview: checked.preview, ...(r.quality ? {} : { quality: checked.quality }) })
@@ -289,10 +309,23 @@ export async function refreshStalePreviews(db: HubDb, opts: { log?: (line: Recor
       refreshed++;
     } catch (err) {
       failed++;
-      log({ at: new Date().toISOString(), msg: "preview refresh failed", ref, version: r.version, error: (err as Error).message.split("\n")[0] });
+      const message = (err as Error).message;
+      const deterministic = err instanceof PublishError;
+      let marked = false;
+      if (deterministic && r.preview) {
+        try {
+          const refresh = { format: PREVIEW_FORMAT, status: "skipped" as const, reason: message.slice(0, REFRESH_REASON_MAX), at: new Date().toISOString() };
+          await db.update(moduleVersions).set({ preview: { ...r.preview, refresh } }).where(eq(moduleVersions.id, r.id));
+          marked = true;
+          skipped++;
+        } catch (markErr) {
+          log({ at: new Date().toISOString(), msg: "preview refresh mark failed", ref, version: r.version, error: (markErr as Error).message });
+        }
+      }
+      log({ at: new Date().toISOString(), msg: "preview refresh failed", ref, version: r.version, kind: deterministic ? "deterministic" : "transient", action: marked ? "skipped" : "retry", error: errorSummary(message) });
     }
   }
   const ms = Date.now() - t0;
-  if (stale.length) log({ at: new Date().toISOString(), msg: "previews refreshed", refreshed, failed, stale: stale.length, ms });
-  return { refreshed, failed, stale: stale.length, ms };
+  if (stale.length) log({ at: new Date().toISOString(), msg: "previews refreshed", refreshed, failed, skipped, stale: stale.length, ms });
+  return { refreshed, failed, skipped, stale: stale.length, ms };
 }

@@ -96,3 +96,11 @@
   .mp-versions li { grid-template-columns: minmax(0, 1fr); gap: 2px; }
   .mp-summary { font-size: var(--fs-md); }
 }
+
+/* Grands écrans (≥ 1600 px, voir styles.css) : fiche de droite un peu plus large, résumé plus long */
+@media (min-width: 1600px) {
+  .mp-hero { grid-template-columns: minmax(0, 1fr) 340px; gap: 48px; }
+  .mp-summary, .mp-readmore { max-width: 76ch; }
+  .mp-kpis { grid-template-columns: repeat(auto-fit, minmax(190px, 1fr)); }
+  .mp-filters li { grid-template-columns: minmax(0, 1fr) 220px; }
+}

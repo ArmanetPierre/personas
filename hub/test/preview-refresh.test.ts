@@ -5,7 +5,7 @@ import { openPglite, type HubDb } from "../db/client";
 import { modules, moduleVersions, type StoredPreview } from "../db/schema";
 import { createHubApp } from "../src/app";
 import { PREVIEW_FORMAT } from "../src/module-check";
-import { refreshStalePreviews } from "../src/publish";
+import { errorSummary, refreshStalePreviews } from "../src/publish";
 import { loadSigner } from "../src/signing";
 import { officialPublications } from "../scripts/seed-official";
 
@@ -116,4 +116,79 @@ describe("refreshStalePreviews (démarrage du Hub)", () => {
     expect(logs[0]).toMatchObject({ msg: "preview refresh failed", ref: "personas/casse", version: "1" });
     expect((await row()).preview?.previewFormat).toBe(PREVIEW_FORMAT);
   }, 120_000);
+});
+
+describe("refreshStalePreviews : refus déterministe et erreur transitoire", () => {
+  // Ancienne version publiée avant le lint des attributs sensibles : le moteur courant la refuse
+  const sensitiveVersion = async () => {
+    const base = await row();
+    const { previewFormat: _f, eligibilityHelpers: _h, ...old } = base.preview!;
+    const yaml = base.yaml.replace("label: Fréquence de jeu vidéo\n", "label: Fréquence de jeu vidéo pendant le ramadan\n");
+    expect(yaml).not.toBe(base.yaml);
+    const [m] = await db.insert(modules).values({ namespace: "personas", slug: "ancien-sensible", label: "Ancien sensible" }).returning({ id: modules.id });
+    await db.insert(moduleVersions).values({ moduleId: m!.id, version: "2026.1", yaml, sha256: "sha-ancien", status: "verified", label: "Ancien sensible", appliesTo: ["fr"], attributes: [], requires: [], searchTitle: "ancien", searchBody: "", publishedAt: "2001-01-01T00:00:00.000Z", preview: old as StoredPreview, quality: base.quality, signature: "sig-ancienne", signatureKid: "kid-ancien" });
+    const get = async () => (await db.select().from(moduleVersions).where(eq(moduleVersions.moduleId, m!.id)))[0]!;
+    return { old: old as StoredPreview, get };
+  };
+
+  it("échec au lint → marqué « skipped » avec la raison complète, ancien aperçu et contenu inchangés ; plus retenté", async () => {
+    const { old, get } = await sensitiveVersion();
+    const before = await get();
+    const logs: Array<Record<string, unknown>> = [];
+    const res = await refreshStalePreviews(db, { log: (l) => logs.push(l) });
+    // personas/casse (sans aperçu, du test précédent) reste à retenter : rien à marquer
+    expect(res).toMatchObject({ refreshed: 0, failed: 2, skipped: 1, stale: 2 });
+    const line = logs.find((l) => l.ref === "personas/ancien-sensible")!;
+    expect(line).toMatchObject({ msg: "preview refresh failed", kind: "deterministic", action: "skipped" });
+    expect(String(line.error)).toMatch(/^Validation en échec, module refusé : - \S/);
+    expect(String(line.error)).toContain("sensitive");
+    expect(logs.find((l) => l.ref === "personas/casse")).toMatchObject({ action: "retry" });
+
+    const after = await get();
+    const { refresh, ...kept } = after.preview!;
+    expect(kept).toEqual(old);
+    expect(refresh).toMatchObject({ format: PREVIEW_FORMAT, status: "skipped" });
+    expect(refresh!.reason).toMatch(/^Validation en échec, module refusé :\n- /);
+    expect(refresh!.reason).toContain("sensitive_justification");
+    expect(Number.isNaN(Date.parse(refresh!.at))).toBe(false);
+    for (const k of ["yaml", "sha256", "signature", "signatureKid", "publishedAt", "quality", "status"] as const) expect(after[k]).toEqual(before[k]);
+
+    // Second démarrage : la version marquée n'est plus à recalculer
+    const logs2: Array<Record<string, unknown>> = [];
+    expect(await refreshStalePreviews(db, { log: (l) => logs2.push(l) })).toMatchObject({ stale: 1, skipped: 0 });
+    expect(logs2.some((l) => l.ref === "personas/ancien-sensible")).toBe(false);
+    expect((await get()).preview).toEqual(after.preview);
+  }, 120_000);
+
+  it("erreur transitoire (base) → rien d'écrit, retentée au démarrage suivant", async () => {
+    const v = await row();
+    const { previewFormat: _f, eligibilityHelpers: _h, ...old } = v.preview!;
+    await db.update(moduleVersions).set({ preview: old as StoredPreview }).where(eq(moduleVersions.id, v.id));
+    // Base qui lit, mais dont les écritures échouent (connexion perdue)
+    const flaky = new Proxy(db, {
+      get: (target, prop, recv) =>
+        prop === "update"
+          ? () => {
+              throw new Error("Connection terminated unexpectedly");
+            }
+          : Reflect.get(target, prop, recv),
+    });
+    const logs: Array<Record<string, unknown>> = [];
+    const res = await refreshStalePreviews(flaky, { log: (l) => logs.push(l) });
+    expect(res).toMatchObject({ refreshed: 0, skipped: 0 });
+    expect(logs.find((l) => l.ref === "personas/jeux-video")).toMatchObject({ kind: "transient", action: "retry", error: "Connection terminated unexpectedly" });
+    expect((await row()).preview).toEqual(old);
+
+    // Démarrage suivant (base revenue) : recalculée
+    const res2 = await refreshStalePreviews(db);
+    expect(res2.refreshed).toBe(1);
+    expect((await row()).preview?.previewFormat).toBe(PREVIEW_FORMAT);
+    expect((await row()).preview?.refresh).toBeUndefined();
+  }, 120_000);
+
+  it("errorSummary : en-tête et premières erreurs sur une ligne, chacune tronquée", () => {
+    expect(errorSummary(`T :\n- ${"x".repeat(500)}`).length).toBeLessThan(320);
+    expect(errorSummary("Validation en échec, module refusé :\n- a : x\n- b : y")).toBe("Validation en échec, module refusé : - a : x - b : y");
+    expect(errorSummary(["Titre :", ...Array.from({ length: 8 }, (_, i) => `- e${i}`)].join("\n"), 5)).toBe("Titre : - e0 - e1 - e2 - e3 - e4 (+ 3 autres)");
+  });
 });
