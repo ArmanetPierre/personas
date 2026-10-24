@@ -2,8 +2,11 @@
 # S'applique à tout adulte du socle sg. Très peu de chiffres publiés : seul l'accès au grill découle de données structurelles (logement).
 # Employées de maison (mdw) et résidents de dortoir : ne reçoivent pas (attributs de réception à null), aucun accès à un grill.
 id: barbecue-reception
-version: "2026.2"
+version: "2026.3"
 changelog:
+  - version: "2026.3"
+    date: "2026-10-20"
+    changes: ["Attributs sensibles déclarés (religion/ethnie du socle), avec justification ; distributions inchangées."]
   - version: "2026.2"
     date: "2026-10-16"
     changes:
@@ -134,6 +137,8 @@ attributes:
                 - {pick: socle.nationality, values: {western: 1.15}, default: 1}
     assumption: true
     justification: "Internal multiplicative index (dwelling × household × children × age × living standard × ethnicity × nationality); no published survey. The modest western-nationality coefficient (1.15) reflects a home-entertaining habit among Western expatriates, kept deliberately small (not a stereotype). Used only to weight hosting frequency."
+    sensitive: true
+    sensitive_justification: "Ethnicity enters this internal hosting index with small coefficients (malay 1.15, indian 1.1) reflecting larger family gatherings; the index only weights hosting frequency and table size, never preferences or opinions. Kept deliberately mild to avoid stereotypes; the narrative checks stay active."
 
   - key: home_hosting_frequency
     label: How often they host meals or parties at home
@@ -174,6 +179,8 @@ attributes:
     sources: [singstat_ghs_dwelling_2025]
     assumption: true
     justification: "Household size (3.06) is the floor; bigger tables by dwelling are an assumption, calibrated on a median of about 6 and about 12-15 % of hosts at 10 people or more. Occasional hosts gather bigger groups (festive family gatherings, coefficient 1.2), frequent hosts smaller ones."
+    sensitive: true
+    sensitive_justification: "Ethnicity enters the table-size model with the same small coefficients as the hosting index (larger family gatherings); it only scales the number of guests. Kept deliberately mild to avoid stereotypes; the narrative checks stay active."
     display: {template: "{value} people", empty: "does not host"}
 
   - key: bbq_per_month

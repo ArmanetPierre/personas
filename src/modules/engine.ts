@@ -37,7 +37,9 @@ function readRef(scope: Scope, ref: string): ModuleValue | undefined {
   if (ref.startsWith("socle.")) return scope.socle[ref.slice(6)] ?? null;
   const dot = ref.lastIndexOf(".");
   if (dot === -1) return scope.values[scope.module.def.id]?.[ref];
-  return scope.values[ref.slice(0, dot)]?.[ref.slice(dot + 1)];
+  // `alias.attr` (forme longue de `requires`) : l'alias désigne la référence canonique du module visé
+  const prefix = ref.slice(0, dot);
+  return scope.values[scope.module.aliases?.get(prefix) ?? prefix]?.[ref.slice(dot + 1)];
 }
 
 export function evalCondition(c: Condition, scope: Scope): boolean {
@@ -289,9 +291,11 @@ export function valueLabel(m: LoadedModule, key: string, code: string, sex: stri
 }
 
 const eur = (n: number) => `${Math.round(n).toLocaleString("fr-FR")} €`;
-/** Module d'un socle anglophone (Singapour) : nombres et montants à l'anglaise, en S$ ; France : rendu historique. */
-const isEnModule = (m: LoadedModule) => m.def.applies_to.some((x) => x.replace(/-.*$/, "") === "sg");
+/** Module d'un socle anglophone (Singapour, États-Unis) : nombres et montants à l'anglaise, en S$ ou en $ ; France : rendu historique. */
+const isUsModule = (m: LoadedModule) => m.def.applies_to.some((x) => x.replace(/-.*$/, "") === "us");
+const isEnModule = (m: LoadedModule) => isUsModule(m) || m.def.applies_to.some((x) => x.replace(/-.*$/, "") === "sg");
 const sgd = (n: number) => `S$${Math.round(n).toLocaleString("en-SG")}`;
+const usd = (n: number) => `$${Math.round(n).toLocaleString("en-US")}`;
 
 /** Rendu d'un attribut sur la fiche (libellés, format, gabarit, valeur vide). */
 export function renderAttribute(m: LoadedModule, key: string, value: ModuleValue | undefined, sex: string): string {
@@ -304,7 +308,8 @@ export function renderAttribute(m: LoadedModule, key: string, value: ModuleValue
     const items = a.type === "set" ? a.items : [];
     text = value.map((c) => items.find((i) => i.code === c)?.card_label ?? items.find((i) => i.code === c)?.label ?? c).join(d?.separator ?? ", ");
   } else if (typeof value === "number") {
-    if (isEnModule(m)) text = d?.format === "eur" ? sgd(value) : d?.format === "percent" ? `${Math.round(value * 100)}%` : value.toLocaleString("en-SG");
+    if (isUsModule(m)) text = d?.format === "eur" ? usd(value) : d?.format === "percent" ? `${Math.round(value * 100)}%` : value.toLocaleString("en-US");
+    else if (isEnModule(m)) text = d?.format === "eur" ? sgd(value) : d?.format === "percent" ? `${Math.round(value * 100)}%` : value.toLocaleString("en-SG");
     else text = d?.format === "eur" ? eur(value) : d?.format === "percent" ? `${Math.round(value * 100)} %` : value.toLocaleString("fr-FR");
   } else if (typeof value === "boolean") {
     const [yes, no] = isEnModule(m) ? ["yes", "no"] : ["oui", "non"];

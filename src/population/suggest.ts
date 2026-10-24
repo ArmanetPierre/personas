@@ -2,11 +2,18 @@ import { mkdirSync, writeFileSync } from "node:fs";
 import { basename, dirname, extname, join, resolve } from "node:path";
 import { stringify as toYaml } from "yaml";
 import { z } from "zod";
-import { loadConfig } from "../config";
-import { getEngine, type Engine } from "../engine";
+import { defaultDataDir, loadConfig } from "../config";
+import type { Engine } from "../engine";
+import { assistantEngine } from "../engine/select";
 import type { CompleteResult } from "../engine/types";
 import type { Project } from "../db/schema";
-import { isLegacy, moduleLibrary, socleCatalog, SOCLE_CODES, SOCLE_VAR_DOCS, type LoadedModule } from "../modules/registry";
+import { isLegacy, moduleAt, moduleLibrary, resolveModules, socleCatalog, SOCLE_CODES, SOCLE_VAR_DOCS, type LoadedModule } from "../modules/registry";
+import { canonicalRef, qualifiedRef } from "../modules/refs";
+import { readCachedCatalog } from "../hub/cache";
+import { HubClient } from "../hub/client";
+import type { CatalogResponse, QualityScore } from "../hub/contract";
+import { pullModule } from "../hub/pull";
+import { autoEligible, bm25, searchDocs, type SearchDoc } from "../hub/search";
 import { SG_ELIGIBILITY_VARS } from "../personas/countries/sg/vars";
 import { formatPricing, hasGenericPricing, pricingOf } from "../studies/price-model";
 import { formatPrice, type ProjectExtra } from "../studies/project";
@@ -264,8 +271,25 @@ export function checkVariant(v: TargetVariant, lib?: Map<string, LoadedModule>, 
 
 // ─── Assistant ────────────────────────────────────────────────────────────────
 
+/** Catalogue du Hub dans l'assistant de cible (docs/plateforme.md § 6.2). */
+export interface HubSuggestOptions {
+  /** Catalogue (défaut : celui du cache local, téléchargé par `personas hub sync` ; null : aucun). */
+  catalog?: CatalogResponse | null;
+  /**
+   * Téléchargement d'un candidat absent du cache (GET d'un objet public, rien du projet). Défaut : client du
+   * Hub quand le catalogue vient du cache ; un échec (hors ligne) écarte le candidat avec une note.
+   */
+  pull?: (ref: string, version: string) => Promise<void>;
+  /** Nombre maximal de modules candidats dans le prompt (défaut 15). */
+  limit?: number;
+}
+
+export const MAX_CANDIDATES = 15;
+
 export interface SuggestOptions {
   engine?: Engine;
+  /** Catalogue du Hub : pré-sélection locale des modules candidats (sans catalogue : bibliothèque entière, prompt historique). */
+  hub?: HubSuggestOptions;
   /** Prévisualiser chaque variante valide (défaut : oui). */
   preview?: boolean;
   /** Pré-tri Qwen dans les aperçus (défaut : non). */
@@ -298,14 +322,135 @@ export interface TargetSuggestion {
   repairs: number;
   usage: { calls: number; inputTokens: number; outputTokens: number; durationMs: number };
   ms: number;
+  /** Présent quand un catalogue du Hub est disponible : candidats pré-sélectionnés et modules existants proches des modules manquants. */
+  hub?: HubSuggestionInfo;
+}
+
+export interface HubCandidate {
+  /** Référence qualifiée (`personas/numerique`, `alice/sport`). */
+  ref: string;
+  version: string;
+  label: string;
+  source: SearchDoc["source"];
+  quality: QualityScore | null;
+  score: number;
+}
+
+export interface HubSuggestionInfo {
+  candidates: HubCandidate[];
+  /** Pour chaque module manquant proposé : modules existants proches (on cherche avant de créer). */
+  missingMatches: Record<string, HubCandidate[]>;
+  notes: string[];
+}
+
+/** Texte de la recherche locale : ce que dit le projet (jamais envoyé au Hub). */
+function projectQuery(p: Project): string {
+  return [p.name, p.pitch, p.targetAudience, p.businessModel, p.freeOffer, ...p.competitors, ...p.alternatives].filter(Boolean).join("\n");
+}
+
+const candidateOf = (d: SearchDoc, score: number, version = d.latest): HubCandidate => ({ ref: qualifiedRef(d.ref), version, label: d.label, source: d.source, quality: d.quality, score: Math.round(score * 1000) / 1000 });
+
+/**
+ * Pré-sélection (§ 6.2) : au plus `limit` modules candidats, bibliothèque locale et catalogue du Hub confondus,
+ * classés par BM25 sur le projet, filtrés par socle et admissibilité (statut, Q). Les modules de la cible
+ * actuelle du projet sont toujours gardés. Un candidat du catalogue absent du cache est téléchargé (lecture
+ * seule, non épinglé) ; sinon il est écarté. Renvoie la bibliothèque réduite du prompt et celle des contrôles.
+ */
+export async function preselectModules(
+  p: Project,
+  opts: { catalog: CatalogResponse; library: Map<string, LoadedModule>; socle?: string; limit?: number; pull?: HubSuggestOptions["pull"]; log?: (m: string) => void },
+): Promise<{ prompt: Map<string, LoadedModule>; check: Map<string, LoadedModule>; candidates: HubCandidate[]; notes: string[] }> {
+  const socle = opts.socle ?? "fr";
+  const limit = opts.limit ?? MAX_CANDIDATES;
+  const docs = searchDocs(opts.library, opts.catalog).filter((d) => autoEligible(d, socle));
+  const scores = new Map(bm25(docs, projectQuery(p)).map((h) => [h.doc.ref, h.score]));
+  const current = new Set(((p.extra as ProjectExtra).target?.modules ?? []).map((m) => {
+    try {
+      return canonicalRef(m.replace(/@.*$/, ""));
+    } catch {
+      return m;
+    }
+  }));
+  const ranked = [...docs].sort(
+    (a, b) =>
+      Number(current.has(b.ref)) - Number(current.has(a.ref)) ||
+      (scores.get(b.ref) ?? 0) - (scores.get(a.ref) ?? 0) ||
+      Number(b.source !== "hub") - Number(a.source !== "hub") ||
+      (a.ref < b.ref ? -1 : 1),
+  );
+  const notes: string[] = [];
+  const check = new Map(opts.library);
+  const chosen: Array<{ doc: SearchDoc; m: LoadedModule }> = [];
+  for (const d of ranked) {
+    if (chosen.length >= limit) break;
+    let m = opts.library.get(d.ref) ?? moduleAt(d.ref, d.latest, opts.library);
+    if (!m && opts.pull) {
+      try {
+        opts.log?.(`Hub : téléchargement du candidat ${qualifiedRef(d.ref)}@${d.latest}…`);
+        await opts.pull(qualifiedRef(d.ref), d.latest);
+        m = moduleAt(d.ref, d.latest, opts.library);
+      } catch (err) {
+        notes.push(`candidat ${qualifiedRef(d.ref)}@${d.latest} écarté : ${(err as Error).message}`);
+        continue;
+      }
+    }
+    if (!m) {
+      notes.push(`candidat ${qualifiedRef(d.ref)}@${d.latest} écarté : absent du cache (personas hub pull ${qualifiedRef(d.ref)})`);
+      continue;
+    }
+    check.set(m.def.id, m);
+    chosen.push({ doc: d, m });
+  }
+  // Bibliothèque du prompt : candidats et leurs dépendances, dans l'ordre de la bibliothèque (alphabétique)
+  const prompt = new Map<string, LoadedModule>();
+  for (const { doc, m } of chosen) {
+    try {
+      for (const dep of resolveModules([m.def.id], m.def.applies_to.includes(socle) ? socle : m.def.applies_to[0]!, check).ordered) prompt.set(dep.def.id, dep);
+    } catch (err) {
+      notes.push(`candidat ${qualifiedRef(doc.ref)} écarté : ${(err as Error).message}`);
+    }
+  }
+  const sorted = new Map([...prompt].sort(([a], [b]) => (a < b ? -1 : a > b ? 1 : 0)));
+  const candidates = chosen.filter(({ m }) => sorted.has(m.def.id)).map(({ doc, m }) => candidateOf(doc, scores.get(doc.ref) ?? 0, m.def.version));
+  return { prompt: sorted, check, candidates, notes };
+}
+
+/** Modules existants proches de chaque module manquant proposé (recherche locale sur sa description). */
+export function missingModuleMatches(missing: TargetSuggestionData["missingModules"], library: Map<string, LoadedModule>, catalog: CatalogResponse | null, socle = "fr"): Record<string, HubCandidate[]> {
+  const docs = searchDocs(library, catalog).filter((d) => autoEligible(d, socle));
+  const out: Record<string, HubCandidate[]> = {};
+  for (const mm of missing) {
+    const hits = bm25(docs, [mm.id.replace(/-/g, " "), mm.description, ...mm.attributes].join("\n"), { limit: 3 });
+    if (hits.length) out[mm.id] = hits.map((h) => candidateOf(h.doc, h.score));
+  }
+  return out;
 }
 
 export async function suggestTarget(project: ProjectInput, opts: SuggestOptions = {}): Promise<TargetSuggestion> {
   const t0 = performance.now();
   const row = projectRow(project);
-  const engine = opts.engine ?? getEngine("claude-cli", loadConfig());
+  const engine = opts.engine ?? assistantEngine(loadConfig());
   const log = opts.log ?? (() => {});
-  const lib = opts.library;
+  let lib = opts.library;
+  // Catalogue du Hub : pré-sélection locale de ≤ 15 candidats (sans catalogue : bibliothèque entière, prompt inchangé)
+  const fromCache = opts.hub?.catalog === undefined;
+  const catalog = fromCache ? (readCachedCatalog()?.catalog ?? null) : (opts.hub!.catalog ?? null);
+  let promptLib = lib;
+  let hubInfo: HubSuggestionInfo | undefined;
+  if (catalog) {
+    const pull =
+      opts.hub?.pull ??
+      (fromCache
+        ? async (ref: string, version: string) => {
+            await pullModule(new HubClient(), `${ref}@${version}`, { catalog });
+          }
+        : undefined);
+    const pre = await preselectModules(row, { catalog, library: lib ?? moduleLibrary(), limit: opts.hub?.limit ?? MAX_CANDIDATES, ...(pull && { pull }), log });
+    promptLib = pre.prompt;
+    lib = pre.check;
+    hubInfo = { candidates: pre.candidates, missingMatches: {}, notes: pre.notes };
+    log(`Hub : ${pre.candidates.length} module(s) candidat(s) pré-sélectionné(s) en local`);
+  }
   const usage = { calls: 0, inputTokens: 0, outputTokens: 0, durationMs: 0 };
   const add = (r: CompleteResult<unknown>) => {
     usage.calls += r.attempts;
@@ -314,7 +459,7 @@ export async function suggestTarget(project: ProjectInput, opts: SuggestOptions 
     usage.durationMs += r.durationMs;
   };
   log("Assistant de cible : proposition (claude-cli, sans outil)…");
-  let r = await engine.complete({ system: TARGET_SYSTEM, messages: [{ role: "user", content: suggestPrompt(row, lib) }], schema: targetSuggestionSchema, maxTokens: 12_000 });
+  let r = await engine.complete({ system: TARGET_SYSTEM, messages: [{ role: "user", content: suggestPrompt(row, promptLib) }], schema: targetSuggestionSchema, maxTokens: 12_000 });
   add(r);
   let data = r.data;
   let model = r.model;
@@ -328,7 +473,7 @@ export async function suggestTarget(project: ProjectInput, opts: SuggestOptions 
     r = await engine.complete({
       system: TARGET_SYSTEM,
       messages: [
-        { role: "user", content: suggestPrompt(row, lib) },
+        { role: "user", content: suggestPrompt(row, promptLib) },
         { role: "assistant", content: JSON.stringify(data) },
         { role: "user", content: targetRepairPrompt(data, errs) },
       ],
@@ -354,6 +499,7 @@ export async function suggestTarget(project: ProjectInput, opts: SuggestOptions 
     }
     variants.push(res);
   }
+  if (hubInfo && catalog) hubInfo.missingMatches = missingModuleMatches(data.missingModules, lib ?? moduleLibrary(), catalog);
   return {
     project: { id: row.id, name: row.name },
     generatedAt: new Date().toISOString(),
@@ -366,6 +512,7 @@ export async function suggestTarget(project: ProjectInput, opts: SuggestOptions 
     repairs,
     usage,
     ms: Math.round(performance.now() - t0),
+    ...(hubInfo && { hub: hubInfo }),
   };
 }
 
@@ -374,7 +521,7 @@ export async function suggestTarget(project: ProjectInput, opts: SuggestOptions 
 /** Chemin par défaut : à côté du fichier projet (`x.target-suggestion.yaml`), sinon data/suggestions/<id>.target-suggestion.yaml. */
 export function suggestionPath(projectFile: string | null, projectId: string): string {
   if (projectFile) return join(dirname(projectFile), `${basename(projectFile, extname(projectFile))}.target-suggestion.yaml`);
-  return resolve("data/suggestions", `${projectId}.target-suggestion.yaml`);
+  return resolve(defaultDataDir(), "suggestions", `${projectId}.target-suggestion.yaml`);
 }
 
 /** Forme écrite dans le fichier : lisible, avec un bloc `target` prêt à copier par variante. */
@@ -415,6 +562,15 @@ export function suggestionDocument(s: TargetSuggestion): Record<string, unknown>
       }),
     })),
     missingModules: s.missingModules,
+    ...(s.hub && {
+      hub: {
+        candidates: s.hub.candidates.map((c) => `${c.ref}@${c.version} (${c.source})`),
+        ...(Object.keys(s.hub.missingMatches).length && {
+          existingForMissing: Object.fromEntries(Object.entries(s.hub.missingMatches).map(([id, l]) => [id, l.map((c) => `${c.ref}@${c.version}${c.quality ? ` (Q ${Math.round(c.quality.q)})` : ""}`)])),
+        }),
+        ...(s.hub.notes.length && { notes: s.hub.notes }),
+      },
+    }),
     notes: s.notes,
     usage: { claudeCalls: s.usage.calls, repairs: s.repairs, inputTokens: s.usage.inputTokens, outputTokens: s.usage.outputTokens, seconds: Math.round(s.ms / 1000) },
   };

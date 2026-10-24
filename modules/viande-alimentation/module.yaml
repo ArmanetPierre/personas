@@ -3,8 +3,11 @@
 # S'applique à tout adulte du socle Singapour. Libellés et lignes de fiche en anglais.
 # Format : docs/modules.md. L'ordre de déclaration est l'ordre de tirage.
 id: viande-alimentation
-version: "2026.2"
+version: "2026.3"
 changelog:
+  - version: "2026.3"
+    date: "2026-10-20"
+    changes: ["Attributs sensibles déclarés (religion/ethnie du socle), avec justification ; distributions inchangées."]
   - version: "2026.2"
     date: "2026-10-16"
     changes: ["Première version (socle sg) : contrainte alimentaire, lieux d'achat, dépense en viande, viandes préférées. Employées de maison et résidents de dortoirs : pas d'achat de viande pour leur foyer (valeurs nulles). La réception et le barbecue relèvent du module barbecue-reception."]
@@ -125,6 +128,8 @@ attributes:
     sources: [census2020_religion]
     assumption: true
     justification: "Religion shares are from Census 2020 (not verified); dietary rules by religion are assumptions (Islam → halal about 96%; Hinduism → no beef about 62%, vegetarian about 23%; Sikhism no beef or vegetarian; Buddhism and Taoism vegetarian 8-10%). No survey of household restrictions found; MUIS halal data not consulted. Applied at household level."
+    sensitive: true
+    sensitive_justification: "Religion (Census 2020) drives the household dietary rule (halal, no pork, no beef, vegetarian): a buying constraint for any meat or food offer, not a preference. Read at household level only; no trait, opinion or behaviour is attached to the religion itself, and the narrative checks (checkNarrative) stay active."
 
   - key: meat_channels
     label: Usual places to buy meat
@@ -178,6 +183,8 @@ attributes:
     sources: [sfa_food_stats_2021]
     assumption: true
     justification: "No consumer preference survey found. Chicken is the near-universal baseline (about 85%); pork excluded for halal and no-pork households and mostly Chinese elsewhere; beef about 45% overall, none for no-beef households; lamb about 15%, more among Malay and Indian households and in condo/landed. SFA supply statistics (PDF unread) could calibrate it. Null for vegetarian households, domestic workers and dormitory residents."
+    sensitive: true
+    sensitive_justification: "Ethnicity only tilts the meat mix (lamb, pork) on top of the dietary rule, with modest assumed coefficients; needed so that meat offers meet realistic households. No other trait is derived from ethnicity, and the narrative checks stay active."
 
 card:
   - "Diet: {dietary_restriction}"

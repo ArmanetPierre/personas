@@ -1,9 +1,9 @@
 import { useEffect, useState } from "react";
-import { useLocation } from "wouter";
+import { Link, useLocation } from "wouter";
 import { useApi, useMeta, type PersonaPage } from "../api";
 import { useDict } from "../i18n";
 import { personasDict } from "../i18n/personas";
-import { Cols, ErrorBox, int, Loading, packShort } from "../ui";
+import { Cols, EmptyState, ErrorBox, int, Loading, packShort, PeopleIcon } from "../ui";
 import { cap } from "./Study";
 
 const SOCLE_FACETS = ["ageBand", "activityStatus", "pcs", "livingStandard", "techAdoption", "townSize"];
@@ -106,46 +106,66 @@ export function PersonasPage() {
           <p className="small ink2" style={{ margin: "6px 0 10px" }}>
             {t.count(int(data.total))}
           </p>
-          <div className="panel table-wrap" style={{ padding: "6px 12px" }}>
-            <table className="table fixed">
-              <Cols widths={[150, null, 170, 210, 110, 64]} />
-              <thead>
-                <tr>
-                  <th>{t.colPersona}</th>
-                  <th>{t.colSituation}</th>
-                  <th>{t.colPopulation}</th>
-                  <th>{t.colProject}</th>
-                  <th className="r">{t.colBudget}</th>
-                  <th>{t.colNarrative}</th>
-                </tr>
-              </thead>
-              <tbody>
-                {data.items.map((p) => (
-                  <tr key={p.id} className="link" tabIndex={0} onClick={() => navigate(`/personas/${encodeURIComponent(p.id)}`)} onKeyDown={(e) => e.key === "Enter" && navigate(`/personas/${encodeURIComponent(p.id)}`)}>
-                    <td className="nowrap">
-                      <b>{p.firstName ?? "?"}</b>, {d.age(p.age)}
-                    </td>
-                    <td className="small">{p.occupation}</td>
-                    <td className="small ink2">{packShort(p.packVersion)}</td>
-                    <td className="small ink2">{p.segments.projectStage ? cap(p.segments.projectStage.label) : "—"}</td>
-                    <td className="r num">{d.eur(int(p.monthlyDiscretionaryBudgetEur))}</td>
-                    <td className="small">{p.hasNarrative ? t.yes : <span className="muted">{t.no}</span>}</td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-          <div className="row" style={{ marginTop: 14 }}>
-            <button className="btn ghost small" type="button" disabled={page <= 1} onClick={() => setPage(page - 1)}>
-              {t.prevPage}
-            </button>
-            <span className="small num ink2">
-              {t.pageOf(page, pages)}
-            </span>
-            <button className="btn ghost small" type="button" disabled={page >= pages} onClick={() => setPage(page + 1)}>
-              {t.nextPage}
-            </button>
-          </div>
+          {data.total === 0 ? (
+            <EmptyState
+              icon={<PeopleIcon />}
+              title={t.emptyTitle}
+              description={t.empty}
+              action={
+                Object.values(seg).some(Boolean) && (
+                  <button type="button" className="btn ghost small" onClick={() => setSeg({})}>
+                    {t.clearSegments}
+                  </button>
+                )
+              }
+            />
+          ) : (
+            <>
+              <div className="panel table-wrap" style={{ padding: "6px 12px" }}>
+                <table className="table fixed">
+                  <Cols widths={[150, null, 170, 210, 110, 64]} />
+                  <thead>
+                    <tr>
+                      <th>{t.colPersona}</th>
+                      <th>{t.colSituation}</th>
+                      <th>{t.colPopulation}</th>
+                      <th>{t.colProject}</th>
+                      <th className="r">{t.colBudget}</th>
+                      <th>{t.colNarrative}</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {data.items.map((p) => (
+                      <tr key={p.id} className="link" onClick={() => navigate(`/personas/${encodeURIComponent(p.id)}`)}>
+                        <td className="nowrap">
+                          <Link href={`/personas/${encodeURIComponent(p.id)}`} onClick={(e) => e.stopPropagation()}>
+                            <b>{p.firstName ?? "?"}</b>
+                          </Link>
+                          , {d.age(p.age)}
+                        </td>
+                        <td className="small">{p.occupation}</td>
+                        <td className="small ink2">{packShort(p.packVersion)}</td>
+                        <td className="small ink2">{p.segments.projectStage ? cap(p.segments.projectStage.label) : "—"}</td>
+                        <td className="r num">{d.eur(int(p.monthlyDiscretionaryBudgetEur))}</td>
+                        <td className="small">{p.hasNarrative ? t.yes : <span className="muted">{t.no}</span>}</td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+              <div className="row" style={{ marginTop: 14 }}>
+                <button className="btn ghost small" type="button" disabled={page <= 1} onClick={() => setPage(page - 1)}>
+                  {t.prevPage}
+                </button>
+                <span className="small num ink2">
+                  {t.pageOf(page, pages)}
+                </span>
+                <button className="btn ghost small" type="button" disabled={page >= pages} onClick={() => setPage(page + 1)}>
+                  {t.nextPage}
+                </button>
+              </div>
+            </>
+          )}
         </>
       )}
     </>

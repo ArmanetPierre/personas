@@ -197,6 +197,13 @@ const baseAttr = {
   when: conditionSchema.optional(),
   display: display.optional(),
   ...provenance,
+  /**
+   * Catégorie sensible au sens du RGPD, art. 9 (ethnie, religion, santé, orientation sexuelle, opinions
+   * politiques, syndicat), docs/plateforme.md § 11.4 : à déclarer, avec une justification d'usage
+   * (`sensitive_justification`). Exigé par le lint de sécurité (src/modules/lint.ts) ; sans effet sur le tirage.
+   */
+  sensitive: z.boolean().optional(),
+  sensitive_justification: z.string().optional(),
 };
 
 const enumAttr = z
@@ -282,7 +289,28 @@ const plausibilitySchema = z
   .strict()
   .refine((p) => (p.median_in ? 1 : 0) + (p.median_vs_table ? 1 : 0) === 1, { message: "plausibilité : median_in ou median_vs_table" });
 
-export const moduleSchema = z
+/** Alias local d'une dépendance dans les conditions (`alias.attr`) : même forme que le préfixe de `attrRef`. */
+export const REQUIRE_ALIAS = /^[a-z][a-z0-9_-]*$/;
+/** Référence d'une dépendance : id nu (bibliothèque locale puis `personas/`) ou `namespace/module` (docs/plateforme.md § 4.2). */
+export const MODULE_REF = /^(?:[a-z0-9-]+\/)?[a-z0-9][a-z0-9-]*$/;
+
+/**
+ * Dépendance (`requires`) : forme courte `numerique` (id nu, modules officiels ou locaux), ou forme longue
+ * `{ref: alice/sport, version: "2026.1", as: sport}`, épinglée à une version exacte (pas de plage). L'alias
+ * (`as`) est le préfixe des références dans les conditions (`sport.attr`).
+ */
+const requireEntry = z.union([
+  z.string().min(1),
+  z
+    .object({
+      ref: z.string().regex(MODULE_REF, "référence attendue : id ou namespace/module"),
+      version: z.union([z.string().min(1), z.number()]).transform(String),
+      as: z.string().regex(REQUIRE_ALIAS, "alias attendu en minuscules, chiffres, _ et - (ex. sport)"),
+    })
+    .strict(),
+]);
+
+const moduleObject = z
   .object({
     id: z.string().regex(/^[a-z][a-z0-9-]*$/, "id en minuscules et tirets (ex. entrepreneuriat-tech)"),
     version: z.union([z.string(), z.number()]).transform(String),
@@ -295,7 +323,13 @@ export const moduleSchema = z
     /** Historique des versions (la plus récente d'abord). */
     changelog: z.array(z.object({ version: z.union([z.string(), z.number()]).transform(String), date: z.string(), changes: z.array(z.string()).min(1) }).strict()).default([]),
     applies_to: z.array(z.string()).min(1),
-    requires: z.array(z.string()).default([]),
+    requires: z.array(requireEntry).default([]),
+    /** Licence du module publié (défaut de la bibliothèque : CC-BY-4.0, docs/plateforme.md § 10). */
+    license: z.string().optional(),
+    /** Version minimale du moteur qui comprend toutes les primitives utilisées. */
+    engine_min: z.string().optional(),
+    /** Origine d'un fork : `namespace/module@version`. */
+    forked_from: z.string().optional(),
     sources: z.record(z.string(), sourceSchema).default({}),
     conditions: z.record(z.string(), conditionSchema).default({}),
     tables: z.record(z.string(), tableSchema).default({}),
@@ -335,5 +369,28 @@ export const moduleSchema = z
       .default({ margins: [], plausibility: [], shares: [] }),
   })
   .strict();
+
+/**
+ * Module validé. `requires` est normalisé en chaînes : `id` (forme courte) ou `ref@version` (forme longue) ;
+ * `aliases` donne, pour chaque forme longue, l'alias local → `ref@version`.
+ */
+export const moduleSchema = moduleObject
+  .superRefine((d, ctx) => {
+    const seen = new Set<string>();
+    for (const [i, r] of d.requires.entries()) {
+      if (typeof r === "string") continue;
+      if (seen.has(r.as)) ctx.addIssue({ code: "custom", path: ["requires", i, "as"], message: `alias « ${r.as} » déclaré deux fois` });
+      seen.add(r.as);
+    }
+  })
+  .transform((d) => {
+    const aliases: Record<string, string> = {};
+    const requires = d.requires.map((r) => {
+      if (typeof r === "string") return r;
+      aliases[r.as] = `${r.ref}@${r.version}`;
+      return `${r.ref}@${r.version}`;
+    });
+    return { ...d, requires, aliases };
+  });
 
 export type ModuleDef = z.infer<typeof moduleSchema>;

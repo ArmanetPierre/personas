@@ -1,3 +1,4 @@
+import { moduleSpec } from "../config";
 import { existsSync, mkdirSync, readdirSync, readFileSync, statSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
 import { parse as parseYaml } from "yaml";
@@ -88,7 +89,7 @@ export function defaultAssistantLoader(): AssistantLoader {
     if (cached) return { api: cached };
     try {
       // Chemin en variable : le module peut ne pas exister au moment du typecheck et du build
-      const spec = "../modules/assistant/index";
+      const spec = moduleSpec("../modules/assistant/index");
       const mod = (await import(/* @vite-ignore */ spec)) as Partial<AssistantApi>;
       const missing = REQUIRED.filter((f) => typeof mod[f] !== "function");
       if (missing.length) return { api: null, reason: `Assistant incomplet : fonction(s) absente(s) : ${missing.join(", ")}.` };

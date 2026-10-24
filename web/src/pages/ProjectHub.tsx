@@ -1,11 +1,11 @@
-import { useEffect, useState, type ReactNode } from "react";
+import { useEffect, useId, useRef, useState, type ReactNode } from "react";
 import { PitchTonePanel, ToneGauge } from "./ProjectPitch";
 import { MiniBars } from "../evidence-charts";
 import { PaymentMeasureView } from "../payment";
 import { Link, useLocation, useSearch } from "wouter";
 import { api, useApi, useMeta, type ProjectDetail, type ProjectTargeting, type StudyListItem } from "../api";
 import { JobPanel, useJob } from "../jobs";
-import { dateFr, ErrorBox, int, Loading, money, num, pct, Status } from "../ui";
+import { dateFr, EmptyState, ErrorBox, int, Loading, money, num, pct, Status, TargetIcon } from "../ui";
 import { tr, useContentLocale, useDict } from "../i18n";
 import { projectDict } from "../i18n/project";
 import { ModuleStatus } from "./Modules";
@@ -108,12 +108,34 @@ function primaryAction(id: string, o: Overview | null, t: ProjectTargeting | und
   return { label: d.launchStudy, href: `${base}/etudes?nouvelle=1`, why: "" };
 }
 
-export function ProjectFrame({ id, tab, children }: { id: string; tab: Tab; children: (d: { data: ProjectData; overview: Overview | null; reload: () => void }) => ReactNode }) {
+export function ProjectFrame({ id, tab, children }: { id: string; tab: Tab; children: (d: { data: ProjectData; overview: Overview | null; overviewError: Error | null; reload: () => void }) => ReactNode }) {
   const proj = useApi<ProjectData>(`/projects/${encodeURIComponent(id)}`);
   const ov = useApi<Overview>(`/projects/${encodeURIComponent(id)}/overview`);
   const [pitchOpen, setPitchOpen] = useState(false);
   const [more, setMore] = useState(false);
+  const moreRef = useRef<HTMLDivElement>(null);
+  const moreBtn = useRef<HTMLButtonElement>(null);
+  const moreId = useId();
   const tf = useDict(projectDict).frame;
+  // Menu « Autres actions » : fermeture au clic extérieur et à Échap (le focus revient au déclencheur)
+  useEffect(() => {
+    if (!more) return;
+    const onDown = (e: MouseEvent) => {
+      if (moreRef.current && !moreRef.current.contains(e.target as Node)) setMore(false);
+    };
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === "Escape") {
+        setMore(false);
+        moreBtn.current?.focus();
+      }
+    };
+    document.addEventListener("mousedown", onDown);
+    document.addEventListener("keydown", onKey);
+    return () => {
+      document.removeEventListener("mousedown", onDown);
+      document.removeEventListener("keydown", onKey);
+    };
+  }, [more]);
   useContentLocale(proj.data?.project.locale ?? ov.data?.project.locale);
   if (proj.error) return <ErrorBox error={proj.error} />;
   if (!proj.data) return <Loading />;
@@ -149,14 +171,14 @@ export function ProjectFrame({ id, tab, children }: { id: string; tab: Tab; chil
           <Link className="btn" href={primary.href}>
             {primary.label}
           </Link>
-          <div className="more">
-            <button className="btn ghost" type="button" aria-expanded={more} aria-haspopup="menu" onClick={() => setMore(!more)}>
+          <div className="menu-anchor" ref={moreRef}>
+            <button ref={moreBtn} className="btn ghost" type="button" aria-expanded={more} aria-controls={moreId} onClick={() => setMore(!more)}>
               {tf.moreActions}
             </button>
             {more && (
-              <div className="menu" role="menu">
+              <div className="menu" id={moreId}>
                 {secondary.map((a) => (
-                  <Link key={a.href} href={a.href} role="menuitem" onClick={() => setMore(false)}>
+                  <Link key={a.href} href={a.href} onClick={() => setMore(false)}>
                     {a.label}
                   </Link>
                 ))}
@@ -173,7 +195,7 @@ export function ProjectFrame({ id, tab, children }: { id: string; tab: Tab; chil
           </Link>
         ))}
       </nav>
-      {children({ data: proj.data, overview: ov.data, reload })}
+      {children({ data: proj.data, overview: ov.data, overviewError: ov.error, reload })}
     </>
   );
 }
@@ -194,9 +216,10 @@ export function ProjectOverviewPage({ id }: { id: string }) {
   const tv = d.overview;
   return (
     <ProjectFrame id={id} tab="apercu">
-      {({ data, overview: o }) => {
+      {({ data, overview: o, overviewError }) => {
         const base = `/projets/${encodeURIComponent(id)}`;
         const p = data.project;
+        if (!o && overviewError) return <ErrorBox error={overviewError} />;
         if (!o) return <Loading what={tv.loading} />;
         const t = o.target;
         const blocking = data.targeting?.blocking ?? [];
@@ -454,10 +477,11 @@ export function ProjectTargetPage({ id }: { id: string }) {
   const tt = useDict(projectDict).target;
   return (
     <ProjectFrame id={id} tab="cible">
-      {({ data, overview: o, reload }) => {
+      {({ data, overview: o, overviewError, reload }) => {
         const t = data.targeting;
+        if (!o && overviewError) return <ErrorBox error={overviewError} />;
         if (!o) return <Loading />;
-        if (!o.target) return <div className="empty" style={{ marginTop: 24 }}>{tt.noTarget}</div>;
+        if (!o.target) return <EmptyState style={{ marginTop: 24 }} icon={<TargetIcon />} title={tt.noTargetTitle} description={tt.noTarget} />;
         const blocking = t?.blocking ?? [];
         return (
           <div className="stack" style={{ gap: 8 }}>
@@ -799,7 +823,9 @@ function useHashScroll() {
       const el = document.getElementById(h);
       if (el || ++tries > 20) {
         clearInterval(t);
-        el?.scrollIntoView({ behavior: "smooth", block: "start" });
+        // Défilement instantané si l'utilisateur a demandé moins d'animations
+        const reduce = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+        el?.scrollIntoView({ behavior: reduce ? "auto" : "smooth", block: "start" });
       }
     }, 150);
     return () => clearInterval(t);

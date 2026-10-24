@@ -79,7 +79,7 @@ export function printPreview(p: TargetPreview): void {
   const e = p.eligibility;
   console.log(m.draws(p.n, e.draws.toLocaleString(numberLocale)));
   if (p.filter) console.log(m.rate(pct(e.rate, 2), pct(e.ci[0], 2), pct(e.ci[1], 2)));
-  for (const w of [...e.warnings, ...e.shortfalls.map((s) => m.quota(s))]) console.log(`⚠ ${w}`);
+  for (const w of [...e.warnings, ...e.shortfalls.map((s) => m.quota(s))]) console.log(`⚠ ${errorText(w)}`);
   console.log(m.distributions);
   for (const d of p.distributions) {
     const vals = d.values.slice(0, 8).map((v) => `${v.label} ${Math.round(v.share * 100)}${t.common.pct}`).join(", ");

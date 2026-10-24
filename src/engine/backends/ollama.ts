@@ -1,5 +1,5 @@
 import { OLLAMA_MAX_CONCURRENCY } from "../../config";
-import type { Availability, Backend, BackendRequest, BackendResponse } from "../types";
+import type { Availability, Backend, BackendRequest, BackendResponse, ProviderCapabilities } from "../types";
 
 export interface OllamaOptions {
   /** URL du serveur Ollama (locale ou par tunnel SSH), par ex. http://localhost:11434. */
@@ -22,6 +22,7 @@ export const TUNNEL_HINT =
  */
 export class OllamaBackend implements Backend {
   readonly name = "ollama" as const;
+  readonly capabilities: ProviderCapabilities = { structured: "json-schema", webTools: false, logprobs: true };
   readonly model: string;
   readonly concurrency: number;
   private readonly fetch: typeof fetch;

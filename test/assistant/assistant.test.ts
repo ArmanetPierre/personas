@@ -17,6 +17,7 @@ import {
   saveDraftYaml,
   validateModuleYaml,
 } from "../../src/modules/assistant";
+import { YAML_MAX_TOKENS, YAML_TIMEOUT_MS } from "../../src/modules/assistant/propose";
 
 const VALID = `
 id: test-eco
@@ -131,6 +132,9 @@ describe("proposition, réparation, révision, validation", () => {
     expect(meta.status).toBe("ready");
     expect(requests[0]!.webTools).toEqual(["WebSearch", "WebFetch"]);
     expect(requests[1]!.webTools).toBeUndefined();
+    // Rédaction et réparations du YAML : plafond et délai propres (un module SG dépasse 16 000 tokens et 5 min)
+    for (const r of requests.slice(1)) expect(r).toMatchObject({ maxTokens: YAML_MAX_TOKENS, timeoutMs: YAML_TIMEOUT_MS });
+    expect(requests[0]!.maxTokens).toBe(16_000);
     // 2 tours de réparation : erreur de validation, puis alerte bloquante de l'aperçu (Mac sans ordinateur)
     expect(meta.steps?.repairRounds).toBe(2);
     expect(requests[3]!.messages.at(-1)!.content).toMatch(/personas sans un ordinateur/);

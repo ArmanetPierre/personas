@@ -1,7 +1,7 @@
 import { useRef, useState } from "react";
 import { Link, useLocation } from "wouter";
 import { api, ApiError, useApi, useMeta, type ProjectDetail, type ProjectListItem } from "../api";
-import { Cols, dateFr, ErrorBox, Loading, Status } from "../ui";
+import { Cols, dateFr, EmptyState, ErrorBox, FolderIcon, Loading, Status } from "../ui";
 import { tr, useDict } from "../i18n";
 import { projectDict } from "../i18n/project";
 
@@ -58,10 +58,23 @@ export function ProjectsPage() {
       <div className="section" style={{ marginTop: 36 }}>
         <ErrorBox error={error} />
         {!data && !error && <Loading />}
-        {data && data.length === 0 && <div className="empty">{t.empty}</div>}
+        {data && data.length === 0 && (
+          <EmptyState
+            icon={<FolderIcon />}
+            title={t.emptyTitle}
+            description={t.empty}
+            action={
+              mode !== "form" && (
+                <button className="btn" type="button" onClick={() => setMode("form")}>
+                  {t.create}
+                </button>
+              )
+            }
+          />
+        )}
         {data && data.length > 0 && (
           <div className="table-wrap">
-            <table className="table fixed">
+            <table className="table fixed projects-table">
               <Cols widths={[null, 170, 72, 280]} />
               <thead>
                 <tr>
@@ -76,10 +89,10 @@ export function ProjectsPage() {
                   <tr key={p.id} className="link" onClick={() => navigate(`/projets/${p.id}`)}>
                     <td style={{ maxWidth: 520 }}>
                       <Link href={`/projets/${p.id}`} onClick={(e) => e.stopPropagation()}>
-                        <b style={{ fontFamily: "var(--font-display)", fontSize: 17, fontWeight: 600 }}>{p.name}</b>
+                        <b className="cell-name">{p.name}</b>
                       </Link>
                       <span className="small muted num" style={{ marginLeft: 8 }}>{p.id}</span>
-                      <div className="small ink2" style={{ marginTop: 3, display: "-webkit-box", WebkitLineClamp: 2, WebkitBoxOrient: "vertical", overflow: "hidden" }}>
+                      <div className="small ink2 clamp-2" style={{ marginTop: 3 }}>
                         {p.pitch}
                       </div>
                     </td>
@@ -244,8 +257,8 @@ function ProjectForm({ onCreated }: { onCreated: (p: ProjectDetail) => void }) {
               </option>
             ))}
           </select>
-          {f.period === "usage" && <input type="text" value={f.usageLabel} onChange={set("usageLabel")} placeholder={t.usagePlaceholder} style={{ marginTop: 6 }} />}
-          {f.period === "quantity" && <input type="text" value={f.quantityUnit} onChange={set("quantityUnit")} placeholder={t.quantityPlaceholder} style={{ marginTop: 6 }} />}
+          {f.period === "usage" && <input type="text" value={f.usageLabel} onChange={set("usageLabel")} aria-label={t.usageLabelAria} placeholder={t.usagePlaceholder} style={{ marginTop: 6 }} />}
+          {f.period === "quantity" && <input type="text" value={f.quantityUnit} onChange={set("quantityUnit")} aria-label={t.quantityUnitAria} placeholder={t.quantityPlaceholder} style={{ marginTop: 6 }} />}
         </label>
         <label className="field">
           <span>{t.currency}</span>

@@ -1,0 +1,38 @@
+{
+ "id": "us-regions",
+ "title": "Régions du Census Bureau (adultes de 18 à 79 ans)",
+ "assumption": false,
+ "sources": [
+  {
+   "org": "U.S. Census Bureau",
+   "title": "American Community Survey 2024 1-year, B01001: Sex by Age (nation and states)",
+   "year": 2024,
+   "url": "https://data.census.gov/table/ACSDT1Y2024.B01001"
+  }
+ ],
+ "referenceYear": 2024,
+ "data": {
+  "regions": [
+   {
+    "code": "S",
+    "name": "South",
+    "population": 98329793
+   },
+   {
+    "code": "W",
+    "name": "West",
+    "population": 59900890
+   },
+   {
+    "code": "NE",
+    "name": "Northeast",
+    "population": 43678871
+   },
+   {
+    "code": "MW",
+    "name": "Midwest",
+    "population": 51574473
+   }
+  ]
+ }
+}

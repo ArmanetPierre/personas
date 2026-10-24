@@ -1,12 +1,12 @@
 import type { Db } from "../db/client";
-import { studies, type Study, type StudyPopulation } from "../db/schema";
+import { studies, type Study, type StudyEngineInfo, type StudyPopulation } from "../db/schema";
 import { allPersonas } from "../personas/store";
 import type { Pack } from "../personas/pack";
-import { getProject } from "./project";
+import { getProject, type ProjectExtra } from "./project";
 import { studyAudience } from "./locale";
 import { packManifest } from "./packs";
 import { toneWarning, type ToneWarning } from "./pitch-tone";
-import { PROTOCOL_ID, PROTOCOL_VERSION, type ProtocolVersion } from "./protocols/concept-price";
+import { hasV3Measures, PROTOCOL_ID, PROTOCOL_VERSION, PROTOCOL_VERSIONS, type ProtocolVersion } from "./protocols/concept-price";
 import { drawSample, quotasSchema, type Quotas } from "./sampling";
 import { findStudy, newStudyId } from "./store";
 import { drawTarget, eligibilityStats, persistDrawn, prepareTarget, resolveSoclePack, type EligibilityStats, type TargetSpec } from "../population/target";
@@ -45,14 +45,16 @@ export interface CreateStudyInput {
   seed: number;
   backend: string;
   model: string;
+  /** Moteur figé dans `studies.extra.engine` (fournisseur, modèle, profil, version de Personas). */
+  engine?: StudyEngineInfo;
   /** Reprend l'échantillon d'une autre étude (ses `n` premières personas, dans l'ordre, avec leurs groupes). */
   sameSampleAs?: string;
   /** Avec `sameSampleAs` : ne reprend que les personas de ce groupe (ex. "target"). */
   sameSampleGroup?: string;
   name?: string;
-  /** Version du protocole (par défaut la dernière, v3) ; "2" force le protocole figé des études existantes. */
+  /** Version du protocole (par défaut la dernière, v4) ; "3" ou "2" forcent un protocole figé des études existantes. */
   protocolVersion?: ProtocolVersion;
-  /** v3 : lance l'étude malgré un pitch au ton commercial (score ≥ seuil). Sans effet en v2 (simple avertissement). */
+  /** v3 et v4 : lance l'étude malgré un pitch au ton commercial (score ≥ seuil). Sans effet en v2 (simple avertissement). */
   force?: boolean;
 }
 
@@ -101,22 +103,22 @@ export function createStudy(db: Db, pack: Pack, input: CreateStudyInput): Create
   if (!project) throw new Error(`Projet introuvable : ${input.projectId}`);
   if (input.backend === "anthropic-api") throw new Error("Backend anthropic-api refusé (API payante).");
   const version = input.protocolVersion ?? PROTOCOL_VERSION;
-  if (version !== "2" && version !== "3") throw new Error(`Version de protocole inconnue : ${String(version)} (2 ou 3).`);
+  if (!PROTOCOL_VERSIONS.includes(version)) throw new Error(`Version de protocole inconnue : ${String(version)} (2, 3 ou 4).`);
   // Garde-fou : un pitch commercial fausse le test de l'idée (expérience du 2026-10-15).
-  // v3 : refus sans --force (aucune neutralisation silencieuse) ; v2 : avertissement seul.
+  // v3 et v4 : refus sans --force (aucune neutralisation silencieuse) ; v2 : avertissement seul.
   const locale = creationLocale(db, project, input);
   const tone = toneWarning(project.pitch, undefined, locale);
-  if (version === "3" && tone.warn && !input.force && locale === "en") {
+  if (hasV3Measures(version) && tone.warn && !input.force && locale === "en") {
     throw new Error(
       `Pitch with a commercial tone (score ${tone.score}/100, threshold ${tone.threshold}${tone.markers.length ? `; markers: ${tone.markers.slice(0, 5).join(", ")}` : ""}): ` +
-        `protocol v3 requires a neutral pitch. Neutralise it: npm run project:neutralize-pitch -- --project ${project.id}; ` +
+        `protocol v${version} requires a neutral pitch. Neutralise it: npm run project:neutralize-pitch -- --project ${project.id}; ` +
         `or override with --force (the confidence index will flag it).`,
     );
   }
-  if (version === "3" && tone.warn && !input.force) {
+  if (hasV3Measures(version) && tone.warn && !input.force) {
     throw new Error(
       `Pitch au ton commercial (score ${tone.score}/100, seuil ${tone.threshold}${tone.markers.length ? ` ; marqueurs : ${tone.markers.slice(0, 5).join(", ")}` : ""}) : ` +
-        `le protocole v3 exige un pitch neutre. Neutraliser : npm run project:neutralize-pitch -- --project ${project.id} ; ` +
+        `le protocole v${version} exige un pitch neutre. Neutraliser : npm run project:neutralize-pitch -- --project ${project.id} ; ` +
         `ou passer outre avec --force (l'indice de confiance le signalera).`,
     );
   }
@@ -149,7 +151,8 @@ export function createStudy(db: Db, pack: Pack, input: CreateStudyInput): Create
     for (const pop of pops) {
       if (pop.target) {
         // Ciblage : tirage virtuel filtré, mis en cache ; les ids déjà pris par un autre groupe sont sautés.
-        const prepared = prepareTarget({ ...pop.target, ...(pop.quotas && { quotas: pop.quotas }) });
+        // Lock du projet (personas hub lock) : socle et modules à leur version exacte, hors ligne
+        const prepared = prepareTarget({ ...pop.target, ...(pop.quotas && { quotas: pop.quotas }) }, { lock: (project.extra as ProjectExtra).lock });
         const drawn = drawTarget(prepared, pop.n, input.seed, { exclude: new Set(ids), ...(pop.accept && { accept: pop.accept }) });
         const cache = persistDrawn(db, drawn.personas);
         const stats = eligibilityStats(prepared, drawn);
@@ -202,10 +205,11 @@ export function createStudy(db: Db, pack: Pack, input: CreateStudyInput): Create
       personaIds: ids,
       sampleFromStudyId: sampleFrom,
       progressTotal: ids.length,
+      ...(input.engine && { extra: { engine: input.engine } }),
     })
     .returning()
     .get();
-  if (tone.warn) notes.push(version === "3" ? `⚠ Pitch au ton commercial (score ${tone.score}/100), étude forcée (--force) : les prix et le frein « confiance » sont faussés.` : `⚠ ${tone.message}`);
+  if (tone.warn) notes.push(hasV3Measures(version) ? `⚠ Pitch au ton commercial (score ${tone.score}/100), étude forcée (--force) : les prix et le frein « confiance » sont faussés.` : `⚠ ${tone.message}`);
   return { study, shortfalls, notes, ...(tone.warn && { pitchTone: tone }) };
 }
 

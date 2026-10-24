@@ -14,6 +14,14 @@ import type { SgPack } from "./pack";
 const money = (n: number) => `S$${Math.round(n).toLocaleString("en-SG")}`;
 const level = (x: number) => (x < 0.25 ? "low" : x < 0.45 ? "rather low" : x < 0.6 ? "medium" : x < 0.8 ? "high" : "very high");
 
+
+/** « 1 person, 1 adult-equivalent » / « 3 people, 2.1 adult-equivalents » (fiche lisible SG et US). */
+export function householdCountsEn(size: number | null | undefined, units: number | null | undefined): string {
+  const people = size == null ? "? people" : `${size} ${size === 1 ? "person" : "people"}`;
+  const eq = units == null ? "? adult-equivalents" : `${units} ${units === 1 ? "adult-equivalent" : "adult-equivalents"}`;
+  return `${people}, ${eq}`;
+}
+
 export const ROGERS_LABELS_EN: Record<string, string> = {
   innovator: "innovator (tries everything new)",
   early_adopter: "early adopter (adopts early what is useful to them)",
@@ -201,8 +209,10 @@ function incomeLine(p: Persona): string {
   return `Personal income: ${personal}${remit}; household income after tax and government transfers: ${money(p.householdIncomeEur ?? 0)}/month`;
 }
 
-/** Fiche compacte envoyée au LLM (récit, étude) ; `modules` comme pour la fiche française. */
-export function sgDescribeForPrompt(pack: SgPack, p: Persona, opts: { modules?: boolean | string[] } = {}): string {
+const wrap = (lines: string[], f?: (lines: string[]) => string[]) => (f ? f(lines) : lines);
+
+/** Fiche compacte envoyée au LLM (récit, étude) ; `modules` et `wrapModules` comme pour la fiche française. */
+export function sgDescribeForPrompt(pack: SgPack, p: Persona, opts: { modules?: boolean | string[]; wrapModules?: (lines: string[]) => string[] } = {}): string {
   const x = xOf(p);
   const lines = [
     `Name: ${p.firstName ?? "(your choice, consistent with age and background)"}; ${p.sex === "F" ? "woman" : "man"}; ${p.age} years old`,
@@ -210,7 +220,7 @@ export function sgDescribeForPrompt(pack: SgPack, p: Persona, opts: { modules?: 
     `Background: ${backgroundLine(pack, p)}`,
     `Lives in: ${placeLine(pack, p)}`,
     `Situation: ${p.occupation}`,
-    ...(opts.modules === false ? [] : sgModuleLines(pack, p, Array.isArray(opts.modules) ? opts.modules : undefined)),
+    ...(opts.modules === false ? [] : wrap(sgModuleLines(pack, p, Array.isArray(opts.modules) ? opts.modules : undefined), opts.wrapModules)),
     `Household: ${householdLine(pack, p)}; housing: ${housingLine(pack, p)}`,
     incomeLine(p),
     `Discretionary budget after committed and day-to-day expenses and subscriptions: ${money(p.monthlyDiscretionaryBudgetEur)}/month` +
@@ -235,7 +245,7 @@ export function formatSgPersona(pack: SgPack, p: Persona): string {
     `Background     ${backgroundLine(pack, p)}`,
     `Lives in       ${placeLine(pack, p)}`,
     ...sgModuleLines(pack, p).map((l) => `Module         ${l}`),
-    `Household      ${householdLine(pack, p)} (${p.householdSize ?? "?"} people, ${x.consumptionUnits ?? "?"} adult-equivalents)`,
+    `Household      ${householdLine(pack, p)} (${householdCountsEn(p.householdSize, x.consumptionUnits)})`,
     `Housing        ${housingLine(pack, p)}`,
     `Income         ${incomeLine(p).replace(/^Personal income: /, "")}`,
     `Tax/transfers  income tax ${money(x.incomeTaxEur ?? 0)}/month; transfers ${money(x.benefitsEur ?? 0)}/month`,

@@ -49,7 +49,41 @@ Any change to a study prompt must preserve these constraints. See [CONTRIBUTING.
   - **`claude` CLI** ([Claude Code](https://docs.anthropic.com/en/docs/claude-code)), logged in with **your own** Claude subscription. This is the default engine (`claude-cli`, model `sonnet`), and the one the protocol was calibrated on. Personas never calls the paid Anthropic API: the `anthropic-api` backend is a disabled placeholder, and `ANTHROPIC_*` variables are stripped from the environment of the `claude` subprocess.
   - **or Ollama**, running locally (default `http://localhost:11434`, model `qwen3:8b`). Concurrency towards Ollama is capped at 2 in code. Studies and narratives can run on Ollama; the assistants (recommendations, pitch neutralisation, module, target and protocol assistants) currently use the `claude` CLI only. The optional relevance pre-screen (`target:preview --triage`) uses Ollama only.
 
-### Install
+### Install as a command
+
+Personas is a local web service: nothing runs on someone else's server. Install the `personas` command once, then open the dashboard in your browser.
+
+> **Not published on npm yet.** Until it is, install from the repository (npm builds the package on the fly; replace `<owner>` with the account hosting the public repository):
+> `npm i -g github:<owner>/personas`, or from a clone: `npm ci && npm pack`, then `npm i -g ./personas-<version>.tgz`.
+> Once published, this will simply be `npm i -g personas`.
+
+```sh
+npm i -g github:<owner>/personas   # later: npm i -g personas
+personas ui                        # opens the dashboard on a free port of 127.0.0.1 (Ctrl+C to stop)
+personas --help                    # every command, in English or French
+```
+
+On first launch, when no engine is configured and the `claude` CLI is not found, the dashboard opens a setup screen (also reachable from **Configure the engine** in the sidebar):
+
+1. **Engine**: your Claude subscription through the `claude` CLI (personal use only), an API key (Anthropic, OpenAI, Gemini, OpenRouter; each with a link to the provider's key page), or a local server (Ollama, vLLM).
+2. **Key**: pasted once, tested on a free endpoint (model or catalogue lookup, no generation), then stored in the system keychain (macOS Keychain, Windows Credential Manager, Secret Service on Linux). It is never written to a file, logged or sent back to the page. The setup API only answers the dashboard on 127.0.0.1, with a session token generated when `personas ui` starts.
+3. **Spending cap** per study (default $5), saved in the engine profile.
+4. **Demo**: creates an example project (20 personas) that you then launch from the project page.
+
+Every `npm run x:y` script of the repository is a sub-command: `personas study run <study-id>`, `personas project create --file my-project.yaml`, `personas engine profile add …`, `personas mcp`. `personas <group>` lists a group (`personas engine`), `personas <command> --help` shows its options.
+
+**Where your data lives.** The installed command keeps its SQLite database, logs and copies of the demo projects in a per-user folder: `~/Library/Application Support/Personas` (macOS), `%APPDATA%\Personas` (Windows), `$XDG_DATA_HOME/personas` or `~/.local/share/personas` (Linux). Set `PERSONAS_DATA_DIR` to use another folder (or `DATABASE_PATH` for the database file alone). The database is created and migrated on first launch. Engine profiles are in `~/.personas/config.json` (never a key).
+
+**Engine profiles and keys from the terminal.**
+
+```sh
+personas engine profile add --name openai --provider openai --model gpt-5-mini --per-study-usd 5 --use
+personas engine key set --profile openai      # masked input, stored in the system keychain
+personas engine key test --profile openai     # free endpoint, no generation
+personas engine profile list
+```
+
+### Install from source (contributors)
 
 ```sh
 git clone <this repository> personas
@@ -59,6 +93,8 @@ cp .env.example .env          # adjust the engine settings if needed
 npm run db:migrate            # creates ./data/personas.db (commands also migrate on start)
 npm run engine:check          # checks each engine with one small JSON request
 ```
+
+In a clone, data stays in `./data` and the commands run from the TypeScript sources (`npm run study:run -- …`). `npm run build` compiles the package (`dist/` and `web/dist/`); `npm pack` does it too.
 
 `npm run engine:check -- --backend claude-cli` or `-- --backend ollama` checks a single engine.
 
@@ -107,11 +143,33 @@ npm run study:recommend -- --study <study-id>                 # findings and nex
 
 ### 4. Open the dashboard
 
+Installed command: `personas ui`. From a clone:
+
 ```sh
 npm run dev:web               # http://localhost:5173 (listens on the loopback interface only)
 ```
 
 Or build once and serve: `npm run build:web && npm run start:web`. Set `PERSONAS_WEB_PORT` to use another port. The dashboard lists projects, studies (progress, results by segment, verbatims, comparisons), personas and modules, and can create projects, start studies and run the assistants.
+
+### 5. Use it from an agent (MCP)
+
+`personas mcp` (installed) or `npm run mcp` (clone) starts a local [MCP](https://modelcontextprotocol.io) server over stdio, on the same database as the CLI and the dashboard. Keep `--silent`: npm otherwise prints a banner on stdout, which breaks the protocol.
+
+```sh
+# Claude Code, installed command
+claude mcp add personas -- personas mcp
+# Claude Code, from a clone
+claude mcp add personas -- npm --prefix /path/to/personas run --silent mcp
+```
+
+```json
+// Claude Desktop: claude_desktop_config.json
+{ "mcpServers": { "personas": { "command": "npm", "args": ["--prefix", "/path/to/personas", "run", "--silent", "mcp"] } } }
+```
+
+- Read tools: `list_projects`, `get_project`, `preview_target` (no LLM pre-sort unless asked), `study_status`, `study_summary` (with the confidence index and the model), `compare_studies`, `list_modules`, `search_modules`.
+- Tools that cost LLM calls or write: `create_project`, `suggest_target`, `create_study`, `run_study` (detached, returns at once), `recommend`. Each one first returns a preview with the planned calls (n responses + ~10 % repairs + one call per 10 missing narratives); it acts only when called again with `confirm: true`.
+- Not exposed: accepting a module, applying a pitch neutralisation, deleting anything. The pitch-tone guard applies as in the CLI, with no `--force`.
 
 ## Examples
 
@@ -137,14 +195,14 @@ Early. Expect breaking changes.
 
 - **Single-model calibration.** The protocol and its anti-sycophancy safeguards were tuned with Claude Sonnet through the `claude` CLI. Other models (including local Ollama models) run, but their bias has not been measured: treat their results as uncalibrated, and compare variants rather than levels. The engine and model are recorded on every study.
 - **M2 is uncalibrated** (`calibration/payment-v3.json`, status `uncalibrated`) until it is fitted with `npm run calibration:fit` on a series of products with a known paying share.
-- **Coming next:** multi-provider "bring your own key" (OpenAI-compatible servers, OpenRouter, Gemini, Anthropic) with a cost estimate and a spending cap before each run; an installable CLI and desktop app; a shared library of modules and country packs.
+- **Coming next:** multi-provider "bring your own key" (OpenAI-compatible servers, OpenRouter, Gemini, Anthropic) with a cost estimate and a spending cap before each run; publication on npm; a shared library of modules and country packs.
 - Multi-role studies are implemented and tested with a simulated engine; they are less battle-tested than single-role studies.
 - Usage simulation (driving a real app with personas) is out of scope for now.
 
 ## Documentation
 
 - [docs/architecture.md](docs/architecture.md): how the code is organised (data model, persona generation, study pipeline, LLM agents, i18n).
-- [docs/study-protocol.md](docs/study-protocol.md): the concept-and-price protocol v3 (M1, G, M2, confidence index, pitch tone).
+- [docs/study-protocol.md](docs/study-protocol.md): the concept-and-price protocol v4 (v3 plus the module-attribute block; M1, G, M2, confidence index, pitch tone).
 - [docs/modules.en.md](docs/modules.en.md): how to write and validate a thematic module.
 - [docs/country-packs.md](docs/country-packs.md): the country-pack contract and how to add a country.
 - [CONTRIBUTING.md](CONTRIBUTING.md), [SECURITY.md](SECURITY.md), [CODE_OF_CONDUCT.md](CODE_OF_CONDUCT.md).
@@ -153,7 +211,8 @@ Early. Expect breaking changes.
 
 ## Licence
 
-- Code: [Apache License 2.0](LICENSE).
+- Code: [Apache License 2.0](LICENSE), except the Hub service.
+- Hub service (`hub/`): [GNU AGPL 3.0](hub/LICENSE). If you run a modified Hub as a network service, you must offer its source to its users. The engine, CLI and dashboard it builds on stay Apache-2.0.
 - Modules (`modules/`) and country packs (`packs/`): [CC BY 4.0](modules/LICENSE). Each table cites its sources.
 - Personas you draw and study results you produce are yours.
 

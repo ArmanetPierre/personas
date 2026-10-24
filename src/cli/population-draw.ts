@@ -62,7 +62,7 @@ try {
   console.log(t.common.filter(prepared.filter?.source));
   console.log(t.populationDraw.retained(d.personas.length, d.draws.toLocaleString(numberLocale), Math.round(performance.now() - t0)));
   if (prepared.filter) console.log(t.populationDraw.rate(pct(d.rate), pct(d.ci[0]), pct(d.ci[1]), d.eligible));
-  for (const w of d.warnings) console.log(`⚠ ${w}`);
+  for (const w of d.warnings) console.log(`⚠ ${errorText(w)}`);
   for (const s of d.shortfalls) console.log(t.populationDraw.quota(s));
   const dist = (f: (p: (typeof d.personas)[number]) => unknown) => {
     const c = new Map<string, number>();

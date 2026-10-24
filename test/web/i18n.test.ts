@@ -122,6 +122,15 @@ describe("i18n de l'API", () => {
   it("messages d'erreur : motifs traduits, message inconnu laissé tel quel", () => {
     expect(messageIn("en", "L'étude abc tourne déjà (processus 42).")).toBe("Study abc is already running (process 42).");
     expect(messageIn("en", "Module « numerique » introuvable")).toBe("Module “numerique” not found");
+    // Garde-fou de budget pour un modèle sans prix (UnknownCostBlockedError, src/engine/budget.ts)
+    expect(
+      messageIn(
+        "en",
+        "Plafond de dépense non vérifiable (profil t-cap) : prix du modèle gpt-x inconnu (absent de pricing/models.json), aucun appel n'est parti. Ajouter son prix au fichier (ou PERSONAS_PRICING), ou accepter le coût inconnu pour cette étude : personas study run st-1 --accept-unknown-cost (coût compté au prix du modèle le plus cher du fournisseur).",
+      ),
+    ).toBe(
+      "Spending cap cannot be checked (profile t-cap): the price of model gpt-x is unknown (not in pricing/models.json), no call was sent. Add its price to the file (or PERSONAS_PRICING), or accept the unknown cost for this study: personas study run st-1 --accept-unknown-cost (cost counted at the price of the provider's most expensive model).",
+    );
     expect(messageIn("en", "Module « a » introuvable (requis par b)")).toBe("Module “a” not found (required by b)");
     expect(messageIn("en", "Message inconnu")).toBe("Message inconnu");
     expect(messageIn("fr", "Projet introuvable : x")).toBe("Projet introuvable : x");

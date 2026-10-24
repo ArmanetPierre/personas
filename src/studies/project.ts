@@ -9,6 +9,7 @@ import { normalizePricing, pricingSchema, referenceOffer, type Pricing } from ".
 import { projectTargetingSchema, type TargetSpec } from "../population/target";
 import { projectProtocolSchema, type ProjectProtocol } from "./protocols/protocol";
 import { rolesSchema, type RoleSpec } from "./roles";
+import { readSidecarLock, type ProjectLock } from "../hub/lock";
 
 /** Fichier de description d'un projet (JSON ou YAML). */
 export const projectFileSchema = z.object({
@@ -77,6 +78,8 @@ export interface ProjectExtra {
   pitchNeutralized?: boolean;
   /** Rôles (phase 7) ; absent : projet classique. */
   roles?: RoleSpec[];
+  /** Lock (phase 2, `personas hub lock`) : versions exactes et sha256 du socle et des modules. */
+  lock?: ProjectLock;
 }
 
 export function slugify(s: string): string {
@@ -143,6 +146,9 @@ export function priceColumns(file: Pick<ProjectFile, "price" | "priceTiers" | "f
 export function createProject(db: Db, file: ProjectFile, opts: { sourceFile?: string; update?: boolean } = {}): Project {
   const id = file.id ?? slugify(file.name);
   const cols = priceColumns(file);
+  const existing = getProject(db, id);
+  // Lock : fichier voisin `<projet>.personas.lock` s'il existe, sinon celui déjà en base (jamais recalculé ici)
+  const lock = (opts.sourceFile ? readSidecarLock(opts.sourceFile) : undefined) ?? (existing?.extra as ProjectExtra | undefined)?.lock;
   const values = {
     name: file.name,
     pitch: file.pitch.trim(),
@@ -162,9 +168,9 @@ export function createProject(db: Db, file: ProjectFile, opts: { sourceFile?: st
       ...(file.pitchOriginal && { pitchOriginal: file.pitchOriginal }),
       ...(file.pitchNeutralized !== undefined && { pitchNeutralized: file.pitchNeutralized }),
       ...(file.roles && { roles: file.roles }),
+      ...(lock && { lock }),
     } satisfies ProjectExtra,
   };
-  const existing = getProject(db, id);
   if (existing) {
     if (!opts.update) throw new Error(`Le projet « ${id} » existe déjà (ajouter --update pour le remplacer).`);
     return db.update(projects).set(values).where(eq(projects.id, id)).returning().get();

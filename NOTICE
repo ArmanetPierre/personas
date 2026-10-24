@@ -2,8 +2,10 @@ Personas
 Copyright 2026 Pierre Armanet
 
 This product is licensed under the Apache License, Version 2.0 (see LICENSE),
-except for the following directories, which are data and are licensed under
-the Creative Commons Attribution 4.0 International licence (CC BY 4.0):
+except for the Hub service in hub/, licensed under the GNU Affero General
+Public License, version 3 (see hub/LICENSE), and for the following
+directories, which are data and are licensed under the Creative Commons
+Attribution 4.0 International licence (CC BY 4.0):
 
   - modules/  thematic persona modules (see modules/LICENSE)
   - packs/    country packs: base-population tables (see packs/LICENSE)

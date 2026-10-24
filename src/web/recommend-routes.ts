@@ -1,3 +1,4 @@
+import { moduleSpec } from "../config";
 import { existsSync, readFileSync, statSync } from "node:fs";
 import { join } from "node:path";
 import type { Hono } from "hono";
@@ -61,7 +62,7 @@ export function defaultRecommendLoader(): RecommendLoader {
   return async () => {
     if (cached) return { api: cached };
     try {
-      const spec = "../studies/recommend";
+      const spec = moduleSpec("../studies/recommend");
       const mod = (await import(/* @vite-ignore */ spec)) as Partial<RecommendApi>;
       if (typeof mod.createNextStudy !== "function") return { api: null, reason: "Recommandations indisponibles : createNextStudy absente de src/studies/recommend.ts." };
       cached = mod as RecommendApi;

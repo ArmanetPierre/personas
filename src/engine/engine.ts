@@ -1,5 +1,6 @@
 import { z } from "zod";
 import { buildRepairPrompt, parseWithSchema } from "./json";
+import type { BudgetGuard } from "./budget";
 import { createLimiter, type Limiter } from "./limiter";
 import type {
   Backend,
@@ -25,6 +26,8 @@ export interface EngineOptions {
   maxRepairs?: number;
   /** Limiteur partagé ; par défaut un limiteur à `backend.concurrency`. */
   limiter?: Limiter;
+  /** Plafond de dépense partagé (docs/plateforme.md § 7.3) : vérifié avant chaque appel, usage cumulé après. */
+  budget?: BudgetGuard;
 }
 
 interface BaseRequest {
@@ -43,6 +46,7 @@ interface BaseRequest {
  */
 export class Engine {
   readonly limiter: Limiter;
+  readonly budget: BudgetGuard | undefined;
   private readonly maxRepairs: number;
 
   constructor(
@@ -51,6 +55,12 @@ export class Engine {
   ) {
     this.limiter = options.limiter ?? createLimiter(backend.concurrency);
     this.maxRepairs = options.maxRepairs ?? 2;
+    this.budget = options.budget;
+  }
+
+  /** Même backend et même limiteur (concurrence du processus), avec un plafond de dépense. */
+  withBudget(budget: BudgetGuard): Engine {
+    return new Engine(this.backend, { limiter: this.limiter, maxRepairs: this.maxRepairs, budget });
   }
 
   complete<S extends z.ZodType>(
@@ -80,7 +90,18 @@ export class Engine {
         ...(request.webTools?.length && { webTools: request.webTools }),
         ...(request.timeoutMs !== undefined && { timeoutMs: request.timeoutMs }),
       };
-      const response = await this.limiter.run(() => this.backend.generate(backendRequest));
+      const budget = this.budget;
+      const response = await this.limiter.run(async () => {
+        // Vérifié au moment de l'appel (dans le limiteur) : les appels en attente voient le coût des précédents
+        const release = budget?.reserve(budget.expectedCost(backendRequest));
+        try {
+          const r = await this.backend.generate(backendRequest);
+          budget?.record(r.usage, r.model);
+          return r;
+        } finally {
+          release?.();
+        }
+      });
       addUsage(usage, response.usage);
 
       const base = {

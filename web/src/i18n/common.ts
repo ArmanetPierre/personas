@@ -3,7 +3,7 @@ import { defineDict } from "./index";
 /** Textes communs : coquille, navigation, statuts, états de chargement. */
 export const commonDict = defineDict(
   {
-    nav: { projects: "Projets", compare: "Comparer des études", personas: "Personas", modules: "Modules", main: "Navigation principale" },
+    nav: { projects: "Projets", compare: "Comparer des études", personas: "Personas", modules: "Modules", main: "Navigation principale", setup: "Configurer le moteur" },
     brandHome: "Personas, accueil",
     theme: { label: "Thème", auto: "Auto", light: "Clair", dark: "Sombre" },
     loading: "Chargement",
@@ -19,7 +19,7 @@ export const commonDict = defineDict(
     apiError: (status: number) => `Erreur ${status}`,
   },
   {
-    nav: { projects: "Projects", compare: "Compare studies", personas: "Personas", modules: "Modules", main: "Main navigation" },
+    nav: { projects: "Projects", compare: "Compare studies", personas: "Personas", modules: "Modules", main: "Main navigation", setup: "Configure the engine" },
     brandHome: "Personas, home",
     theme: { label: "Theme", auto: "Auto", light: "Light", dark: "Dark" },
     loading: "Loading",

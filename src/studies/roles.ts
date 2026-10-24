@@ -1,6 +1,7 @@
 import { z } from "zod";
 import type { Persona, Project } from "../db/schema";
 import { cardLines, drawPhase, type ModuleValues } from "../modules/engine";
+import { attributeBlock, type BlockLocale } from "./protocols/attribute-block";
 import { moduleLibrary, resolveModules, type LoadedModule, type ResolvedModules } from "../modules/registry";
 import { Rng } from "../personas/rng";
 import { compileEligibility, type CompiledEligibility } from "../population/eligibility";
@@ -244,9 +245,13 @@ export function pickChild(p: ChildPersona, prepared: PreparedChild, studySeed: n
 export const childDesignation = (c: Pick<ChildProfile, "age" | "sex">, possessive: "ton" | "mon" = "ton") =>
   `${c.sex === "M" ? possessive : possessive === "ton" ? "ta" : "ma"} ${c.sex === "M" ? "fils" : "fille"} de ${c.age} an${c.age > 1 ? "s" : ""}`;
 
-/** Bloc « Ton enfant » du prompt utilisateur. */
-export function childBlock(c: ChildProfile): string {
-  const lines = [`${childDesignation(c).replace(/^./, (x) => x.toUpperCase())}, qui vit avec toi.`, ...c.lines.map((l) => `- ${l}`)];
+/**
+ * Bloc « Ton enfant » du prompt utilisateur. `attributeBlock` (protocole v4) : les lignes des modules enfant
+ * sont placées dans le bloc délimité, valeurs neutralisées ; absent : texte historique.
+ */
+export function childBlock(c: ChildProfile, opts: { attributeBlock?: BlockLocale } = {}): string {
+  const head = `${childDesignation(c).replace(/^./, (x) => x.toUpperCase())}, qui vit avec toi.`;
+  const lines = [head, ...(opts.attributeBlock ? attributeBlock(c.lines, opts.attributeBlock, "- ") : c.lines.map((l) => `- ${l}`))];
   return `## L'enfant pour qui tu décides\n${lines.join("\n")}\nTu réponds pour cet enfant-là : parle de « ${childDesignation(c, "mon")} ».`;
 }
 

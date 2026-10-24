@@ -23,11 +23,71 @@ export interface Meta {
   priceUnits?: Array<{ id: string; label: string }>;
   currencies?: Array<{ id: string; fx?: Fx }>;
   backends: Array<{ id: string; label: string; defaultModel: string }>;
+  /** Profils de moteur (jamais de clé) : tarification et plafond par étude. */
+  profiles?: EngineProfileInfo[];
   methodNote: string;
   smallSegment: number;
   /** Socles déclarés (packs/socles.json). */
   socles?: Array<{ id: string; pack: string }>;
   packs: PackInfo[];
+  /**
+   * Service hébergé (phase 4) : `mode: "hosted"`, fonctions disponibles et configuration publique de connexion.
+   * Absents en local (dépôt ou paquet installé) : l'interface reste celle du tableau de bord local.
+   */
+  mode?: "local" | "hosted";
+  features?: string[];
+  supabaseUrl?: string;
+  supabaseAnonKey?: string;
+  githubEnabled?: boolean;
+}
+
+export interface EngineProfileInfo {
+  name: string;
+  provider: string;
+  model: string;
+  builtin: boolean;
+  active: boolean;
+  paid: boolean;
+  pricing: "paid" | "subscription" | "local" | "unknown";
+  perStudyUsd?: number;
+  perDayUsd?: number;
+  perMonthUsd?: number;
+}
+
+/** Moteur figé dans une étude (studies.extra.engine). */
+export interface StudyEngine {
+  provider: string;
+  model: string;
+  reportedModel?: string;
+  profile: string;
+  personasVersion: string;
+}
+
+/** Base des moyennes de l'estimation : `version` des mesures, `forVersion` de l'étude (v3 appliqué à la v4). */
+export interface EstimateBasis {
+  source: "local" | "reference";
+  responses: number;
+  provider: string;
+  socle: string;
+  version: string;
+  forVersion?: string;
+}
+
+export interface CostEstimate {
+  profile: string;
+  provider: string;
+  model: string;
+  calls: { responses: number; repairs: number; narratives: number; triage: number; total: number };
+  tokens: { input: number; output: number; cacheRead: number };
+  cost: { kind: "paid" | "subscription" | "local" | "unknown"; usd: number | null; low: number | null; high: number | null; priceSource: string | null };
+  durationMinutes: number;
+  concurrency: number;
+  basis: EstimateBasis;
+  limits: { perStudyUsd?: number; perDayUsd?: number; perMonthUsd?: number };
+  exceedsStudyCap: boolean;
+  requiresConfirmation: boolean;
+  sampleSize?: number;
+  missingNarratives?: number;
 }
 
 export interface PackInfo {
@@ -155,6 +215,7 @@ export interface StudyListItem {
   createdAt: string;
   completedAt: string | null;
   extra: Record<string, unknown>;
+  engine?: StudyEngine | null;
 }
 
 export interface StudyState {
@@ -165,6 +226,7 @@ export interface StudyState {
   displayStatus: string;
   backend: string;
   model: string;
+  engine?: StudyEngine | null;
   seed: number;
   protocol: string;
   protocolVersion: string;
@@ -294,6 +356,12 @@ export function withLang(url: string): string {
   return `${url}${url.includes("?") ? "&" : "?"}lang=${l}`;
 }
 
+/** Réaction à un 401 (service hébergé : session expirée → page de connexion). Rien en local. */
+let onUnauthorized: ((path: string) => void) | null = null;
+export function setUnauthorizedHandler(fn: ((path: string) => void) | null) {
+  onUnauthorized = fn;
+}
+
 export async function api<T>(path: string, init?: RequestInit & { json?: unknown }): Promise<T> {
   const { json, ...rest } = init ?? {};
   const res = await fetch(withLang(`/api${path}`), {
@@ -301,6 +369,7 @@ export async function api<T>(path: string, init?: RequestInit & { json?: unknown
     ...(json !== undefined && { method: rest.method ?? "POST", body: JSON.stringify(json), headers: { "content-type": "application/json" } }),
   });
   const body = (await res.json().catch(() => ({}))) as Record<string, unknown>;
+  if (res.status === 401 && onUnauthorized) onUnauthorized(path);
   if (!res.ok) throw new ApiError(typeof body.error === "string" ? body.error : tr(commonDict).apiError(res.status), res.status, body);
   return body as T;
 }
@@ -334,21 +403,51 @@ export function useApi<T>(path: string | null) {
 }
 
 const metaCache = new Map<string, Promise<Meta>>();
-export function useMeta(): Meta | null {
+/** Métadonnées de la langue courante, partagées (une requête par langue et par chargement de page). */
+export function loadMeta(): Promise<Meta> {
+  const l = getLocale();
+  let p = metaCache.get(l);
+  if (!p) {
+    p = api<Meta>("/meta").then((m) => {
+      for (const pk of m.packs ?? []) packInfos.set(pk.packVersion, pk);
+      return m;
+    });
+    metaCache.set(l, p);
+  }
+  return p;
+}
+/** Oublie les métadonnées (service hébergé : connexion, déconnexion, changement de clé IA). */
+export function invalidateMeta() {
+  metaCache.clear();
+}
+/** Métadonnées et erreur de chargement : l'échec retire la promesse du cache, un rechargement de la page réessaie. */
+export function useMetaState(): { meta: Meta | null; error: Error | null } {
   const [meta, setMeta] = useState<Meta | null>(null);
+  const [error, setError] = useState<Error | null>(null);
   useEffect(() => {
     const l = getLocale();
-    let p = metaCache.get(l);
-    if (!p) {
-      p = api<Meta>("/meta").then((m) => {
-        for (const pk of m.packs) packInfos.set(pk.packVersion, pk);
-        return m;
-      });
-      metaCache.set(l, p);
-    }
-    p.then(setMeta, () => metaCache.delete(l));
+    const p = loadMeta();
+    let alive = true;
+    p.then(
+      (m) => {
+        if (alive) {
+          setMeta(m);
+          setError(null);
+        }
+      },
+      (e: unknown) => {
+        if (metaCache.get(l) === p) metaCache.delete(l);
+        if (alive) setError(e instanceof Error ? e : new Error(String(e)));
+      },
+    );
+    return () => {
+      alive = false;
+    };
   }, []);
-  return meta;
+  return { meta, error };
+}
+export function useMeta(): Meta | null {
+  return useMetaState().meta;
 }
 
 // ─── Modules (assistant de création, phase 5) ────────────────────────────────

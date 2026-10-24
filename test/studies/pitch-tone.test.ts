@@ -140,23 +140,24 @@ describe("schéma du projet et garde-fou", () => {
     sqlite.close();
   });
 
-  it("protocole v3 (défaut) : refuse un pitch commercial sauf --force, sans neutraliser en silence", () => {
+  it("protocoles v4 (défaut) et v3 : refusent un pitch commercial sauf --force, sans neutraliser en silence", () => {
     const { db, sqlite } = openDb(":memory:");
     runMigrations(db);
     insertPersonas(db, drawPersonas(pack, 99, 10));
     const over = createProject(db, readProjectFile("examples/pitch-tone/conciergerie-survendu.json"));
     const fact = createProject(db, readProjectFile("examples/pitch-tone/conciergerie-factuel.json"));
     const before = db.$client.prepare("select count(*) as n from studies").get() as { n: number };
-    expect(() => createStudy(db, pack, { projectId: over.id, n: 3, seed: 1, backend: "ollama", model: "m" })).toThrow(/pitch neutre.*--force/);
+    expect(() => createStudy(db, pack, { projectId: over.id, n: 3, seed: 1, backend: "ollama", model: "m" })).toThrow(/protocole v4 exige un pitch neutre.*--force/);
+    expect(() => createStudy(db, pack, { projectId: over.id, n: 3, seed: 1, backend: "ollama", model: "m", protocolVersion: "3" })).toThrow(/protocole v3 exige un pitch neutre.*--force/);
     expect((db.$client.prepare("select count(*) as n from studies").get() as { n: number }).n).toBe(before.n);
     const forced = createStudy(db, pack, { projectId: over.id, n: 3, seed: 1, backend: "ollama", model: "m", force: true });
-    expect(forced.study.protocolVersion).toBe("3");
+    expect(forced.study.protocolVersion).toBe("4");
     expect(forced.pitchTone?.warn).toBe(true);
     expect(forced.notes.join(" ")).toMatch(/étude forcée/);
     // Le pitch du projet n'est pas modifié
     expect((db.$client.prepare("select pitch from projects where id = ?").get(over.id) as { pitch: string }).pitch).toBe(readProjectFile("examples/pitch-tone/conciergerie-survendu.json").pitch);
     const ok = createStudy(db, pack, { projectId: fact.id, n: 3, seed: 1, backend: "ollama", model: "m" });
-    expect(ok.study.protocolVersion).toBe("3");
+    expect(ok.study.protocolVersion).toBe("4");
     expect(ok.pitchTone).toBeUndefined();
     sqlite.close();
   });

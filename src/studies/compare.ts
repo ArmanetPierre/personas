@@ -1,4 +1,4 @@
-import { BEHAVIOR_LABELS, BEHAVIORS, behaviorRank, OBJECTION_CATEGORIES, OBJECTION_LABELS, type Behavior, type ObjectionCategory } from "./protocols/concept-price";
+import { BEHAVIOR_LABELS, BEHAVIORS, behaviorRank, hasV3Measures, OBJECTION_CATEGORIES, OBJECTION_LABELS, type Behavior, type ObjectionCategory } from "./protocols/concept-price";
 import { COMPARE_DIMENSIONS, DIMENSION_LABELS, type SegmentDimension } from "./segments";
 import { formatMoney, fxOf, monthlyFactor, referenceOffer, type Pricing } from "./price-model";
 import type { Analysis, Distribution, StudySummary } from "./summary";
@@ -28,6 +28,8 @@ export interface CompareEntry {
   studyName: string;
   projectId: string;
   projectName: string;
+  /** Moteur de l'étude : fournisseur / modèle (modèle exact rapporté par l'API s'il est connu). */
+  model: string;
   price: string;
   priceUnit: string;
   /** Groupe analysé (null : toute l'étude). */
@@ -97,7 +99,7 @@ export interface Comparison {
   scalesDiffer?: true;
   /** Normalisation optionnelle (coût mensuel équivalent en euros), seulement si elle est demandée. */
   normalization?: Normalization;
-  /** Versions de protocole différentes (v2 et v3) : niveaux absolus non comparables (présent seulement dans ce cas). */
+  /** Mesures de protocole différentes (v2 face à v3 ou v4) : niveaux absolus non comparables (présent seulement dans ce cas). v3 et v4 ont la même mesure. */
   protocolsDiffer?: true;
 }
 
@@ -192,6 +194,7 @@ export function toEntry(s: StudySummary, group?: string): CompareEntry {
     studyName: s.study.name,
     projectId: s.project.id,
     projectName: s.project.name,
+    model: `${s.study.backend} / ${s.study.engine?.reportedModel ?? s.study.model}`,
     price: s.project.price,
     priceUnit: s.project.priceUnit ?? "mois",
     group: g,
@@ -289,7 +292,8 @@ export function compareEntries(entriesIn: CompareEntry[]): Comparison {
       paymentEstimated: e.payment?.estimated && ref.payment?.estimated ? pts(e.payment.estimated.value, ref.payment.estimated.value) : null,
     }),
   }));
-  const versions = new Set(entries.map((e) => e.protocolVersion ?? "2"));
+  // v4 = mesure v3 (seul le bloc des attributs de module change) : seul un mélange avec la v2 rend les niveaux incomparables
+  const versions = new Set(entries.map((e) => (hasV3Measures(e.protocolVersion) ? "3" : "2")));
   return {
     referenceId: ref.studyId,
     group: ref.group,
@@ -361,9 +365,9 @@ export function formatComparison(c: Comparison): string {
   out.push("⚠ Signaux qualitatifs issus de personas synthétiques : comparer des variantes, pas prévoir une conversion.");
   if (c.unitsDiffer) out.push("⚠ Unités de prix différentes : Gabor-Granger et Van Westendorp ne se comparent pas directement entre ces études.");
   if (c.sizesDiffer) out.push("⚠ Effectifs différents d'une étude à l'autre : vérifier que toutes les études sont complètes.");
-  if (c.protocolsDiffer) out.push("⚠ Versions de protocole différentes (v2 et v3) : les niveaux absolus ne se comparent pas ; lire les objections et les segments.");
+  if (c.protocolsDiffer) out.push("⚠ Versions de protocole différentes (v2 et v3 ou v4) : les niveaux absolus ne se comparent pas ; lire les objections et les segments.");
   out.push("");
-  for (const [i, e] of cols.entries()) out.push(`  [${i}] ${e.studyId}  ${e.projectName} (${e.projectId}) — ${e.price} ; n = ${e.n}`);
+  for (const [i, e] of cols.entries()) out.push(`  [${i}] ${e.studyId}  ${e.projectName} (${e.projectId}) — ${e.price} ; n = ${e.n} ; ${e.model}`);
 
   const d = (i: number) => c.deltas[i]!;
   const id = (_: CompareEntry, i: number) => `[${i}] ${cols[i]!.studyId}`;

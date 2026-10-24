@@ -1,0 +1,24 @@
+Personas Hub (the hub/ directory of this repository)
+Copyright (C) 2026 The Personas authors
+
+SPDX-License-Identifier: AGPL-3.0-only
+
+This program is free software: you can redistribute it and/or modify it under
+the terms of the GNU Affero General Public License, version 3, as published by
+the Free Software Foundation.
+
+This program is distributed in the hope that it will be useful, but WITHOUT
+ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
+FOR A PARTICULAR PURPOSE. See the GNU Affero General Public License for more
+details.
+
+The full text of the GNU Affero General Public License, version 3, is
+available at <https://www.gnu.org/licenses/agpl-3.0.txt>.
+
+If you run a modified version of the Hub as a network service, section 13 of
+the licence requires you to offer its users the corresponding source code.
+
+Scope: this licence covers the hub/ directory only. The engine, CLI and local
+dashboard (src/, web/) are licensed under the Apache License 2.0 (see the
+LICENSE file at the root of the repository); modules and country packs are
+licensed under CC BY 4.0 (modules/LICENSE, packs/LICENSE).

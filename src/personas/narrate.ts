@@ -1,3 +1,4 @@
+import { isBudgetExceeded } from "../engine/budget";
 import { z } from "zod";
 import type { Engine } from "../engine/engine";
 import type { Usage } from "../engine/types";
@@ -69,7 +70,19 @@ export const NARRATIVE_SYSTEM = [
  * française (faits intangibles, pas de cliché, pas de complaisance, au plus un montant), plus le respect
  * du statut de résidence, de l'ethnie, de la religion et du logement tels qu'ils sont tirés.
  */
+/** Consignes propres au pays (contraintes typiques, stéréotypes à éviter) ; Singapour : texte d'origine. */
+const COUNTRY_LINES_EN: Record<string, { constraint: string; stereotypes: string; facts: string }> = {
+  "the United States": {
+    constraint: "(money, time, health, health insurance, housing, transport, debt, family, work)",
+    stereotypes:
+      "- No stereotypes tied to race, ethnicity, origin, immigration status, religion or region: no caricatured accent or dialect, no exoticism; a person with a low income is not miserable by default, an immigrant is not defined by their origin, a rural or Southern resident is not a caricature, a well-off person is not carefree by default. Write in standard American English; a local word is fine when natural.",
+    facts: "another age, another place, another job, another household composition, another income, another race or origin, another health coverage or type of housing",
+  },
+};
+
 export function narrativeSystemEn(countryName: string): string {
+  const c = COUNTRY_LINES_EN[countryName];
+  if (c) return narrativeSystemLines(countryName, c).join("\n");
   return [
     `You write short biographical profiles of ordinary people living in ${countryName}, for a market research panel.`,
     "The attributes provided are FACTS drawn from official statistics: you never change them, never contradict them and never invent incompatible ones (another age, another place, another job, another household composition, another income, another residency status, ethnicity, religion or type of housing).",
@@ -90,6 +103,18 @@ export function narrativeSystemEn(countryName: string): string {
     "- No moral, no forced positive conclusion, no bullet list.",
     "Reply only with the requested JSON.",
   ].join("\n");
+}
+
+/** Même consigne que Singapour, avec les lignes propres au pays. */
+function narrativeSystemLines(countryName: string, c: { constraint: string; stereotypes: string; facts: string }): string[] {
+  const sg = narrativeSystemEn("Singapore").split("\n");
+  return sg.map((l) => {
+    if (l.startsWith("You write short biographical profiles")) return l.replace("Singapore", countryName);
+    if (l.startsWith("The attributes provided are FACTS")) return `The attributes provided are FACTS drawn from official statistics: you never change them, never contradict them and never invent incompatible ones (${c.facts}).`;
+    if (l.startsWith("- Include a concrete habit")) return l.replace("(money, time, health, housing, transport, family, work pass)", c.constraint);
+    if (l.startsWith("- No stereotypes tied to")) return c.stereotypes;
+    return l;
+  });
 }
 
 export const OPENING_ANGLES_EN = [
@@ -116,7 +141,7 @@ export const ENDINGS_EN = [
 
 /** Consigne système des récits d'un pack : française (historique) ou anglaise. */
 export function narrativeSystemFor(pack: Pack): string {
-  return pack.manifest.locale === "en" ? narrativeSystemEn(pack.manifest.country === "SG" ? "Singapore" : pack.manifest.country) : NARRATIVE_SYSTEM;
+  return pack.manifest.locale === "en" ? narrativeSystemEn(pack.manifest.country === "SG" ? "Singapore" : pack.manifest.country === "US" ? "the United States" : pack.manifest.country) : NARRATIVE_SYSTEM;
 }
 
 /** Angles d'entrée : un par persona, tous différents dans un lot de 10. */
@@ -498,7 +523,7 @@ export async function narratePersonas(
     progress.failedBatches++;
     const msg = (err as Error).message;
     log(`${label} : ${msg}`);
-    if (!aborted && isUsageLimitError(msg)) {
+    if (!aborted && (isUsageLimitError(msg) || isBudgetExceeded(err))) {
       aborted = msg;
       log("Limite d'usage atteinte : arrêt propre, relancer plus tard (seules les personas sans récit seront traitées).");
     }

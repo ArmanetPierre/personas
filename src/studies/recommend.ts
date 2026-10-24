@@ -1,4 +1,5 @@
 import { studyAudience } from "./locale";
+import { defaultDataDir, runMode } from "../config";
 import { createHash } from "node:crypto";
 import { existsSync, mkdirSync, readFileSync, writeFileSync } from "node:fs";
 import { dirname, join, resolve } from "node:path";
@@ -273,7 +274,8 @@ export function relatedStudies(db: Db, study: Study, project: Project): Study[] 
 /** Fichier projet (forme déclarative) d'un projet : son fichier source s'il existe, sinon reconstruit depuis la base. */
 export function projectFileOf(project: Project): { file: ProjectFile; path: string | null } {
   const src = (project.extra as { sourceFile?: string }).sourceFile;
-  if (src && existsSync(src)) {
+  // Service hébergé : jamais de fichier projet (un nom envoyé par l'utilisateur n'est pas lu)
+  if (src && runMode() !== "hosted" && existsSync(src)) {
     const f = readProjectFile(src);
     if ((f.id ?? slugify(f.name)) === project.id) return { file: f, path: src };
   }
@@ -372,7 +374,7 @@ export function buildRecommendationContext(db: Db, pack: Pack, studyId: string):
 
   // Objections recodées
   const recoded = recodedKeys.map((key) => {
-    const file = join(process.cwd(), "data/summaries", `${study.id}-recode-${key}.json`);
+    const file = join(defaultDataDir(), "summaries", `${study.id}-recode-${key}.json`);
     const tax = existsSync(file) ? (JSON.parse(readFileSync(file, "utf8")) as { taxonomy: ReturnType<typeof readTaxonomy> }).taxonomy : null;
     const d = tax ? recodedDistribution(targetRows, tax) : null;
     return d && tax ? { key, n: d.n, categories: tax.objections.map((o) => ({ code: o.code, label: o.label, share: d.shares[o.code] ?? 0 })) } : null;
@@ -665,7 +667,8 @@ export interface RecommendOptions {
   log?: (m: string) => void;
 }
 
-export function recommendationPath(studyId: string, outDir = join(process.cwd(), "data/recommendations")): string {
+/** Cache des recommandations : `<dossier de données>/recommendations/` (là où l'API le relit). */
+export function recommendationPath(studyId: string, outDir = join(defaultDataDir(), "recommendations")): string {
   return join(outDir, `${studyId}.json`);
 }
 

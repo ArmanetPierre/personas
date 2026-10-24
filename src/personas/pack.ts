@@ -3,6 +3,8 @@ import { resolve } from "node:path";
 import { z } from "zod";
 import { resolveModules, type ResolvedModules } from "../modules/registry";
 import { loadSgPack, type SgPack } from "./countries/sg/pack";
+import { loadUsPack, type UsPack } from "./countries/us/pack";
+import { packDir, packSocle } from "./pack-source";
 
 /**
  * Pack pays : tables de distribution versionnées (`packs/<pays>/`). Contrat commun (manifeste, tables
@@ -183,8 +185,8 @@ export interface FrPack extends PackData {
 }
 
 /** Pack de n'importe quel pays : distinguer par `kind` avant de lire une table propre à un générateur. */
-export type Pack = FrPack | SgPack;
-export type { SgPack };
+export type Pack = FrPack | SgPack | UsPack;
+export type { SgPack, UsPack };
 
 /** Pack France, ou erreur explicite (fonctions propres au générateur France). */
 export function asFr(pack: Pack, what = "cette fonction"): FrPack {
@@ -217,11 +219,16 @@ export function loadPack(name = "fr"): Pack {
   const key = name.toLowerCase();
   const cached = cache.get(key);
   if (cached) return cached;
-  const generator = (JSON.parse(readFileSync(resolve(PACKS_DIR, key, "pack.json"), "utf8")) as { generator?: string }).generator ?? "fr";
+  const generator = (JSON.parse(readFileSync(resolve(packDir(key), "pack.json"), "utf8")) as { generator?: string }).generator ?? "fr";
   if (generator === "sg") {
     const sg = loadSgPack(key);
     cache.set(key, sg);
     return sg;
+  }
+  if (generator === "us") {
+    const us = loadUsPack(key);
+    cache.set(key, us);
+    return us;
   }
   const { raw, socle } = readRaw(key);
   const parsed = packSchema.safeParse(raw);
@@ -248,10 +255,10 @@ export function loadPack(name = "fr"): Pack {
 /** Lit les tables d'un pack ; avec `extends`, les tables absentes sont reprises du pack de base. */
 function readRaw(key: string, depth = 0): { raw: Record<string, unknown>; socle: string } {
   if (depth > 3) throw new Error(`Chaîne d'héritage trop longue pour le pack ${key}`);
-  const dir = resolve(PACKS_DIR, key);
+  const dir = packDir(key);
   const read = (file: string) => JSON.parse(readFileSync(resolve(dir, file), "utf8")) as unknown;
   const manifest = read("pack.json") as { extends?: string };
-  const base = manifest.extends ? readRaw(manifest.extends, depth + 1) : { raw: {}, socle: key };
+  const base = manifest.extends ? readRaw(manifest.extends, depth + 1) : { raw: {}, socle: packSocle(key) };
   const raw: Record<string, unknown> = { ...base.raw, manifest };
   for (const [k, file] of Object.entries(FILES)) {
     if (existsSync(resolve(dir, file))) raw[k] = read(file);

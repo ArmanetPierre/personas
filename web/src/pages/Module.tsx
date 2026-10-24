@@ -4,7 +4,9 @@ import { api, ApiError, useApi, type DraftStatus, type ModulePreview, type Modul
 import { dateFr, ErrorBox, Loading, num, pct } from "../ui";
 import { tr, useDict } from "../i18n";
 import { modulesDict } from "../i18n/modules";
-import { AssistantBanner, draftStatusLabel, ModuleStatus } from "./Modules";
+import { AssistantBanner, draftStatusLabel, ModuleStatus, useAssistantFeature } from "./Modules";
+import { FEATURES, usePlatform } from "../platform";
+import { HubAccountPanel } from "./ModulesHub";
 
 type Attr = ModuleView["attributes"][number];
 
@@ -57,7 +59,9 @@ export function ModulePage({ id, draft = false }: { id: string; draft?: boolean 
   const meta = status.data?.meta ?? mod.data?.module.meta ?? null;
   const working = Boolean(status.data?.job?.alive) || meta?.status === "proposing";
   const hasYaml = Boolean(mod.data?.module.yaml);
-  const assistantOk = Boolean(mod.data?.assistant.available);
+  const feature = useAssistantFeature();
+  const { has } = usePlatform();
+  const assistantOk = Boolean(mod.data?.assistant.available) && feature;
   const library = useApi<{ modules: Array<{ id: string; status: string }> }>(draft ? "/modules" : null);
   const preview = useApi<ModulePreview>(hasYaml && assistantOk && !working ? `/modules/${encodeURIComponent(id)}/preview?n=2000&sample=5` : null);
   const [, navigate] = useLocation();
@@ -207,6 +211,8 @@ export function ModulePage({ id, draft = false }: { id: string; draft?: boolean 
       {hasYaml && <PreviewSections preview={preview.data} error={preview.error} loading={preview.loading} assistantOk={assistantOk} draft={draft} />}
 
       {view && <ModuleBody view={view} />}
+
+      {!draft && m?.status === "validated" && view && has(FEATURES.hubPublish) && <PublishSection moduleId={view.id} />}
 
       {draft && !accepted && hasYaml && <ReviseSection id={id} disabled={working || !assistantOk} onStarted={() => void status.reload()} />}
 
@@ -999,6 +1005,171 @@ function AcceptSection({
             <div style={{ marginTop: 8 }}>
               <button className="btn ghost small" type="button" onClick={() => setErr(null)}>
                 {t.accept.close}
+              </button>
+            </div>
+          </div>
+        )}
+      </div>
+    </section>
+  );
+}
+
+interface LintIssueView {
+  code: string;
+  path: string;
+  message: string;
+}
+
+interface PublishPreview {
+  moduleId: string;
+  yaml: string;
+  sha256: string;
+  version: string | null;
+  ref: string | null;
+  namespace: string | null;
+  tokenStored: boolean;
+  validation: ValidationIssue[];
+  lint: { errors: LintIssueView[]; warnings: LintIssueView[] };
+  sensitive: string[];
+  ok: boolean;
+}
+
+/**
+ * « Publier sur le Hub » (module validé de la bibliothèque) : aperçu (lint de sécurité, référence visée, YAML exact
+ * qui partira), confirmation, puis publication par l'API locale avec le jeton du trousseau. Rien d'autre que le
+ * YAML n'est envoyé ; la connexion se fait dans un terminal (personas hub login).
+ */
+function PublishSection({ moduleId }: { moduleId: string }) {
+  const t = useDict(modulesDict);
+  const p = t.publish;
+  const [phase, setPhase] = useState<"idle" | "loading" | "preview" | "confirming" | "sending" | "done">("idle");
+  const [preview, setPreview] = useState<PublishPreview | null>(null);
+  const [done, setDone] = useState<{ ref: string; version: string; status: string | null; signed: boolean } | null>(null);
+  const [err, setErr] = useState<string | null>(null);
+
+  const prepare = async () => {
+    setErr(null);
+    setDone(null);
+    setPhase("loading");
+    try {
+      setPreview(await api<PublishPreview>("/hub/publish/preview", { json: { moduleId } }));
+      setPhase("preview");
+    } catch (e) {
+      setErr((e as Error).message);
+      setPhase("idle");
+    }
+  };
+  const publish = async () => {
+    if (!preview) return;
+    setErr(null);
+    setPhase("sending");
+    try {
+      const r = await api<{ published: { ref: string; version: string; status: string | null; signed: boolean } }>("/hub/publish", { json: { moduleId, sha256: preview.sha256 } });
+      setDone(r.published);
+      setPhase("done");
+    } catch (e) {
+      setErr((e as Error).message);
+      setPhase("preview");
+    }
+  };
+  const issue = (i: { path: string; message: string }) => (i.path ? `${i.path}${t.colon}${i.message}` : i.message);
+  const blocked = !preview || !preview.ok || !preview.tokenStored;
+  return (
+    <section className="section">
+      <div className="section-head">
+        <h2>{p.title}</h2>
+      </div>
+      <div className="panel stack">
+        <p className="ink2" style={{ maxWidth: "72ch" }}>{p.intro(preview?.namespace ?? null, moduleId)}</p>
+        {phase === "idle" || phase === "loading" ? (
+          <div className="row">
+            <button className="btn ghost" type="button" disabled={phase === "loading"} onClick={prepare}>
+              {phase === "loading" ? p.preparing : p.prepare}
+            </button>
+          </div>
+        ) : null}
+        {preview && phase !== "idle" && phase !== "loading" && (
+          <>
+            <HubAccountPanel />
+            {preview.validation.length > 0 && (
+              <div className="alerts">
+                <p className="small" style={{ color: "var(--danger)" }}>{p.validationErrors(preview.validation.length)}</p>
+                {preview.validation.map((e, i) => (
+                  <div key={`v${i}`} className="alert error">
+                    <span className="lvl">{t.page.error}</span>
+                    <span>{issue(e)}</span>
+                  </div>
+                ))}
+              </div>
+            )}
+            {preview.lint.errors.length > 0 ? (
+              <div className="alerts">
+                <p className="small" style={{ color: "var(--danger)" }}>{p.lintErrors(preview.lint.errors.length)}</p>
+                {preview.lint.errors.map((e, i) => (
+                  <div key={`e${i}`} className="alert error">
+                    <span className="lvl">{e.code}</span>
+                    <span>{issue(e)}</span>
+                  </div>
+                ))}
+              </div>
+            ) : (
+              <p className="small">{p.lintOk}</p>
+            )}
+            {preview.lint.warnings.length > 0 && (
+              <div className="alerts">
+                <p className="small">{p.lintWarnings(preview.lint.warnings.length)}</p>
+                {preview.lint.warnings.map((w, i) => (
+                  <div key={`w${i}`} className="alert warning">
+                    <span className="lvl">{w.code}</span>
+                    <span>{issue(w)}</span>
+                  </div>
+                ))}
+              </div>
+            )}
+            {preview.sensitive.length > 0 && <p className="small">{p.sensitive(preview.sensitive.join(", "))}</p>}
+            <p className="small num">{preview.ref ? p.target(preview.ref, preview.version ?? "?", preview.sha256) : p.targetNoAccount(moduleId, preview.version ?? "?", preview.sha256)}</p>
+            <details>
+              <summary className="small ink2" style={{ cursor: "pointer" }}>{p.yaml}</summary>
+              <pre className="yaml" style={{ marginTop: 6, maxHeight: 360 }}>{preview.yaml}</pre>
+            </details>
+            {!preview.tokenStored && <p className="small" style={{ color: "var(--danger)" }}>{p.needLogin}</p>}
+            {phase === "preview" && (
+              <div className="row">
+                <button className="btn" type="button" disabled={blocked} onClick={() => setPhase("confirming")}>
+                  {p.title}
+                </button>
+                <button className="btn ghost" type="button" onClick={prepare}>
+                  {p.prepare}
+                </button>
+              </div>
+            )}
+            {(phase === "confirming" || phase === "sending") && (
+              <div className="banner-block stack" role="alertdialog" aria-label={p.confirm}>
+                <p>{p.confirmText(preview.ref ?? `${moduleId}@${preview.version ?? "?"}`)}</p>
+                <div className="row">
+                  <button className="btn" type="button" onClick={publish} disabled={phase === "sending" || blocked}>
+                    {phase === "sending" ? p.sending : p.confirm}
+                  </button>
+                  <button className="btn ghost" type="button" disabled={phase === "sending"} onClick={() => setPhase("preview")}>
+                    {p.cancel}
+                  </button>
+                </div>
+              </div>
+            )}
+          </>
+        )}
+        {done && (
+          <div className="note-box small" role="status">
+            {p.done(done.ref, done.version, t.hub.status[done.status ?? ""] ?? done.status ?? "")}
+            {done.signed && <> {p.signed}</>}
+          </div>
+        )}
+        {err && (
+          <div className="error-box" role="alert">
+            {err}
+            <div style={{ marginTop: 8 }}>
+              <button className="btn ghost small" type="button" onClick={() => setErr(null)}>
+                {p.close}
               </button>
             </div>
           </div>

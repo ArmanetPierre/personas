@@ -2,6 +2,7 @@ import type { Persona } from "../db/schema";
 import { ROGERS_LABELS } from "../personas/describe";
 import { asFr, type FrPack, type Pack } from "../personas/pack";
 import { sgSegmentLabel } from "../personas/countries/sg/describe";
+import { usSegmentLabel } from "../personas/countries/us/describe";
 import { valueLabel } from "../modules/engine";
 import { librarySegments, moduleLibrary } from "../modules/registry";
 
@@ -162,6 +163,7 @@ export function segmentOf(pack: Pack, p: Persona, dim: SegmentDimension): string
 
 export function segmentLabel(pack: Pack, dim: SegmentDimension, code: string, example?: Persona): string {
   if (pack.kind === "sg" && !EXTRA_DIMENSIONS.includes(dim)) return sgSegmentLabel(pack, dim, code);
+  if (pack.kind === "us" && !EXTRA_DIMENSIONS.includes(dim)) return usSegmentLabel(pack, dim, code);
   if (EXTRA_DIMENSIONS.includes(dim) && example && code !== "?") {
     const l = extraLabel(dim, code, example.sex);
     if (l) return l;

@@ -5,10 +5,10 @@ import { loadConfig, loadDotEnv } from "../config";
 import { openDb, runMigrations } from "../db/client";
 import { loadPack } from "../personas/pack";
 import { fitCalibration, type CalibrationPoint } from "../studies/calibration-fit";
-import { CALIBRATION_FILE, loadCalibration } from "../studies/payment";
+import { CALIBRATION_FILE, DEFAULT_MODEL_FAMILY, loadCalibrationFor, readCalibrationFile } from "../studies/payment";
 import { hasGenericPricing, pricingOf, toEur } from "../studies/price-model";
 import { getProject } from "../studies/project";
-import { QUESTION_KEY } from "../studies/protocols/concept-price";
+import { hasV3Measures, QUESTION_KEY } from "../studies/protocols/concept-price";
 import { findStudy, personasByIds, studyResponses } from "../studies/store";
 import { summarize } from "../studies/summary";
 import { errorText, t } from "./i18n";
@@ -25,6 +25,8 @@ const { values } = parseArgs({
     out: { type: "string", default: CALIBRATION_FILE },
     write: { type: "boolean", default: false },
     group: { type: "string", default: "target" },
+    /** Famille de modèle des études de la série (table de calibration indexée par famille). */
+    family: { type: "string", default: DEFAULT_MODEL_FAMILY },
     pack: { type: "string", default: "fr" },
     help: { type: "boolean", short: "h" },
   },
@@ -53,7 +55,8 @@ try {
       continue;
     }
     const study = findStudy(db, p.studyId);
-    if (study.protocolVersion !== "3") throw new Error(t.calibrationFit.notV3(p.product, study.id, String(study.protocolVersion)));
+    // v4 : même mesure que la v3 (seul le bloc des attributs de module change dans le prompt)
+    if (!hasV3Measures(study.protocolVersion)) throw new Error(t.calibrationFit.notV3(p.product, study.id, String(study.protocolVersion)));
     const project = getProject(db, study.projectId);
     if (!project) throw new Error(t.common.projectNotFound(study.projectId));
     const rows = studyResponses(db, study.id, QUESTION_KEY);
@@ -76,7 +79,7 @@ try {
     });
     console.log(t.calibrationFit.point(p.product, study.id, pay.lowTierYes.n, pay.lowTierYes.price, pay.lowTierYes.yes));
   }
-  const current = loadCalibration(values.out!);
+  const current = loadCalibrationFor(values.family!, values.out!) ?? { version: "payment-v3/0", status: "uncalibrated" as const };
   const next = `payment-v3/${Number(current.version.split("/")[1] ?? 0) + 1}`;
   const r = fitCalibration(points, { version: next, date: new Date().toISOString().slice(0, 10) });
   for (const l of r.report) console.log(`  ${l}`);
@@ -86,7 +89,8 @@ try {
   } else if (!values.write) {
     console.log(t.calibrationFit.ready(next, JSON.stringify(r.calibration, null, 2)));
   } else {
-    writeFileSync(values.out!, JSON.stringify(r.calibration, null, 2) + "\n");
+    const file = readCalibrationFile(values.out!);
+    writeFileSync(values.out!, JSON.stringify({ ...file, byModelFamily: { ...file.byModelFamily, [values.family!]: r.calibration } }, null, 2) + "\n");
     console.log(t.calibrationFit.written(values.out!, next));
   }
 } catch (err) {

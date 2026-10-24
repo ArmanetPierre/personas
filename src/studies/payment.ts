@@ -1,7 +1,7 @@
 import { existsSync, readFileSync } from "node:fs";
 import { fileURLToPath } from "node:url";
 import { z } from "zod";
-import { lowTierOf } from "./protocols/concept-price";
+import { hasV3Measures, lowTierOf } from "./protocols/concept-price";
 
 /**
  * Double mesure du paiement (protocole v3, docs/protocol-v3.md § 3).
@@ -62,13 +62,60 @@ export const DEFAULT_CALIBRATION: PaymentCalibration = {
   updatedAt: "2026-10-15",
 };
 
-let cached: PaymentCalibration | null = null;
-/** Paramètres de conversion courants (fichier versionné, sinon défaut). */
+/**
+ * Fichier de calibration indexé par famille de modèle (docs/plateforme.md § 7.4) :
+ * `{ "byModelFamily": { "claude-sonnet": <calibration> } }`. L'ancien format (une calibration seule) vaut
+ * pour `claude-sonnet`, la famille sur laquelle la série v3 a été jouée.
+ */
+export const DEFAULT_MODEL_FAMILY = "claude-sonnet";
+export const calibrationFileSchema = z.object({
+  note: z.string().optional(),
+  byModelFamily: z.record(z.string(), calibrationSchema),
+});
+export type CalibrationFile = z.infer<typeof calibrationFileSchema>;
+
+/** Contenu du fichier de calibration, quel que soit son format (ancien : une seule calibration, Sonnet). */
+export function readCalibrationFile(path = CALIBRATION_FILE): CalibrationFile {
+  if (!existsSync(path)) return { byModelFamily: { [DEFAULT_MODEL_FAMILY]: DEFAULT_CALIBRATION } };
+  const raw = JSON.parse(readFileSync(path, "utf8")) as unknown;
+  if (raw && typeof raw === "object" && "byModelFamily" in raw) return calibrationFileSchema.parse(raw);
+  return { byModelFamily: { [DEFAULT_MODEL_FAMILY]: calibrationSchema.parse(raw) } };
+}
+
+const cachedFiles = new Map<string, CalibrationFile>();
+function calibrationFile(path: string): CalibrationFile {
+  if (path !== CALIBRATION_FILE) return readCalibrationFile(path);
+  let f = cachedFiles.get(path);
+  if (!f) {
+    f = readCalibrationFile(path);
+    cachedFiles.set(path, f);
+  }
+  return f;
+}
+
+/** Paramètres de conversion de la famille de référence (claude-sonnet), sinon défaut. */
 export function loadCalibration(path = CALIBRATION_FILE): PaymentCalibration {
-  if (path === CALIBRATION_FILE && cached) return cached;
-  const c = existsSync(path) ? calibrationSchema.parse(JSON.parse(readFileSync(path, "utf8"))) : DEFAULT_CALIBRATION;
-  if (path === CALIBRATION_FILE) cached = c;
-  return c;
+  return calibrationFile(path).byModelFamily[DEFAULT_MODEL_FAMILY] ?? DEFAULT_CALIBRATION;
+}
+
+/** Paramètres de conversion d'une famille de modèle ; null si la famille n'est pas dans la table. */
+export function loadCalibrationFor(family: string | null, path = CALIBRATION_FILE): PaymentCalibration | null {
+  if (!family) return null;
+  return calibrationFile(path).byModelFamily[family] ?? null;
+}
+
+/**
+ * Famille d'un modèle, pour la table de calibration : `sonnet`, `claude-sonnet-5-5`, `anthropic/claude-sonnet-4.5`
+ * → `claude-sonnet` ; `gpt-5.4-mini` → `gpt-5.4-mini` ; `user/qwen3.8-27b-q8:32k` → `qwen3.8`. Null si vide.
+ */
+export function modelFamily(provider: string, model: string | null | undefined): string | null {
+  const m = (model ?? "").trim().toLowerCase().replace(/^.*\//, "").replace(/:.*$/, "");
+  if (!m) return null;
+  const claude = m.match(/^(?:claude-)?(opus|sonnet|haiku|fable|mythos)\b/) ?? m.match(/^claude-(?:\d[\d.-]*-)?(opus|sonnet|haiku|fable|mythos)\b/);
+  if (claude && (provider === "claude-cli" || provider === "anthropic" || m.startsWith("claude") || provider === "openrouter")) return `claude-${claude[1]}`;
+  if (/^(gpt|o\d|gemini)/.test(m)) return m.replace(/-\d{4}-?\d{2}-?\d{2}$/, "").replace(/-latest$/, "");
+  // Modèles ouverts : nom de base sans taille ni quantification (qwen3.8-27b-q8 → qwen3.8)
+  return m.split(/[-_]/)[0] || m;
 }
 
 export const logit = (p: number) => Math.log(p / (1 - p));
@@ -146,7 +193,8 @@ export function paymentConfidence(input: Pick<PaymentInput, "unit" | "shownEur" 
     return { confidence: "low", reasons: ["conversion non calibrée (paramètres par défaut : M2 ≈ part de « oui » au palier bas)"] };
   }
   const reasons: string[] = [];
-  if (input.protocolVersion !== "3") return { confidence: "low", reasons: ["protocole v2 : la conversion est ajustée sur des études v3"] };
+  // v4 : même mesure que la v3, la calibration payment-v3 s'applique telle quelle
+  if (!hasV3Measures(input.protocolVersion)) return { confidence: "low", reasons: ["protocole v2 : la conversion est ajustée sur des études v3"] };
   if (!cal.domain.units.includes(input.unit)) return { confidence: "low", reasons: [`unité de prix « ${input.unit} » jamais calibrée`] };
   if (input.recurringShare === null || !cal.domain.recurringShare) return { confidence: "low", reasons: ["fréquence du besoin hors du domaine calibré"] };
   let missing = 0;

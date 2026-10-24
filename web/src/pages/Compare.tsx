@@ -1,11 +1,11 @@
 import { useMemo, type ReactNode } from "react";
 import { PaymentMeasureView } from "../payment";
 import { Link, useLocation, useSearch } from "wouter";
-import { useApi, useMeta, type Comparison, type ProjectListItem, type StudyListItem } from "../api";
+import { useApi, useMetaState, type Comparison, type ProjectListItem, type StudyListItem } from "../api";
 import { BehaviorStack, HBars } from "../charts";
 import { tr, useDict } from "../i18n";
 import { compareDict } from "../i18n/compare";
-import { Cols, dateFr, ErrorBox, eur, Loading, money, num, pct, Seg, Status } from "../ui";
+import { Cols, CompareIcon, dateFr, EmptyState, ErrorBox, eur, Loading, money, num, pct, SegmentedControl, Status } from "../ui";
 import { cap } from "./Study";
 
 type Entry = Comparison["entries"][number];
@@ -24,7 +24,7 @@ function DeltaTag({ d, unit }: { d: number | null | undefined; unit?: string }) 
 }
 
 export function ComparePage() {
-  const meta = useMeta();
+  const { meta, error: metaError } = useMetaState();
   const t = useDict(compareDict).page;
   const search = useSearch();
   const [, navigate] = useLocation();
@@ -80,7 +80,7 @@ export function ComparePage() {
           <span className="spacer" />
           <div className="field">
             <span>{t.group}</span>
-            <Seg label={t.group} value={group} onChange={(g) => go({ group: g })} options={[{ id: "target", label: t.groupTarget }, { id: "control", label: t.groupControl }, { id: "all", label: t.groupAll }]} />
+            <SegmentedControl label={t.group} value={group} onChange={(g) => go({ group: g })} options={[{ id: "target", label: t.groupTarget }, { id: "control", label: t.groupControl }, { id: "all", label: t.groupAll }]} />
           </div>
           <label className="row small" style={{ gap: 6 }} title={t.normalizeTitle}>
             <input type="checkbox" checked={normalize} onChange={(e) => go({ normalize: e.target.checked })} />
@@ -131,7 +131,9 @@ export function ComparePage() {
                         <td className="r num">
                           {s.responses}/{s.sampleSize}
                         </td>
-                        <td className="ellipsis" title={s.model}>{s.backend}</td>
+                        <td className="ellipsis" title={s.engine?.reportedModel ?? s.model}>
+                          {s.backend} <span className="muted small">{s.engine?.reportedModel ?? s.model}</span>
+                        </td>
                         <td>
                           <Status status={s.status} />
                         </td>
@@ -146,8 +148,9 @@ export function ComparePage() {
         )}
       </div>
 
-      {ids.length < 2 && <div className="empty" style={{ marginTop: 24 }}>{t.empty}</div>}
+      {ids.length < 2 && <EmptyState style={{ marginTop: 24 }} icon={<CompareIcon />} title={t.emptyTitle} description={t.empty} />}
       <ErrorBox error={cmp.error} />
+      {ids.length >= 2 && !meta && <ErrorBox error={metaError} />}
       {ids.length >= 2 && !cmp.data && !cmp.error && <Loading what={t.computing} />}
       {cmp.data && meta && <ComparisonView c={cmp.data} behaviors={compareBehaviors(meta.behaviors, cmp.data)} objections={meta.objections} dims={meta.dimensions} />}
     </>

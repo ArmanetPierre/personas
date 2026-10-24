@@ -11,6 +11,7 @@ import {
   type Sex,
 } from "./pack";
 import { computeSgMargins } from "./countries/sg/validate";
+import { computeUsMargins } from "./countries/us/validate";
 import { socleVars, type SocleLike } from "../modules/apply";
 import { evalCondition, expectedDistribution, theoreticalMargin, valueLabel, type ModuleValues } from "../modules/engine";
 import type { EnumAttribute } from "../modules/schema";
@@ -166,6 +167,7 @@ const count = <T>(rows: T[], pred: (r: T) => boolean) => rows.reduce((s, r) => s
 
 export function computeMargins(pack: Pack, rows: MarginInput[]): DimensionReport[] {
   if (pack.kind === "sg") return [...computeSgMargins(pack, rows), ...moduleMargins(pack, rows)];
+  if (pack.kind === "us") return [...computeUsMargins(pack, rows), ...moduleMargins(pack, rows)];
   return computeFrMargins(pack, rows);
 }
 

@@ -5,7 +5,7 @@ import { stringify } from "yaml";
 import { loadConfig, loadDotEnv } from "../config";
 import type { Project } from "../db/schema";
 import { openDb, runMigrations } from "../db/client";
-import { getEngine } from "../engine";
+import { assistantEngine } from "../engine/select";
 import { getProject, priceColumns, readProjectFile, slugify } from "../studies/project";
 import { gatherObjections, suggestProtocol } from "../studies/protocol-suggest";
 import { errorText, t } from "./i18n";
@@ -18,6 +18,7 @@ import { errorText, t } from "./i18n";
 
 const { values } = parseArgs({
   options: {
+    profile: { type: "string" },
     project: { type: "string" },
     out: { type: "string" },
     help: { type: "boolean", short: "h" },
@@ -49,7 +50,7 @@ try {
   const evidence = gatherObjections(db, project.id);
   console.log(t.projectSuggestProtocol.header(project.id, project.name));
   console.log(evidence ? t.projectSuggestProtocol.evidence(evidence.respondents, evidence.studies.join(", ")) : t.projectSuggestProtocol.noEvidence);
-  const engine = getEngine("claude-cli", config);
+  const engine = assistantEngine(config, { profile: values.profile, db });
   const r = await suggestProtocol(engine, project, evidence);
   const out = values.out ?? join(dirname(resolve(config.DATABASE_PATH)), "proposals", `${project.id}-protocol.json`);
   mkdirSync(dirname(out), { recursive: true });

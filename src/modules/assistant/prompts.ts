@@ -58,6 +58,12 @@ export function socleCatalogue(socle = "fr"): string {
 
 /** Pays et langue des libellés d'un socle, pour les consignes de l'assistant (France : texte historique). */
 function socleContext(socle: string): { country: string; languageLine: string } {
+  if (socle.replace(/-.*$/, "") === "us")
+    return {
+      country: "États-Unis",
+      languageLine:
+        "Le socle est en anglais : libellés des attributs et des valeurs, lignes de fiche (`card`) et phrases des segments sont en anglais américain (les personas et les prompts d'étude de ce socle sont en anglais). Montants en dollars US (`format: eur` affiche $). Sources à privilégier : Census Bureau (ACS, CPS), BLS, Federal Reserve (SHED, Survey of Consumer Finances, Diary of Consumer Payment Choice), Pew Research Center, FCC, NTIA, FDIC, CFPB, ministères fédéraux et enquêtes publiées aux États-Unis.",
+    };
   if (socle.replace(/-.*$/, "") !== "sg") return { country: "France", languageLine: "" };
   return {
     country: "Singapour",

@@ -2,6 +2,7 @@ import { existsSync, readdirSync, readFileSync } from "node:fs";
 import { join } from "node:path";
 import type { Persona } from "../db/schema";
 import { loadPack, PACKS_DIR, type Pack } from "../personas/pack";
+import { findPack } from "../personas/pack-source";
 
 /**
  * Plusieurs populations peuvent cohabiter dans la base (pack général, pack ciblé).
@@ -43,7 +44,8 @@ export function packManifest(version: string): Pack["manifest"] | undefined {
 }
 
 function findPackDir(version: string): string | undefined {
-  if (!existsSync(PACKS_DIR)) return undefined;
+  // Pack absent de packs/ : version téléchargée dans le cache du Hub (chargée par sa version)
+  if (!existsSync(PACKS_DIR)) return findPack(version) ? version : undefined;
   for (const d of readdirSync(PACKS_DIR, { withFileTypes: true })) {
     if (!d.isDirectory()) continue;
     try {
@@ -53,5 +55,5 @@ function findPackDir(version: string): string | undefined {
       // pas de manifeste lisible
     }
   }
-  return undefined;
+  return findPack(version)?.source === "hub-cache" ? version : undefined;
 }

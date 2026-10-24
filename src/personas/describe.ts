@@ -1,6 +1,7 @@
 import type { Persona } from "../db/schema";
 import type { FrPack, Pack, PcsCode, Sex } from "./pack";
 import { formatSgPersona, sgDescribeForPrompt } from "./countries/sg/describe";
+import { formatUsPersona, usDescribeForPrompt } from "./countries/us/describe";
 import type { PersonaExtra } from "./sampler";
 import { socleVars } from "../modules/apply";
 import { cardLines } from "../modules/engine";
@@ -131,6 +132,17 @@ export function personaModules(pack: Pack, p: Persona): ResolvedModules {
   return r;
 }
 
+/**
+ * Options de la fiche. `wrapModules` : transformation des lignes de module, à leur place dans la fiche
+ * (protocole d'étude v4 : bloc délimité) ; absente, les lignes sont insérées telles quelles.
+ */
+export interface DescribeOptions {
+  modules?: boolean | string[];
+  wrapModules?: (lines: string[]) => string[];
+}
+
+export const wrapModuleLines = (lines: string[], opts: DescribeOptions): string[] => (opts.wrapModules ? opts.wrapModules(lines) : lines);
+
 /** Fiche compacte envoyée au LLM pour écrire le récit. */
 /**
  * `modules: false` : fiche du socle seul (récits génériques des personas v2 : le récit parle de la vie,
@@ -138,14 +150,15 @@ export function personaModules(pack: Pack, p: Persona): ResolvedModules {
  * `modules: [ids]` : seulement les lignes de ces modules (ceux de la cible d'une étude ; une persona du
  * cache peut porter des modules appliqués par une autre étude).
  */
-export function describeForPrompt(pack: Pack, p: Persona, opts: { modules?: boolean | string[] } = {}): string {
+export function describeForPrompt(pack: Pack, p: Persona, opts: DescribeOptions = {}): string {
   if (pack.kind === "sg") return sgDescribeForPrompt(pack, p, opts);
+  if (pack.kind === "us") return usDescribeForPrompt(pack, p, opts);
   const x = extraOf(p);
   const lines = [
     `Prénom : ${p.firstName ?? "(au choix, cohérent avec l'âge)"} ; ${p.sex === "F" ? "femme" : "homme"} ; ${p.age} ans`,
     `Lieu de vie : ${placeLine(pack, p)}`,
     `Situation : ${p.occupation}`,
-    ...(opts.modules === false ? [] : moduleLines(pack, p, Array.isArray(opts.modules) ? opts.modules : undefined)),
+    ...(opts.modules === false ? [] : wrapModuleLines(moduleLines(pack, p, Array.isArray(opts.modules) ? opts.modules : undefined), opts)),
     `Foyer : ${householdLine(pack, p)} ; ${TENURE_LABELS[x.tenure ?? ""] ?? "logement inconnu"}`,
     `Revenu personnel : ${eur(p.monthlyIncomeEur)} net/mois ; revenu du foyer après impôt et aides : ${eur(p.householdIncomeEur ?? 0)}/mois`,
     `Reste-à-vivre personnel après dépenses contraintes, courantes et abonnements : ${eur(p.monthlyDiscretionaryBudgetEur)}/mois` +
@@ -162,6 +175,7 @@ export function describeForPrompt(pack: Pack, p: Persona, opts: { modules?: bool
 /** Affichage lisible en français (commande personas:show). */
 export function formatPersona(pack: Pack, p: Persona): string {
   if (pack.kind === "sg") return formatSgPersona(pack, p);
+  if (pack.kind === "us") return formatUsPersona(pack, p);
   const x = extraOf(p);
   const head = `${p.firstName ?? "?"}, ${p.age} ans — ${p.occupation}`;
   const lines = [

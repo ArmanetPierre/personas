@@ -8,6 +8,7 @@ import type {
   BackendRequest,
   BackendResponse,
   ChatMessage,
+  ProviderCapabilities,
   Usage,
 } from "../types";
 
@@ -204,6 +205,7 @@ function run(
 /** Backend `claude -p` : abonnement Claude de l'utilisateur, usage personnel uniquement. */
 export class ClaudeCliBackend implements Backend {
   readonly name = "claude-cli" as const;
+  readonly capabilities: ProviderCapabilities = { structured: "json-schema", webTools: true, logprobs: false };
   readonly model: string;
   readonly concurrency: number;
 

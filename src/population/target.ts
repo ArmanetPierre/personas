@@ -11,6 +11,9 @@ import { drawPersona, type DrawnPersona } from "../personas/sampler";
 import { segmentOf } from "../studies/segments";
 import { compileEligibility, type CompiledEligibility, type Vars } from "./eligibility";
 import { SG_ELIGIBILITY_VARS, sgEligibilityVars } from "../personas/countries/sg/vars";
+import { US_ELIGIBILITY_VARS, usEligibilityVars } from "../personas/countries/us/vars";
+import { lockPins, moduleEntries, socleEntry, type LockedSocle, type ProjectLock } from "../hub/lock";
+import { packSha256 } from "../personas/pack-source";
 
 /**
  * Ciblage conditionnel : une population se déclare par un socle, des modules et un filtre
@@ -53,6 +56,17 @@ export const projectTargetingSchema = {
   control: controlSpecSchema.optional(),
 };
 
+/**
+ * Socle épinglé par un lock : la version exacte enregistrée (pas celle de packs/socles.json, qui peut avoir
+ * changé), dont le contenu doit avoir le même sha256.
+ */
+export function pinnedSoclePack(pin: LockedSocle): Pack {
+  const sha = packSha256(pin.version);
+  if (!sha) throw new Error(`Socle épinglé ${pin.ref}@${pin.version} introuvable (ni dans packs/ ni dans le cache du Hub : personas hub pull --pack ${pin.ref}@${pin.version})`);
+  if (sha !== pin.sha256) throw new Error(`Socle épinglé ${pin.ref}@${pin.version} : contenu différent de celui du lock (sha256 ${sha.slice(0, 12)}… au lieu de ${pin.sha256.slice(0, 12)}…)`);
+  return loadPack(pin.version);
+}
+
 /** Résout le nom de socle d'une cible vers un pack chargeable. */
 export function resolveSoclePack(socle: string): Pack {
   let dir = socle;
@@ -68,6 +82,7 @@ export function resolveSoclePack(socle: string): Pack {
 /** Variables visibles par le filtre d'éligibilité pour une persona (socle + modules « module.attr »). */
 export function eligibilityVars(p: Pick<DrawnPersona, "age" | "sex" | "region" | "townSize" | "pcs" | "activityStatus" | "householdType" | "householdSize" | "monthlyIncomeEur" | "householdIncomeEur" | "monthlyDiscretionaryBudgetEur" | "techAdoption" | "socialMediaUsage" | "extra"> & { country?: string }): Vars {
   if (p.country === "SG") return sgEligibilityVars(p);
+  if (p.country === "US") return usEligibilityVars(p);
   const x = p.extra as { tenure?: string; childrenAges?: number[]; livingStandardEur?: number; modules?: ModuleValues };
   const vars: Vars = {
     age: p.age,
@@ -110,16 +125,22 @@ export interface PreparedTarget {
  * `library` : bibliothèque de modules à utiliser (par défaut, les modules validés). La CLI d'aperçu
  * peut y ajouter des brouillons (`population:draw --drafts`) ; les études n'utilisent que les modules validés.
  */
-export function prepareTarget(input: unknown, opts: { library?: Map<string, LoadedModule> } = {}): PreparedTarget {
+/**
+ * `lock` : lock du projet (src/hub/lock.ts) ; le socle et les modules qu'il cite sont pris à leur version
+ * exacte (bibliothèque locale ou cache du Hub, sans réseau), avec contrôle du sha256.
+ */
+export function prepareTarget(input: unknown, opts: { library?: Map<string, LoadedModule>; lock?: ProjectLock | undefined } = {}): PreparedTarget {
   const spec = targetSpecSchema.parse(input);
-  const pack = resolveSoclePack(spec.socle);
+  const soclePin = opts.lock?.socles[spec.socle];
+  const pack = soclePin ? pinnedSoclePack(soclePin) : resolveSoclePack(spec.socle);
   if (pack.manifest.rngStreams !== "module" && spec.modules.length) {
     throw new Error(`Le socle ${pack.manifest.version} tire les modules dans la chaîne du socle (v1) : utiliser un socle v2 (ex. fr-2026.2).`);
   }
-  const modules = resolveModules(spec.modules, pack.socle, opts.library);
+  const pins = lockPins(opts.lock);
+  const modules = resolveModules(spec.modules, pack.socle, opts.library, pins ? { pins } : {});
   const legacy = modules.ordered.filter(isLegacy).map((m) => m.def.id);
   if (legacy.length) throw new Error(`Module(s) archivé(s), réservé(s) aux études historiques : ${legacy.join(", ")}`);
-  const known = new Set(pack.kind === "sg" ? SG_ELIGIBILITY_VARS : SOCLE_ELIGIBILITY_VARS);
+  const known = new Set(pack.kind === "sg" ? SG_ELIGIBILITY_VARS : pack.kind === "us" ? US_ELIGIBILITY_VARS : SOCLE_ELIGIBILITY_VARS);
   for (const m of modules.ordered) for (const a of m.def.attributes) known.add(`${m.def.id}.${a.key}`);
   const filter = spec.eligibility ? compileEligibility(spec.eligibility, known) : null;
   return { spec, pack, modules, filter };
@@ -281,9 +302,21 @@ export interface EligibilityStats {
   rate: number;
   ci: [number, number];
   rare: boolean;
+  /** Versions exactes et sha256 utilisés (socle et modules), même format que le lock du projet. */
+  lock?: { socle: LockedSocle; modules: ProjectLock["modules"] };
+}
+
+/** Versions exactes du socle et des modules d'une cible préparée (null si l'un d'eux n'a pas d'empreinte). */
+export function targetLock(target: PreparedTarget): EligibilityStats["lock"] | undefined {
+  try {
+    return { socle: socleEntry(target.pack), modules: moduleEntries(target.modules) };
+  } catch {
+    return undefined; // module en mémoire (brouillon) : pas d'empreinte à enregistrer
+  }
 }
 
 export function eligibilityStats(target: PreparedTarget, d: TargetDraw): EligibilityStats {
+  const lock = targetLock(target);
   return {
     socle: d.pack.manifest.version,
     modules: target.modules.ordered.map((m) => `${m.def.id}@${m.def.version}`),
@@ -293,5 +326,6 @@ export function eligibilityStats(target: PreparedTarget, d: TargetDraw): Eligibi
     rate: d.rate,
     ci: d.ci,
     rare: d.rare,
+    ...(lock && { lock }),
   };
 }

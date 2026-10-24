@@ -3,6 +3,8 @@ import { resolve } from "node:path";
 import { parse as parseYaml } from "yaml";
 import { compileEligibility } from "../../population/eligibility";
 import { SG_ELIGIBILITY_VARS } from "../../personas/countries/sg/vars";
+import { US_ELIGIBILITY_VARS } from "../../personas/countries/us/vars";
+import { lintModule as securityLint } from "../lint";
 import { isLegacy, lintModule, moduleLibrary, modulesRoot, resolveModules, checkModule, type LoadedModule } from "../registry";
 import type { ModuleDef } from "../schema";
 import { lineDiff } from "./diff";
@@ -143,20 +145,26 @@ export function writeDraftFile(id: string, name: string, content: string): void 
 
 /**
  * Validation complète d'un YAML de module : syntaxe, schéma zod, contrôles sémantiques, dépendances
- * (bibliothèque + ce module), compatibilité au socle, filtres d'éligibilité prêts à l'emploi.
+ * (bibliothèque + ce module), compatibilité au socle, filtres d'éligibilité prêts à l'emploi, puis lint de
+ * sécurité (src/modules/lint.ts : injection de prompt, complaisance, tailles, attributs sensibles), dont les
+ * erreurs bloquent comme les autres et les avertissements sont renvoyés à part.
  */
 export function validateModuleYaml(
   yaml: string,
   opts: { socle?: string; library?: Map<string, LoadedModule> } = {},
-): { ok: boolean; errors: ValidationIssue[]; module?: LoadedModule } {
+): { ok: boolean; errors: ValidationIssue[]; warnings: ValidationIssue[]; module?: LoadedModule } {
+  const security = securityLint(yaml);
+  const warnings: ValidationIssue[] = security.warnings.map((w) => ({ path: w.path, message: `${w.message} [lint ${w.code}]` }));
+  const lintErrors: ValidationIssue[] = security.errors.map((e) => ({ path: e.path, message: `${e.message} [lint ${e.code}]` }));
+  if (security.errors.some((e) => e.code === "yaml" || e.code === "size")) return { ok: false, errors: lintErrors, warnings };
   let raw: unknown;
   try {
     raw = parseYaml(yaml);
   } catch (err) {
-    return { ok: false, errors: [{ path: "", message: `YAML illisible : ${(err as Error).message}` }] };
+    return { ok: false, errors: [{ path: "", message: `YAML illisible : ${(err as Error).message}` }], warnings };
   }
   const errors = lintModule(raw);
-  if (errors.length) return { ok: false, errors };
+  if (errors.length) return { ok: false, errors: [...errors, ...lintErrors], warnings };
   const m = checkModule(raw, "(brouillon)");
   const lib = new Map(opts.library ?? moduleLibrary());
   lib.set(m.def.id, m);
@@ -177,7 +185,8 @@ export function validateModuleYaml(
       errors.push({ path: `eligibility_helpers.${name}`, message: (err as Error).message });
     }
   }
-  return { ok: errors.length === 0, errors, module: m };
+  errors.push(...lintErrors);
+  return { ok: errors.length === 0, errors, warnings, module: m };
 }
 
 /**
@@ -206,6 +215,7 @@ export function libraryWithDrafts(): { library: Map<string, LoadedModule>; draft
 /** Variables du socle reconnues par le filtre d'éligibilité (voir population/target.ts ; Singapour : countries/sg/vars.ts). */
 export function eligibilitySocleVars(socle = "fr"): string[] {
   if (socle.replace(/-.*$/, "") === "sg") return [...SG_ELIGIBILITY_VARS];
+  if (socle.replace(/-.*$/, "") === "us") return [...US_ELIGIBILITY_VARS];
   return [
     "age", "sex", "region", "town_size", "pcs", "activity_status", "household_type", "household_size", "monthly_income",
     "household_income", "budget", "living_standard", "tech_adoption", "social_media", "tenure", "children",
@@ -299,7 +309,7 @@ export function getModule(idOrDraftId: string): {
   if (draftExists(idOrDraftId)) {
     const meta = readMeta(idOrDraftId);
     const yaml = readDraftYaml(idOrDraftId) ?? "";
-    const v = yaml ? validateModuleYaml(yaml, { socle: meta.socle }) : { ok: false, errors: [{ path: "", message: "Pas encore de YAML" }] };
+    const v = yaml ? validateModuleYaml(yaml, { socle: meta.socle }) : { ok: false, errors: [{ path: "", message: "Pas encore de YAML" }], warnings: [] };
     return { yaml, ...(v.module && { parsed: v.module.def }), status: `draft:${meta.status}`, meta, validationErrors: v.errors };
   }
   const file = resolve(modulesRoot(), idOrDraftId, "module.yaml");

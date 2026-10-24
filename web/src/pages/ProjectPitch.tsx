@@ -4,7 +4,7 @@ import { api, useApi, type FactView, type PitchProposalView, type PitchState, ty
 import { JobPanel, useJob } from "../jobs";
 import { tr, useContentLocale, useDict } from "../i18n";
 import { projectPitchDict } from "../i18n/projectP1";
-import { dateFr, ErrorBox, Loading } from "../ui";
+import { dateFr, ErrorBox, Loading, useTooltip } from "../ui";
 import { ProjectFrame } from "./ProjectHub";
 
 /**
@@ -247,6 +247,8 @@ function Review({ id, d, onDone }: { id: string; d: PitchState; onDone: () => vo
   const [done, setDone] = useState<{ kind: "applied" | "dismissed"; file?: string; backup?: string; source?: string } | null>(null);
   const edited = text.trim() !== pr.neutral.trim();
   const t = useDict(projectPitchDict).review;
+  // Infobulle des passages marqués au focus clavier (le title ne s'affiche qu'au survol de la souris)
+  const tip = useTooltip();
 
   // Contrôle sans modèle de la version éditée (score lexical, faits), après une courte pause de frappe
   const timer = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -331,6 +333,7 @@ function Review({ id, d, onDone }: { id: string; d: PitchState; onDone: () => vo
 
   return (
     <>
+      {tip.node}
       <div className="row" style={{ justifyContent: "space-between", alignItems: "baseline" }}>
         <div>
           <h2 style={{ margin: 0 }}>{t.title}</h2>
@@ -382,7 +385,14 @@ function Review({ id, d, onDone }: { id: string; d: PitchState; onDone: () => vo
               };
               const inner = runs(diff.ta.slice(run.first, run.first + run.count), (_t, j) => (delAt(run.first + j) ? "d" : "-")).map((x, j) => (x.key === "d" ? <del key={j}>{x.text}</del> : <span key={j}>{x.text}</span>));
               return p ? (
-                <mark key={k} className={`tone-mark tc-${catNo(p.category)}`} title={t.markTitle(toneLabel(p.category), p.reason, p.replacement)} tabIndex={0}>
+                <mark
+                  key={k}
+                  className={`tone-mark tc-${catNo(p.category)}`}
+                  title={t.markTitle(toneLabel(p.category), p.reason, p.replacement)}
+                  tabIndex={0}
+                  onFocus={(e) => tip.showAt(e.currentTarget, t.markTitle(toneLabel(p.category), p.reason, p.replacement))}
+                  onBlur={tip.hide}
+                >
                   {inner}
                   <sup aria-hidden="true">{catNo(p.category)}</sup>
                   <span className="sr-only">

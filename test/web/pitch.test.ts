@@ -146,7 +146,7 @@ describe("API de la neutralisation du pitch", () => {
     expect((await call("PUT", "/projects/demo-pitch-db/pitch", { pitch: "court", confirm: true })).status).toBe(400);
   });
 
-  it("création d'étude v3 : refus structuré d'un pitch commercial, forçage, v2 seulement averti", async () => {
+  it("création d'étude v4 (comme v3) : refus structuré d'un pitch commercial, forçage, v2 seulement averti", async () => {
     const base = { projectId: "demo-survendu", backend: "claude-cli", target: { packVersion: pack.manifest.version, n: 3 } };
     const refused = await call("POST", "/studies", base);
     expect(refused.status).toBe(422);
@@ -161,7 +161,7 @@ describe("API de la neutralisation du pitch", () => {
     expect(v2.body.notes.join(" ")).toMatch(/ton commercial/);
     const studies = (await call("GET", "/studies?project=demo-survendu")).body as Array<{ id: string }>;
     expect(studies).toHaveLength(2);
-    expect((await call("POST", "/studies", { ...base, protocolVersion: "4" })).status).toBe(400);
+    expect((await call("POST", "/studies", { ...base, protocolVersion: "5" })).status).toBe(400);
   });
 
   it("expose l'avancement des récits de l'échantillon (étude lancée du terminal)", async () => {

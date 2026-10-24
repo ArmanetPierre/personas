@@ -2,7 +2,7 @@ import { existsSync } from "node:fs";
 import { parseArgs } from "node:util";
 import { loadConfig, loadDotEnv } from "../config";
 import { openDb } from "../db/client";
-import { getEngine } from "../engine";
+import { assistantEngine } from "../engine/select";
 import type { ProjectInput } from "../population/preview";
 import { suggestionPath, suggestTarget, writeSuggestion } from "../population/suggest";
 import { getProject, readProjectFile } from "../studies/project";
@@ -18,6 +18,7 @@ import { errorText, numberLocale, t } from "./i18n";
 
 const { values } = parseArgs({
   options: {
+    profile: { type: "string" },
     project: { type: "string" },
     triage: { type: "boolean", default: false },
     "no-preview": { type: "boolean", default: false },
@@ -47,7 +48,7 @@ try {
     if (!row) throw new Error(t.common.projectNotFoundAnywhere(values.project));
     project = row;
   }
-  const engine = getEngine("claude-cli", config);
+  const engine = assistantEngine(config, { profile: values.profile });
   const s = await suggestTarget(project, {
     engine,
     triage: values.triage,

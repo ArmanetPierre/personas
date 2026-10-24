@@ -1,5 +1,6 @@
 import type { Pack } from "../personas/pack";
 import { sgSocleVars } from "../personas/countries/sg/vars";
+import { usSocleVars } from "../personas/countries/us/vars";
 import { Rng } from "../personas/rng";
 import { drawPhase, type ModuleValues } from "./engine";
 import type { ResolvedModules } from "./registry";
@@ -28,6 +29,7 @@ export interface SocleLike {
 /** Variables du socle visibles par les modules (voir SOCLE_VARS dans registry.ts). */
 export function socleVars(pack: Pack, p: SocleLike): Record<string, string | number | null> {
   if (pack.kind === "sg") return sgSocleVars(pack, p);
+  if (pack.kind === "us") return usSocleVars(pack, p);
   const x = (p.extra ?? {}) as {
     tenure?: string;
     childrenAges?: number[];

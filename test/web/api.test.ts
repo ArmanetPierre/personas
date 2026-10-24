@@ -9,6 +9,7 @@ import { drawPersonas } from "../../src/personas/sampler";
 import { insertPersonas } from "../../src/personas/store";
 import { createProject, readProjectFile } from "../../src/studies/project";
 import { runStudy } from "../../src/studies/run";
+import { findStudy } from "../../src/studies/store";
 import { createStudy } from "../../src/studies/study";
 import { createApp } from "../../src/web/app";
 import { childEnv, Launcher, type SpawnFn } from "../../src/web/launcher";
@@ -181,7 +182,65 @@ describe("API du tableau de bord", () => {
     expect((await get(`/studies/${draftId}/log`)).body.logPath).toContain(draftId);
   });
 
+  it("estime le coût avant lancement (création simulée) et exige une confirmation pour un coût inconnu", async () => {
+    const before = (await get<unknown[]>("/studies")).body.length;
+    const body = { projectId: "meal-planner", seed: 7, backend: "claude-cli", target: { packVersion: pack.manifest.version, n: 10 } };
+    const e = await post("/studies/estimate", body);
+    expect(e.status).toBe(200);
+    expect(e.body.estimate).toMatchObject({ profile: "claude-cli", provider: "claude-cli", calls: { responses: 10 }, cost: { kind: "subscription" }, sampleSize: 10 });
+    expect(e.body.estimate.cost.high).toBeGreaterThan(e.body.estimate.cost.low);
+    const local = await get(`/projects/meal-planner/estimate?n=12&backend=ollama`);
+    expect(local.body.estimate).toMatchObject({ provider: "ollama", calls: { responses: 12 }, cost: { kind: "local", usd: 0 } });
+    expect((await get<unknown[]>("/studies")).body.length).toBe(before); // rien n'a été créé
+    // Modèle sans prix : refus structuré, puis création avec la confirmation explicite
+    const unknown = { ...body, model: "claude-imaginaire-9" };
+    expect((await post("/studies/estimate", unknown)).body.estimate).toMatchObject({ cost: { kind: "unknown", usd: null }, requiresConfirmation: true });
+    const refused = await post("/studies", unknown);
+    expect(refused.status).toBe(422);
+    expect(refused.body.code).toBe("unknown_cost");
+    const created = await post("/studies", { ...unknown, acceptUnknownCost: true });
+    expect(created.status).toBe(201);
+    expect(created.body.study.engine).toMatchObject({ provider: "claude-cli", model: "claude-imaginaire-9", profile: "claude-cli" });
+    // L'accord est enregistré dans l'étude : le garde-fou de budget ne la met pas en pause au premier appel
+    expect(findStudy(db, created.body.study.id).extra).toMatchObject({ engine: { acceptUnknownCost: true } });
+    expect(findStudy(db, (await post("/studies", body)).body.study.id).extra).not.toMatchObject({ engine: { acceptUnknownCost: true } });
+    const meta = await get("/meta");
+    expect(meta.body.profiles).toEqual(expect.arrayContaining([expect.objectContaining({ name: "claude-cli", pricing: "subscription", paid: false })]));
+    expect(JSON.stringify(meta.body.profiles)).not.toMatch(/key|secret|token/i);
+  });
+
+  it("base neuve : socles proposés, tirage à la demande d'un socle, erreurs de validation lisibles", async () => {
+    const meta = await get("/meta");
+    expect(meta.body.socles).toEqual(expect.arrayContaining([{ id: "fr", pack: "fr-2026.2" }]));
+    const before = (await get<unknown[]>("/studies")).body.length;
+    // Socle sans persona en base : tirage virtuel (sans LLM) dans une création simulée, rien n'est écrit
+    const e = await post("/studies/estimate", { projectId: "meal-planner", seed: 7, backend: "ollama", model: "fake", target: { socle: "fr", n: 5 } });
+    expect(e.status).toBe(200);
+    expect(e.body.estimate).toMatchObject({ sampleSize: 5, calls: { responses: 5 }, basis: { socle: "fr", forVersion: "4" } });
+    expect((await get<unknown[]>("/studies")).body.length).toBe(before);
+    // Ni pack ni socle : message guidé, pas le message brut de Zod
+    const bad = await post("/studies/estimate", { projectId: "meal-planner", seed: 7, backend: "ollama", target: { packVersion: "", n: 5 } });
+    expect(bad.status).toBe(400);
+    expect(bad.body).toMatchObject({ code: "invalid_study", error: "Population cible : choisir un pack ou un socle." });
+    const res = await app.request("/api/studies/estimate?lang=en", {
+      method: "POST",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify({ projectId: "meal-planner", seed: 7, backend: "ollama", target: { n: 0 }, control: { packVersion: "x", n: 3 } }),
+    });
+    const en = (await res.json()) as { error: string };
+    expect(en.error).toBe("Target sample size: positive whole number expected. Target population: choose a pack or a base population.");
+    expect(en.error).not.toMatch(/Too small/);
+  });
+
   it("nettoie l'environnement transmis", () => {
     expect(childEnv({ ANTHROPIC_AUTH_TOKEN: "x", CLAUDE_CODE_API_KEY_HELPER: "y", HOME: "/h" })).toEqual({ HOME: "/h" });
+  });
+});
+
+describe("en-têtes du mode local", () => {
+  it("ni CSP ni HSTS (propres au service hébergé), même derrière un X-Forwarded-Proto https", async () => {
+    const res = await app.request("/api/projects", { headers: { "x-forwarded-proto": "https" } });
+    expect(res.headers.get("content-security-policy")).toBeNull();
+    expect(res.headers.get("strict-transport-security")).toBeNull();
   });
 });

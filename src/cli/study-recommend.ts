@@ -1,7 +1,7 @@
 import { parseArgs } from "node:util";
 import { loadConfig, loadDotEnv } from "../config";
 import { openDb, runMigrations } from "../db/client";
-import { getEngine } from "../engine";
+import { assistantEngine } from "../engine/select";
 import { loadPack } from "../personas/pack";
 import { createNextStudy, recommendationPath, recommendStudy } from "../studies/recommend";
 import { errorText, numberLocale, t } from "./i18n";
@@ -14,6 +14,7 @@ import { errorText, numberLocale, t } from "./i18n";
 
 const { values } = parseArgs({
   options: {
+    profile: { type: "string" },
     study: { type: "string" },
     force: { type: "boolean", default: false },
     create: { type: "string" },
@@ -40,7 +41,7 @@ try {
     console.log(t.studyRecommend.projectCreated(r.projectId, r.projectFile));
     console.log(t.studyRecommend.studyCreated(r.studyId));
   } else {
-    const r = await recommendStudy(values.study, { db, pack, engine: getEngine("claude-cli", config), force: values.force, log: (m) => console.log(m) });
+    const r = await recommendStudy(values.study, { db, pack, engine: assistantEngine(config, { profile: values.profile, db }), force: values.force, log: (m) => console.log(m) });
     console.log(`\n${r.headline}\n`);
     console.log(t.studyRecommend.findings);
     for (const f of r.findings) {

@@ -1,4 +1,4 @@
-import { useLayoutEffect, useMemo, useRef, useState, type ReactNode } from "react";
+import { useLayoutEffect, useMemo, useRef, useState, type FocusEvent, type KeyboardEvent, type ReactNode } from "react";
 import { useDict } from "./i18n";
 import { chartsDict } from "./i18n/charts";
 import { eur, money, pct, useTooltip } from "./ui";
@@ -97,7 +97,7 @@ export function BehaviorStack({ rows, behaviors }: { rows: Array<{ key: string; 
               {r.label}
               {r.sub && <small>{r.sub}</small>}
             </div>
-            <div className="stackbar" role="img" aria-label={`${typeof r.label === "string" ? r.label : r.key}${t.units.colon}${parts.map((b) => `${b.label} ${pct(r.dist.shares[b.id])}`).join(", ")}`}>
+            <div className="stackbar" role="group" aria-label={typeof r.label === "string" ? r.label : r.key}>
               {parts.map((b) => {
                 const share = r.dist.shares[b.id] ?? 0;
                 const content = (
@@ -115,6 +115,8 @@ export function BehaviorStack({ rows, behaviors }: { rows: Array<{ key: string; 
                   <div
                     key={b.id}
                     tabIndex={0}
+                    role="img"
+                    aria-label={`${b.label}${t.units.colon}${pct(share)} ${t.units.ofTotal(r.dist.counts[b.id] ?? 0, r.dist.n)}`}
                     style={{ flex: `${share} 0 0`, background: behaviorColor(b.id) }}
                     onMouseMove={(e) => tt.show(e, content)}
                     onMouseLeave={tt.hide}
@@ -199,6 +201,7 @@ export function HBars({
                     className="hbar"
                     key={s.key}
                     tabIndex={0}
+                    role="img"
                     aria-label={`${s.label}${t.units.colon}${format(v)}`}
                     onMouseMove={(e) => tt.show(e, content)}
                     onMouseLeave={tt.hide}
@@ -297,18 +300,31 @@ export function Heatmap({
                       {r.small && <div className="muted">{t.charts.heatSmall}</div>}
                     </>
                   );
+                  const active = Boolean(onCell) && k > 0;
+                  const open = () => active && onCell?.(b.dim, r.code, c.id);
                   return (
                     <td
                       key={c.id}
                       className={`hb${binOf(v)}${v === 0 ? " zero" : ""}`}
-                      tabIndex={0}
-                      style={onCell && k > 0 ? { cursor: "pointer" } : undefined}
-                      onClick={() => k > 0 && onCell?.(b.dim, r.code, c.id)}
-                      onKeyDown={(e) => e.key === "Enter" && k > 0 && onCell?.(b.dim, r.code, c.id)}
+                      {...(active
+                        ? {
+                            tabIndex: 0,
+                            role: "button",
+                            "aria-label": `${b.label}${t.units.colon}${r.label}, ${c.label}${t.units.colon}${pct(v)} ${t.units.ofTotal(k, r.n)}`,
+                            onFocus: (e: FocusEvent<HTMLElement>) => tt.showAt(e.currentTarget, content),
+                            onBlur: tt.hide,
+                            onKeyDown: (e: KeyboardEvent) => {
+                              if (e.key === "Enter" || e.key === " ") {
+                                e.preventDefault();
+                                open();
+                              }
+                            },
+                          }
+                        : {})}
+                      style={active ? { cursor: "pointer" } : undefined}
+                      onClick={open}
                       onMouseMove={(e) => tt.show(e, content)}
                       onMouseLeave={tt.hide}
-                      onFocus={(e) => tt.showAt(e.currentTarget, content)}
-                      onBlur={tt.hide}
                     >
                       {v === 0 ? "·" : Math.round(v * 100)}
                     </td>
@@ -536,7 +552,7 @@ export function Columns({
   const y = (v: number) => m.t + ph - (v / max) * ph;
   return (
     <div ref={box}>
-      <svg className="chart" width={W} height={height} viewBox={`0 0 ${W} ${height}`} role="img" aria-label={title}>
+      <svg className="chart" width={W} height={height} viewBox={`0 0 ${W} ${height}`} role="group" aria-label={title}>
         <line x1={m.l} x2={m.l + pw} y1={m.t + ph} y2={m.t + ph} stroke="var(--axis)" />
         {categories.map((c, ci) => {
           const cx = m.l + band * ci + band / 2;
@@ -564,6 +580,8 @@ export function Columns({
                   <g
                     key={s.key}
                     tabIndex={0}
+                    role="img"
+                    aria-label={`${s.label}, ${c.label}${t.units.colon}${format(v)}`}
                     onMouseMove={(e) => tt.show(e, content)}
                     onMouseLeave={tt.hide}
                     onFocus={(e) => tt.showAt(e.currentTarget, content)}

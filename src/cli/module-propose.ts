@@ -3,7 +3,8 @@ import { parseArgs } from "node:util";
 import { parse as parseYaml } from "yaml";
 import { loadConfig, loadDotEnv } from "../config";
 import { openDb, runMigrations } from "../db/client";
-import { getEngine } from "../engine";
+import { assistantEngine } from "../engine/select";
+import { capabilitiesOf } from "../engine";
 import { proposeModule } from "../modules/assistant";
 import { getProject } from "../studies/project";
 import { t } from "./i18n";
@@ -12,6 +13,7 @@ import { t } from "./i18n";
 
 const { values } = parseArgs({
   options: {
+    profile: { type: "string" },
     description: { type: "string" },
     project: { type: "string" },
     socle: { type: "string", default: "fr" },
@@ -46,7 +48,7 @@ if (values.project) {
   projectContext = [`Nom : ${p.name}`, `Pitch : ${p.pitch}`, p.targetAudience ? `Cible visée : ${p.targetAudience}` : ""].filter(Boolean).join("\n");
 }
 
-const engine = getEngine("claude-cli", config);
+const engine = assistantEngine(config, { profile: values.profile });
 const meta = await proposeModule(engine, {
   ...(values.draft && { draftId: values.draft }),
   description: values.description ?? "",
@@ -54,7 +56,8 @@ const meta = await proposeModule(engine, {
   socle: values.socle!,
   ...(projectId && { projectId }),
   ...(projectContext && { projectContext }),
-  research: !values["no-research"],
+  // Recherche de sources : seulement avec un fournisseur qui a les outils web (claude-cli aujourd'hui)
+  research: !values["no-research"] && capabilitiesOf(engine.backend).webTools,
   log: (m) => console.log(m),
 });
 const u = meta.usage;

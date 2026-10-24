@@ -17,13 +17,15 @@ import {
   NEED_FREQUENCIES,
   NEED_FREQUENCY_LABELS,
   protocolVersionOf,
+  hasV3Measures,
   tierKey,
   type Behavior,
   type ObjectionCategory,
 } from "./protocols/concept-price";
 import type { ConceptPricePayload } from "./run";
 import { confidenceIndex, formatConfidence, type ConfidenceIndex } from "./confidence";
-import { formatPaymentLine, loadCalibration, paymentMeasure, type PaymentCalibration, type PaymentMeasure } from "./payment";
+import { DEFAULT_CALIBRATION, formatPaymentLine, loadCalibrationFor, modelFamily, paymentMeasure, type PaymentCalibration, type PaymentMeasure } from "./payment";
+import type { StudyEngineInfo } from "../db/schema";
 import { toneWarning, TONE_WARNING_THRESHOLD } from "./pitch-tone";
 import { toEur } from "./price-model";
 import { studyAudience } from "./locale";
@@ -182,7 +184,8 @@ export interface SummaryContext {
 }
 
 export interface StudySummary {
-  study: { id: string; name: string; backend: string; model: string; protocol: string; sampleSize: number; responses: number; status: string };
+  /** `engine` : moteur figé à la création (études créées depuis les profils de moteur, champ additif). */
+  study: { id: string; name: string; backend: string; model: string; protocol: string; sampleSize: number; responses: number; status: string; engine?: StudyEngineInfo };
   /** `pricePeriod` et `priceUnit` (« mois », « mise en relation »…) : ajoutés après la v2, unité des prix et des paliers. */
   project: {
     id: string;
@@ -332,7 +335,12 @@ export function summarize(
   // Étude en anglais (socle en locale `en`) : libellés et textes générés en anglais ; France inchangée.
   const locale = studyAudience(study).locale;
   const en = locale === "en";
-  const calibration = context.calibration ?? loadCalibration();
+  // Calibration de la famille du modèle (modèle exact rapporté par l'API s'il est connu) ; famille absente : défaut, non calibré
+  const engineInfo = (study.extra as { engine?: StudyEngineInfo } | undefined)?.engine;
+  const family = modelFamily(study.backend, engineInfo?.reportedModel ?? study.model);
+  const familyCalibration = loadCalibrationFor(family);
+  const calibration = context.calibration ?? familyCalibration ?? DEFAULT_CALIBRATION;
+  const modelCal = { family, inTable: Boolean(context.calibration) || familyCalibration !== null };
   const pay = paymentContext(project, version, calibration);
   const rows: Row[] = responses.map((r) => {
     const persona = personas.get(r.personaId);
@@ -370,6 +378,7 @@ export function summarize(
       sampleSize: study.personaIds.length,
       responses: rows.length,
       status: study.status,
+      ...(engineInfo && { engine: engineInfo }),
     },
     project: en
       ? { id: project.id, name: project.name, price: "—", ...projectFieldsEn(project) }
@@ -405,7 +414,7 @@ export function summarize(
   const roleOf = (g: string) => byGroup.get(g)?.[0]?.payload.role;
   const payerGroup = groupNames.find((g) => roleOf(g)?.pricing);
   const refGroup = multi && payerGroup && roleOf(payerGroup) ? payerGroup : driverGroup;
-  return withRoles(withV3Blocks(summary, study, project, rows, refGroup, version, calibration, context, locale), byGroup, groupNames, en);
+  return withRoles(withV3Blocks(summary, study, project, rows, refGroup, version, calibration, context, locale, modelCal), byGroup, groupNames, en);
 }
 
 interface PayContext {
@@ -502,6 +511,7 @@ function withV3Blocks(
   calibration: PaymentCalibration,
   context: SummaryContext,
   locale: "fr" | "en" = "fr",
+  model?: { family: string | null; inTable: boolean },
 ): StudySummary {
   const en = locale === "en";
   const ref = refGroup ? summary.groups.find((g) => g.group === refGroup)!.analysis : summary.overall;
@@ -526,6 +536,7 @@ function withV3Blocks(
       n: ref.n,
       repeats: context.repeats ?? null,
       calibration,
+      ...(model && { model }),
       pitch,
       extraCaveats,
       ...(en && { locale }),
@@ -730,7 +741,7 @@ function roleBlocks(rows: Row[]): Pick<Analysis, "role" | "expectedUsage" | "ado
 
 /** Fréquence du besoin agrégée ; null si aucune réponse ne la porte (v2). */
 function needFrequencyOf(rows: Row[], en = false): NeedFrequencySummary | null {
-  const withF = rows.filter((r) => r.payload.protocolVersion === "3" && r.payload.answer.needFrequency);
+  const withF = rows.filter((r) => hasV3Measures(r.payload.protocolVersion) && r.payload.answer.needFrequency);
   if (!withF.length) return null;
   const d = distribution(NEED_FREQUENCIES, withF.map((r) => r.payload.answer.needFrequency!), withF.length);
   const recurringShare = d.shares.monthly + d.shares.weekly + d.shares.daily;
@@ -751,7 +762,7 @@ function needFrequencyOf(rows: Row[], en = false): NeedFrequencySummary | null {
 }
 
 function needFrequencyDimension(rows: Row[], en = false): Dimension {
-  const byPersona = new Map(rows.map((r) => [r.persona.id, (r.payload.protocolVersion === "3" && r.payload.answer.needFrequency) || "?"]));
+  const byPersona = new Map(rows.map((r) => [r.persona.id, (hasV3Measures(r.payload.protocolVersion) && r.payload.answer.needFrequency) || "?"]));
   return {
     id: "needFrequency",
     label: en ? "Need frequency" : "Fréquence du besoin",
@@ -931,7 +942,9 @@ function formatAnalysis(
 export function formatSummary(s: StudySummary): string {
   const out: string[] = [];
   out.push(`Étude ${s.study.id} — ${s.study.name}`);
-  out.push(`Projet : ${s.project.name} (${s.project.price}) ; protocole ${s.study.protocol} ; ${s.study.backend} / ${s.study.model}`);
+  const reported = s.study.engine?.reportedModel && s.study.engine.reportedModel !== s.study.model ? ` (${s.study.engine.reportedModel})` : "";
+  const prof = s.study.engine && !["claude-cli", "ollama"].includes(s.study.engine.profile) ? `, profil ${s.study.engine.profile}` : "";
+  out.push(`Projet : ${s.project.name} (${s.project.price}) ; protocole ${s.study.protocol} ; ${s.study.backend} / ${s.study.model}${reported}${prof}`);
   out.push(`Réponses : ${s.study.responses}/${s.study.sampleSize} (statut ${s.study.status})`);
   out.push(`⚠ ${s.methodNote}`);
   for (const e of s.eligibility ?? []) {

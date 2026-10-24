@@ -129,6 +129,7 @@ export const studyDict = defineDict(
       clear: "Effacer les filtres",
       anomaly: "anomalie",
       empty: "Aucune réponse ne correspond à ces filtres.",
+      emptyTitle: "Aucune réponse",
       more: (n: number) => `Afficher 50 de plus (${n} restantes)`,
     },
     coherence: {
@@ -366,6 +367,7 @@ export const studyDict = defineDict(
       clear: "Clear filters",
       anomaly: "anomaly",
       empty: "No response matches these filters.",
+      emptyTitle: "No matching responses",
       more: (n: number) => `Show 50 more (${n} left)`,
     },
     coherence: {

@@ -2,6 +2,7 @@ import type { PersonaSubscription } from "../db/schema";
 import { clamp, sigmoid } from "./rng";
 import type { FrPack, Pack } from "./pack";
 import { recomputeSgEconomics } from "./countries/sg/economics";
+import { recomputeUsEconomics } from "./countries/us/economics";
 import { incomeTax, type DrawnPersona, type PersonaExtra } from "./sampler";
 
 /**
@@ -91,6 +92,7 @@ function householdTransfers(pack: FrPack, p: DrawnPersona, selfIncome: number, h
 }
 
 export function recomputeEconomics(pack: Pack, p: DrawnPersona, change: EconomicsChange): DrawnPersona {
+  if (pack.kind === "us") return recomputeUsEconomics(pack, p, change);
   return pack.kind === "sg" ? recomputeSgEconomics(pack, p, change) : recomputeFrEconomics(pack, p, change);
 }
 

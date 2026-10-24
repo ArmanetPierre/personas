@@ -1,0 +1,16 @@
+# Liste blanche du contexte de construction (BuildKit lit <Dockerfile>.dockerignore).
+*
+!package.json
+!package-lock.json
+!tsconfig.json
+!src/
+!packs/
+!hub/
+!web/src/tokens.css
+hub/test/
+hub/README.md
+**/node_modules
+**/.DS_Store
+# Jamais de secret dans l image : hub/.env vit à côté du code sur le serveur.
+**/.env
+**/.env.*

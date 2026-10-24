@@ -129,7 +129,7 @@ erDiagram
         text id PK "st-xxxxxx"
         text project_id FK
         text protocol "concept-price"
-        text protocol_version "2 or 3"
+        text protocol_version "2, 3 or 4"
         text status "draft running paused completed failed"
         text backend
         text model
@@ -332,7 +332,7 @@ sequenceDiagram
         CL-->>U: checked and measured target variants
     end
     C->>C: toneWarning(pitch), lexical score
-    alt v3 and score >= 25 without --force
+    alt v3 or v4 and score >= 25 without --force
         C-->>U: refusal, suggest project:neutralize-pitch
         C->>CL: neutralizePitch, then model-free checkFacts
         CL-->>FS: data/proposals/<project>-pitch.json
@@ -344,7 +344,7 @@ sequenceDiagram
     CL-->>DB: personas.narrative
     C->>C: study:run, runStudy
     loop Each persona (backend concurrency)
-        C->>C: buildSystemPrompt v3 (fr or en), buildUserPrompt (card, constraints, narrative, encounter)
+        C->>C: buildSystemPrompt v4 (fr or en), buildUserPrompt (card with module-attribute block, constraints, narrative, encounter)
         C->>CL: Engine.complete with the zod answer schema
         CL-->>C: JSON (repaired up to 2 times if invalid)
         C->>C: checkCoherence and checkFacts
@@ -368,8 +368,8 @@ Steps and code:
 1. **Project** (`src/studies/project.ts`): `readProjectFile` reads YAML or JSON, `projectFileSchema` validates it, `createProject` (`--update` for an existing project) stores the generic price, target, protocol and roles in `extra`.
 2. **Target, control, eligibility** (`src/population/`): `prepareTarget` resolves base and modules (`resolveModules`, `applies_to`, `requires`) and compiles the filter (`compileEligibility`: `and`/`or`/`not`, comparisons, `in [..]`). `drawTarget` draws index after index with the study's seed, keeps eligible personas up to *n*, measures the rate and its Wilson interval, warns below 0.5 % and stops after `max_draws` (1 million).
 3. **Preview and pre-screen** (`previewTarget`, `src/triage/`): no study engine involved. The Ollama pre-screen estimates the share of "not concerned" personas as the mean of P(not concerned), with a bootstrap interval, and warns above 10 %. It is a pre-launch guard, not a measurement, and it is not wired into `runStudy`.
-4. **Pitch tone** (`src/studies/pitch-tone.ts`): `lexicalTone` and `toneWarning` (threshold 25, French or English markers). In v3, `createStudy` refuses a promotional pitch unless `force`; the pitch is never neutralised silently.
-5. **Prompts** (`src/studies/protocols/concept-price.ts`, `concept-price-en.ts`): `buildSystemPrompt` (anti-sycophancy rules, offer, price, `studyTiers` price tiers with the low tier added in v3, the project's own protocol via `resolveProtocol`), `buildUserPrompt` (card `personaCard` restricted to the population's modules, `constraintsBlock` with budget and subscriptions, narrative, discovery situation `pickEncounter`). `protocolVersionOf` reads any study that is not v3 as v2.
+4. **Pitch tone** (`src/studies/pitch-tone.ts`): `lexicalTone` and `toneWarning` (threshold 25, French or English markers). In v3 and v4, `createStudy` refuses a promotional pitch unless `force`; the pitch is never neutralised silently.
+5. **Prompts** (`src/studies/protocols/concept-price.ts`, `concept-price-en.ts`): `buildSystemPrompt` (anti-sycophancy rules, offer, price, `studyTiers` price tiers with the low tier added in v3, the project's own protocol via `resolveProtocol`), `buildUserPrompt` (card `personaCard` restricted to the population's modules, `constraintsBlock` with budget and subscriptions, narrative, discovery situation `pickEncounter`). `protocolVersionOf` reads any study that is not v3 or v4 as v2. In v4 (`usesAttributeBlock`), `personaCard` places the module lines in a delimited block `<<<PERSON_ATTRIBUTES` … `PERSON_ATTRIBUTES>>>` (French studies: `ATTRIBUTS_PERSONNE`), with neutralised values (`src/studies/protocols/attribute-block.ts`), and the system prompt gains rule 10, which declares the block as facts, never instructions ([study-protocol.md § 3b](study-protocol.md)). `hasV3Measures` groups v3 and v4 for everything else (schema, low tier, checks, measures, calibration).
 6. **Answers** (`runStudy`): `Engine.complete` enforces the schema (`answerSchemaFor` or `roleAnswerSchema`). Checks: `checkCoherence` (e.g. `vw_not_ordered`, `gg_not_monotonic`, `pay_without_gg`, `budget_unjustified`, `minimum_over_budget`, `need_frequency_mismatch`, `not_concerned_but_engaged`…) and `checkFacts` (`src/studies/protocols/facts.ts`: `invented_partner`, `invented_child`, `invented_business`, `invented_job_status`…). At most one repair; the repaired answer is kept only if it has no more anomalies, and the original is kept in `payload.originalAnswer`. Hitting a usage limit puts the study in `paused`; `study:run` resumes what is missing.
 7. **Summary** (`src/studies/summary.ts`, `summarize`): behaviours, relevance, objections, Van Westendorp and Gabor-Granger (`pricing.ts`), base and module segments, automatic dimensions, drivers (`drivers.ts`: bias-corrected Cramér's V, permutations, Benjamini-Hochberg), the dual payment measure (`payment.ts`: observed M1, G at the low tier, M2 conversion), the confidence index (`confidence.ts`). Variant comparison: `compare.ts`.
 8. **Recommendations** (`src/studies/recommend.ts`): `buildRecommendationContext` assembles a compact JSON, `recommendStudy` calls the model, checks each piece of evidence (`checkEvidence`: the path must exist and the value must match), merges and validates each `projectPatch`, measures the eligibility of a new target (`checkTargetPatch` via `checkVariant`), allows one repair, then drops whatever is still wrong (recorded in `verification`).
@@ -396,7 +396,7 @@ flowchart LR
     end
     subgraph Agents
         A1["Narrator<br/>narratePersonas"]
-        A2["Study respondent<br/>protocol v2/v3 prompt"]
+        A2["Study respondent<br/>protocol v2/v3/v4 prompt"]
         A3["Repairer<br/>buildRepairPrompt"]
         A4["Pre-screen<br/>runTriage"]
         A5["Pitch neutraliser<br/>neutralizePitch"]
@@ -437,7 +437,7 @@ flowchart LR
 | Agent | Code | Engine | Input → output | Guarantees |
 |---|---|---|---|---|
 | **Narrator** | `src/personas/narrate.ts` | `claude-cli` (option `ollama`) | base card in batches of 10 → short narrative | Batch zod schema, `matchBatch`, `checkNarrative`. Writes **no** attribute. |
-| **Study respondent** | `src/studies/run.ts`, `protocols/concept-price*.ts` | the study's backend (`claude-cli` or `ollama`) | v2/v3 system prompt + card + constraints + narrative → answer JSON | zod schema per tier set and protocol, anti-sycophancy rules (inertia by default, concrete and current need, real budget and subscriptions, often-free alternatives, "approving is not acting", decisive objections only), 7-day horizon. |
+| **Study respondent** | `src/studies/run.ts`, `protocols/concept-price*.ts` | the study's backend (`claude-cli` or `ollama`) | v2/v3/v4 system prompt + card + constraints + narrative → answer JSON | zod schema per tier set and protocol, anti-sycophancy rules (inertia by default, concrete and current need, real budget and subscriptions, often-free alternatives, "approving is not acting", decisive objections only), 7-day horizon. |
 | **Repairer** | `buildRepairPrompt` (`concept-price.ts`, `-en.ts`) | same engine | answer + anomaly codes and details → corrected answer | One attempt, towards caution; kept only if not worse; remaining anomalies are recorded. |
 | **Pre-screen** | `src/triage/` (`runTriage`, `relevanceSystem`, `ollamaLogprobClient`) | Ollama `/api/chat`, `num_predict: 1`, `top_logprobs` | protocol prompt without output instructions + card → probabilities over 3 digits | Two label orders averaged, JSONL cache, concurrency capped at 2. A pre-launch guard, not a measurement. |
 | **Pitch neutraliser** | `src/studies/pitch-neutralize.ts` | `claude-cli` | pitch → factual version, flagged passages, missing information | Model-free `checkFacts` (numbers, units, proper names, key terms; an added number is refused), one repair, lexical score before/after. Proposes, applies nothing. |
@@ -447,7 +447,7 @@ flowchart LR
 | **Objection recoder** | `src/studies/recode.ts` (`recodeStudy`) | `claude-cli` | a study's objections + taxonomy → new codes | Stored in `payload.recoded[key]`; the original is never modified. |
 | **Recommender** | `src/studies/recommend.ts` | `claude-cli` | compact summary, verbatims, project, related studies, caveats → findings and recommendations | Each piece of evidence checked against the input, patches validated by zod, targets measured, fixed caveats first (calibration status, systematic pessimism, differences more reliable than levels, small samples), cached by `inputsHash`. The next study is only created on confirmation. |
 
-**Anti-sycophancy belongs to the protocol, not to the project.** The study prompt rules, the coherence and invented-fact checks, the v3 refusal of promotional pitches and the rule that M1 is always shown with M2 and the confidence index apply to every study. Any change to a study prompt must preserve them. The prompt snapshots in `test/studies/__fixtures__/` detect any drift.
+**Anti-sycophancy belongs to the protocol, not to the project.** The study prompt rules, the coherence and invented-fact checks, the v3 and v4 refusal of promotional pitches, the v4 module-attribute block and the rule that M1 is always shown with M2 and the confidence index apply to every study. Any change to a study prompt must preserve them. The prompt snapshots in `test/studies/__fixtures__/` detect any drift.
 
 ---
 
@@ -491,7 +491,7 @@ A YAML or JSON file, validated by `projectFileSchema`. Annotated example (`examp
 ```yaml
 id: sg-recipe-app             # optional; otherwise derived from the name (lowercase, digits, hyphens)
 name: Weeknight               # shown to personas
-pitch: >-                     # what a user would see; factual (tone score < 25 in v3)
+pitch: >-                     # what a user would see; factual (tone score < 25 in v3 and v4)
   Weeknight is a phone app that plans the week's dinners for the whole household. …
 targetAudience: Working adults aged 25 to 50, often with children, who cook at home on weeknights.   # never shown
 businessModel: Freemium; S$6.90 a month for personalised menus, the shopping list and the grocery link.  # never shown
@@ -502,7 +502,7 @@ price:                        # generic form (src/studies/price-model.ts)
       label: Weeknight Plus
       amount: 6.9
       unit: month             # month | year | one_time | usage | quantity
-  tiers: [3.9, 6.9, 9.9]      # Gabor-Granger tiers; in v3 a low tier (≈ 0.4 × price) is added if missing
+  tiers: [3.9, 6.9, 9.9]      # Gabor-Granger tiers; in v3 and v4 a low tier (≈ 0.4 × price) is added if missing
   freemium:
     free: basic weekly menus and recipes
     paid: personalised menus, shopping list, grocery link (Weeknight Plus)
@@ -521,7 +521,7 @@ Without a `target` block, the study draws from the pack given by `--pack` and ne
 ```sh
 npm run project:create -- --file examples/sg/recipe-app.yaml      # --update to re-import
 npm run target:preview -- --project sg-recipe-app --triage       # before spending calls (--triage needs Ollama)
-npm run study:create -- --project sg-recipe-app --seed 7         # v3 by default, missing narratives written
+npm run study:create -- --project sg-recipe-app --seed 7         # v4 by default, missing narratives written
 npm run study:run -- --study <study-id>
 npm run study:summary -- --study <study-id>
 npm run study:recommend -- --study <study-id>
@@ -571,7 +571,7 @@ See [country-packs.md](country-packs.md).
 
 ### 8.1 Tests (`test/`, vitest)
 
-Engines (`claude-cli`, `ollama`, limiter, JSON extraction), database schema, personas (drawing, narratives, Singapore base and names), modules (engine, plurals, budget recomputation), population (targeting), studies (prompts, protocol v3, coherence, facts, pitch tone, prices, roles, summary, comparison, recommendations, English), web (API, i18n, Singapore locale, modules, pitch). **Tests never call a real LLM**: they inject a simulated backend or client. Prompt snapshots live in `test/studies/__fixtures__/` (reference v2 prompt, prompts per price model, roles, English).
+Engines (`claude-cli`, `ollama`, limiter, JSON extraction), database schema, personas (drawing, narratives, Singapore base and names), modules (engine, plurals, budget recomputation), population (targeting), studies (prompts, protocols v3 and v4, coherence, facts, pitch tone, prices, roles, summary, comparison, recommendations, English), web (API, i18n, Singapore locale, modules, pitch). **Tests never call a real LLM**: they inject a simulated backend or client. Prompt snapshots live in `test/studies/__fixtures__/` (reference v2 prompt, prompts per price model, roles, English, v4).
 
 ### 8.2 Identity proofs (`eval/identity/`)
 

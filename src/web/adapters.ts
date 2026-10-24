@@ -1,3 +1,4 @@
+import { studyEngineInfo } from "../engine/select";
 import { count, desc, eq, max } from "drizzle-orm";
 import { toneWarning } from "../studies/pitch-tone";
 import type { Db } from "../db/client";
@@ -170,6 +171,7 @@ export function studyListItem(db: Db, s: Study) {
     createdAt: s.createdAt,
     completedAt: s.completedAt,
     extra: pickStudyExtras(s),
+    engine: studyEngineInfo(s),
   };
 }
 
@@ -178,7 +180,7 @@ function pickStudyExtras(s: Study): Record<string, unknown> {
   const known = new Set([
     "id", "projectId", "name", "protocol", "protocolVersion", "status", "backend", "model", "seed", "sampleSize", "quotas",
     "personaIds", "sampleFromStudyId", "populations", "personaGroups", "progressDone", "progressTotal", "error",
-    "startedAt", "completedAt", "createdAt", "updatedAt",
+    "startedAt", "completedAt", "createdAt", "updatedAt", "extra",
   ]);
   return Object.fromEntries(Object.entries(s).filter(([k, v]) => !known.has(k) && v !== null && v !== undefined));
 }

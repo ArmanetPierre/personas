@@ -78,9 +78,9 @@ export type Locale = (typeof LOCALES)[number];
 
 /**
  * Chaînes de tirage connues (contrat de pack pays, docs/architecture-v2.md § 16). Chaque générateur lit
- * les tables communes et ses tables propres : `fr` (INSEE, DREES…), `sg` (SingStat, MOM, HDB…).
+ * les tables communes et ses tables propres : `fr` (INSEE, DREES…), `sg` (SingStat, MOM, HDB…), `us` (Census, BLS, IRS…).
  */
-export const GENERATORS = ["fr", "sg"] as const;
+export const GENERATORS = ["fr", "sg", "us"] as const;
 export type Generator = (typeof GENERATORS)[number];
 
 export const manifestSchema = z.object({

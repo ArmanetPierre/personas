@@ -3,7 +3,10 @@ import { resolve } from "node:path";
 import { parse as parseYaml } from "yaml";
 import { z } from "zod";
 import { moduleSchema, type Condition, type Expr, type ModuleAttribute, type ModuleDef } from "./schema";
+import { compareVersions, OFFICIAL_NAMESPACE, parseModuleSpec, type ModuleSpec } from "./refs";
+import { hubCacheDir, listCachedModules, readCachedModule, sha256Text } from "../hub/cache";
 import { DWELLINGS, EDUCATION_LEVELS, ETHNICITIES, HOME_LANGUAGES, RELIGIONS, RESIDENCY, SG_NATIONALITIES, SG_TENURES, SSOC_CODES } from "../personas/countries/sg/codes";
+import { CLASS_OF_WORKER, HEALTH_INSURANCE, NATIVITY, RACES, URBANICITY, US_DIVISIONS, US_DWELLINGS, US_EDUCATION, US_HOME_LANGUAGES, US_OCCUPATIONS, US_REGIONS, US_STATES, US_TENURES } from "../personas/countries/us/codes";
 
 /**
  * Bibliothèque de modules : chargement des YAML, contrôles sémantiques (sources, références,
@@ -131,9 +134,90 @@ export const SOCLE_VAR_DOCS_SG: Record<string, string> = {
   nationality: "singapore for citizens; drawn nationality for non-residents (western = Europe, North America, Australia/NZ; east_asia = Japan, Korea…); null for PRs (not drawn)",
 };
 
+/** États-Unis : variables communes (mêmes noms qu'en France) plus les variables propres au socle. */
+export const SOCLE_VARS_US = {
+  work: ["age", "sex", "region", "town_size", "state", "race_ethnicity"],
+  profile: [
+    ...SOCLE_VARS.profile,
+    "state",
+    "division",
+    "urbanicity",
+    "race_ethnicity",
+    "nativity",
+    "home_language",
+    "education",
+    "dwelling",
+    "class_of_worker",
+    "health_insurance",
+    "has_student_loan",
+    "vehicles",
+    "married",
+  ],
+} as const;
+
+export const SOCLE_CODES_US: Record<string, string[]> = {
+  sex: ["F", "M"],
+  activity_status: ["employed", "unemployed", "student", "retired", "inactive"],
+  pcs: [...US_OCCUPATIONS, "none"],
+  tenure: [...US_TENURES],
+  household_type: ["alone", "couple_no_child", "couple_with_children", "single_parent", "with_parents", "other"],
+  partner_status: ["none", "employed", "not_employed"],
+  tech_adoption: ["innovator", "early_adopter", "early_majority", "late_majority", "laggard"],
+  social_media: ["none", "occasional", "daily", "heavy"],
+  region: [...US_REGIONS],
+  town_size: [...US_STATES],
+  state: [...US_STATES],
+  division: [...US_DIVISIONS],
+  urbanicity: [...URBANICITY],
+  race_ethnicity: [...RACES],
+  nativity: [...NATIVITY],
+  home_language: [...US_HOME_LANGUAGES],
+  education: [...US_EDUCATION],
+  dwelling: [...US_DWELLINGS],
+  class_of_worker: [...CLASS_OF_WORKER, "none"],
+  health_insurance: [...HEALTH_INSURANCE],
+};
+
+export const SOCLE_VAR_DOCS_US: Record<string, string> = {
+  age: "age in years (18-79)",
+  sex: "F or M",
+  region: "Census region: NE (Northeast), MW (Midwest), S (South), W (West)",
+  town_size: "state postal code (same value as state)",
+  state: "state postal code (CA, TX, NY, FL… and DC)",
+  division: "Census division: new_england, middle_atlantic, east_north_central, west_north_central, south_atlantic, east_south_central, west_south_central, mountain, pacific",
+  urbanicity: "urban or rural (2020 Census definition)",
+  household_type: "alone, couple_no_child (no child under 18), couple_with_children, single_parent, with_parents, other (roommates, other relatives)",
+  tenure: "owner, owner_mortgage, renter_private, renter_social (public housing or voucher), free (with parents, no cash rent)",
+  children_under_12: "number of children under 12 in the household",
+  partner_status: "none, employed, not_employed",
+  living_standard_ratio: "living standard / national median (≈ 1 = median)",
+  living_standard: "monthly living standard in US$ per adult-equivalent (after taxes and tax credits)",
+  monthly_income: "personal monthly income in US$ after Social Security and Medicare payroll taxes (before income tax)",
+  activity_status: "employed, unemployed, student, retired, inactive",
+  pcs: "occupation group (SOC 2018, CPS groups): management, business_finance, computer_engineering_science, education_legal_community_arts, healthcare_practitioners, service, sales, office_admin, farming, construction, installation_repair, production, transportation; none",
+  has_computer: "true if the persona has a desktop or laptop computer",
+  has_smartphone: "true if they have a smartphone",
+  has_tablet: "true if they have a tablet",
+  has_internet: "true if they have home internet",
+  tech_adoption: "Rogers profile: innovator, early_adopter, early_majority, late_majority, laggard",
+  social_media: "social media use: none, occasional, daily, heavy",
+  race_ethnicity: "white (non-Hispanic), black (non-Hispanic), hispanic (any race), asian (non-Hispanic), other (AIAN, NHPI, other or multiracial, non-Hispanic)",
+  nativity: "us_born, naturalized, noncitizen",
+  home_language: "language spoken at home: english (only), spanish, other_indo_european, asian_pacific, other",
+  education: "highest education: below_hs, high_school, some_college, associate, bachelor, graduate",
+  dwelling: "single_family, townhouse, small_multifamily (2-4 units), apartment (5+ units), mobile_home",
+  class_of_worker: "private, nonprofit, government, self_employed (employed only); none otherwise",
+  health_insurance: "main health coverage: employer, marketplace (individual or ACA plan), medicaid, medicare, military (TRICARE, VA), uninsured",
+  has_student_loan: "true if the persona has outstanding student loan debt",
+  vehicles: "number of vehicles available to the household (0, 1, 2)",
+  married: "true if married (couples only; unmarried partners: false)",
+};
+
 /** Catalogue des variables du socle d'un pays (« fr-enfants » → France). */
 export function socleCatalog(socle: string): { vars: { work: readonly string[]; profile: readonly string[] }; codes: Record<string, string[]>; docs: Record<string, string> } {
-  return socle.replace(/-.*$/, "") === "sg"
+  const country = socle.replace(/-.*$/, "");
+  if (country === "us") return { vars: SOCLE_VARS_US, codes: SOCLE_CODES_US, docs: SOCLE_VAR_DOCS_US };
+  return country === "sg"
     ? { vars: SOCLE_VARS_SG, codes: SOCLE_CODES_SG, docs: SOCLE_VAR_DOCS_SG }
     : { vars: SOCLE_VARS, codes: SOCLE_CODES, docs: SOCLE_VAR_DOCS };
 }
@@ -159,6 +243,17 @@ export interface LoadedModule {
   def: ModuleDef;
   file: string;
   attrs: Map<string, ModuleAttribute>;
+  /**
+   * Référence canonique, égale à `def.id` : id nu pour la bibliothèque locale et le namespace `personas`,
+   * `ns/slug` pour un module tiers du cache du Hub (src/modules/refs.ts).
+   */
+  ref?: string;
+  /** sha256 du texte YAML exact (fichier local ou version du Hub) ; absent pour un module en mémoire. */
+  sha256?: string;
+  /** Origine : bibliothèque locale (modules/ du dépôt ou du paquet) ou cache du Hub. */
+  source?: "local" | "hub-cache";
+  /** Alias des dépendances → référence canonique (forme longue `{ref, version, as}` de `requires`). */
+  aliases?: Map<string, string>;
 }
 
 function formatZod(err: z.ZodError): string {
@@ -167,13 +262,20 @@ function formatZod(err: z.ZodError): string {
 
 /** Lit et valide un fichier de module (YAML). Lève une ModuleError lisible. */
 export function loadModuleFile(file: string): LoadedModule {
+  return loadModuleText(readFileSync(file, "utf8"), file, "local");
+}
+
+function loadModuleText(text: string, file: string, source: "local" | "hub-cache"): LoadedModule {
   let raw: unknown;
   try {
-    raw = parseYaml(readFileSync(file, "utf8"));
+    raw = parseYaml(text);
   } catch (err) {
     throw new ModuleError(`Module ${file} : YAML illisible : ${(err as Error).message}`);
   }
-  return checkModule(raw, file);
+  const m = checkModule(raw, file);
+  m.sha256 = sha256Text(text);
+  m.source = source;
+  return m;
 }
 
 export function checkModule(raw: unknown, file = "(en mémoire)"): LoadedModule {
@@ -182,7 +284,10 @@ export function checkModule(raw: unknown, file = "(en mémoire)"): LoadedModule 
   const def = parsed.data;
   const errors = semanticErrors(def);
   if (errors.length) throw new ModuleError(`Module ${def.id} (${file}) invalide :\n${errors.map((e) => `  - ${e}`).join("\n")}`);
-  return { def, file, attrs: new Map(def.attributes.map((a) => [a.key, a])) };
+  const m: LoadedModule = { def, file, attrs: new Map(def.attributes.map((a) => [a.key, a])), ref: def.id };
+  const aliases = Object.entries(def.aliases ?? {});
+  if (aliases.length) m.aliases = new Map(aliases.map(([alias, spec]) => [alias, parseModuleSpec(spec).ref]));
+  return m;
 }
 
 /** Références d'attributs d'une expression ou d'une condition (pour l'ordre de tirage). */
@@ -495,9 +600,22 @@ export function activeLibrary(dir = modulesRoot()): Map<string, LoadedModule> {
   return new Map([...moduleLibrary(dir)].filter(([, m]) => !isLegacy(m)));
 }
 
+/**
+ * Bibliothèque à plusieurs racines, par ordre de priorité (docs/technique.md § 3.4) :
+ *  1. modules locaux : `modules/<id>/module.yaml` du dépôt ou du paquet installé (actifs), puis `modules/_archive/` ;
+ *  2. cache du Hub (`<données>/hub-cache/modules/<ns>/<slug>/<version>/`), contenu vérifié par sha256 : pour
+ *     chaque référence absente des modules locaux, la plus haute version en cache (hors `yanked` s'il y en a
+ *     une autre). Un module officiel (`personas/x`) garde son id nu ; un module tiers a pour id `ns/slug`.
+ * Une version exacte (`ref@version`, ou épinglée par un lock) se cherche d'abord dans la bibliothèque locale si
+ * la version correspond, puis dans le cache (`moduleAt`). Le cache n'est lu que pour la racine par défaut
+ * (`modulesRoot()`), jamais pour un dossier de test explicite.
+ */
 export function moduleLibrary(dir = modulesRoot(), opts: { fresh?: boolean } = {}): Map<string, LoadedModule> {
-  const cached = libraries.get(dir);
+  const cacheDir = resolve(dir) === resolve(modulesRoot()) ? hubCacheDir() : null;
+  const libKey = `${dir}\0${cacheDir ?? ""}`;
+  const cached = libraries.get(libKey);
   if (cached && !opts.fresh) return cached;
+  if (opts.fresh) cachedVersions.clear();
   const out = new Map<string, LoadedModule>();
   // Modules actifs, puis modules archivés (modules/_archive) : ceux-ci restent chargés pour relire les
   // personas et les études historiques, avec le statut legacy (voir isLegacy).
@@ -514,10 +632,78 @@ export function moduleLibrary(dir = modulesRoot(), opts: { fresh?: boolean } = {
       out.set(m.def.id, m);
     }
   }
+  if (cacheDir) for (const m of latestCachedModules(cacheDir)) if (!out.has(m.def.id)) out.set(m.def.id, m);
   // Ordre alphabétique des identifiants, archivés compris (ordre historique des segments et des fiches)
   const sorted = new Map([...out].sort(([a], [b]) => (a < b ? -1 : a > b ? 1 : 0)));
-  libraries.set(dir, sorted);
+  libraries.set(libKey, sorted);
   return sorted;
+}
+
+/** Oublie les bibliothèques chargées (après un téléchargement dans le cache du Hub). */
+export function invalidateModuleLibraries(): void {
+  libraries.clear();
+  cachedVersions.clear();
+}
+
+const cachedVersions = new Map<string, LoadedModule | null>();
+
+/** Version exacte d'un module du cache du Hub, vérifiée (sha256) et validée ; null si absente du cache. */
+export function loadCachedModule(cacheDir: string, namespace: string, slug: string, version: string): LoadedModule | null {
+  const key = `${cacheDir}\0${namespace}/${slug}@${version}`;
+  if (cachedVersions.has(key)) return cachedVersions.get(key)!;
+  const hit = readCachedModule(cacheDir, namespace, slug, version);
+  let m: LoadedModule | null = null;
+  if (hit) {
+    m = loadModuleText(hit.text, hit.file, "hub-cache");
+    if (m.def.id !== slug) throw new ModuleError(`Module ${hit.file} : l'id « ${m.def.id} » ne correspond pas à la référence ${namespace}/${slug}`);
+    if (m.def.version !== version) throw new ModuleError(`Module ${hit.file} : version « ${m.def.version} » au lieu de ${version}`);
+    m.sha256 = hit.meta.sha256;
+    const ref = namespace === OFFICIAL_NAMESPACE ? slug : `${namespace}/${slug}`;
+    m.def.id = ref;
+    m.ref = ref;
+  }
+  cachedVersions.set(key, m);
+  return m;
+}
+
+/** Plus haute version en cache de chaque référence (les versions retirées passent après les autres). */
+function latestCachedModules(cacheDir: string): LoadedModule[] {
+  const byRef = new Map<string, Array<{ namespace: string; slug: string; version: string; yanked: boolean }>>();
+  for (const v of listCachedModules(cacheDir)) {
+    let yanked = false;
+    try {
+      yanked = (JSON.parse(readFileSync(resolve(v.dir, "_hub.json"), "utf8")) as { status?: string }).status === "yanked";
+    } catch {
+      continue;
+    }
+    const key = `${v.namespace}/${v.slug}`;
+    byRef.set(key, [...(byRef.get(key) ?? []), { ...v, yanked }]);
+  }
+  const out: LoadedModule[] = [];
+  for (const versions of byRef.values()) {
+    versions.sort((a, b) => Number(a.yanked) - Number(b.yanked) || compareVersions(b.version, a.version));
+    const best = versions[0]!;
+    try {
+      const m = loadCachedModule(cacheDir, best.namespace, best.slug, best.version);
+      if (m) out.push(m);
+    } catch (err) {
+      // Une copie altérée ou invalide n'empêche pas de charger le reste de la bibliothèque : elle est écartée.
+      console.warn(`⚠ ${(err as Error).message}`);
+    }
+  }
+  return out;
+}
+
+/**
+ * Module à une version exacte : bibliothèque locale si la version correspond, sinon cache du Hub (vérifié).
+ * null s'il est introuvable (hors ligne, jamais téléchargé).
+ */
+export function moduleAt(ref: string, version: string, lib: Map<string, LoadedModule> = moduleLibrary()): LoadedModule | null {
+  const spec = parseModuleSpec(ref);
+  const local = lib.get(spec.ref);
+  if (local && local.def.version === version) return local;
+  const cacheDir = hubCacheDir();
+  return cacheDir ? loadCachedModule(cacheDir, spec.namespace, spec.slug, version) : null;
 }
 
 export interface ResolvedModules {
@@ -527,19 +713,52 @@ export interface ResolvedModules {
   quasiDims: Map<string, number>;
 }
 
+/** Versions épinglées (lock d'un projet) : référence canonique → version exacte et sha256 attendu. */
+export type ModulePins = Map<string, { version: string; sha256?: string }>;
+
+function specOf(id: string, path: string[]): ModuleSpec {
+  try {
+    return parseModuleSpec(id);
+  } catch {
+    throw new ModuleError(`Module « ${id} » introuvable${path.length ? ` (requis par ${path.at(-1)})` : ""}`);
+  }
+}
+
 /**
  * Résout une liste de modules activés : ajoute les dépendances, vérifie la compatibilité avec le
  * socle, refuse les cycles, ordonne (tri topologique stable) et numérote les dimensions quasi aléatoires.
+ * Une entrée est un id nu (`numerique`), une référence qualifiée (`alice/sport`) ou une version exacte
+ * (`alice/sport@2026.1`) ; `pins` (lock du projet) impose la version et le sha256 des références citées.
  */
-export function resolveModules(ids: string[], socle: string, lib: Map<string, LoadedModule> = moduleLibrary()): ResolvedModules {
+export function resolveModules(ids: string[], socle: string, lib: Map<string, LoadedModule> = moduleLibrary(), opts: { pins?: ModulePins } = {}): ResolvedModules {
   const ordered: LoadedModule[] = [];
+  const byRef = new Map<string, LoadedModule>();
   const state = new Map<string, "visiting" | "done">();
-  const visit = (id: string, path: string[]) => {
+  const visit = (entry: string, path: string[]) => {
+    const spec = specOf(entry, path);
+    const id = spec.ref;
+    const pin = spec.version ? { version: spec.version, sha256: opts.pins?.get(id)?.sha256 } : opts.pins?.get(id);
     const st = state.get(id);
-    if (st === "done") return;
+    if (st === "done") {
+      const got = byRef.get(id)!;
+      if (pin && got.def.version !== pin.version) {
+        throw new ModuleError(`Module « ${id} » demandé en deux versions (${got.def.version} et ${pin.version})${path.length ? ` (requis par ${path.at(-1)})` : ""}`);
+      }
+      return;
+    }
     if (st === "visiting") throw new ModuleError(`Dépendances circulaires entre modules : ${[...path, id].join(" → ")}`);
-    const m = lib.get(id);
-    if (!m) throw new ModuleError(`Module « ${id} » introuvable${path.length ? ` (requis par ${path.at(-1)})` : ""}`);
+    const m = pin ? moduleAt(id, pin.version, lib) : lib.get(id);
+    if (!m) {
+      if (pin) {
+        throw new ModuleError(
+          `Module « ${id}@${pin.version} » introuvable${path.length ? ` (requis par ${path.at(-1)})` : ""} : ni dans la bibliothèque locale ni dans le cache du Hub (télécharger : personas hub pull ${spec.namespace}/${spec.slug}@${pin.version})`,
+        );
+      }
+      throw new ModuleError(`Module « ${id} » introuvable${path.length ? ` (requis par ${path.at(-1)})` : ""}`);
+    }
+    if (pin?.sha256 && m.sha256 && m.sha256 !== pin.sha256) {
+      throw new ModuleError(`Module « ${id}@${pin.version} » : contenu différent de celui épinglé (sha256 ${m.sha256.slice(0, 12)}… au lieu de ${pin.sha256.slice(0, 12)}…)`);
+    }
     if (!m.def.applies_to.includes(socle)) {
       throw new ModuleError(`Module « ${id} » non compatible avec le socle « ${socle} » (applies_to : ${m.def.applies_to.join(", ")})`);
     }
@@ -547,6 +766,7 @@ export function resolveModules(ids: string[], socle: string, lib: Map<string, Lo
     for (const dep of m.def.requires) visit(dep, [...path, id]);
     state.set(id, "done");
     ordered.push(m);
+    byRef.set(id, m);
   };
   for (const id of ids) visit(id, []);
 
@@ -556,9 +776,10 @@ export function resolveModules(ids: string[], socle: string, lib: Map<string, Lo
     for (const a of m.def.attributes) {
       for (const ref of attrRefs(a, m.def)) {
         if (ref.startsWith("socle.") || !ref.includes(".")) continue;
-        const [mid, key] = [ref.slice(0, ref.lastIndexOf(".")), ref.slice(ref.lastIndexOf(".") + 1)];
+        const [prefix, key] = [ref.slice(0, ref.lastIndexOf(".")), ref.slice(ref.lastIndexOf(".") + 1)];
+        const mid = m.aliases?.get(prefix) ?? prefix;
         if (!seen.has(mid)) throw new ModuleError(`Module « ${m.def.id} », attribut « ${a.key} » : « ${ref} » vise un module absent de \`requires\` ou tiré après`);
-        if (!lib.get(mid)!.attrs.has(key)) throw new ModuleError(`Module « ${m.def.id} » : « ${ref} » n'existe pas`);
+        if (!byRef.get(mid)!.attrs.has(key)) throw new ModuleError(`Module « ${m.def.id} » : « ${ref} » n'existe pas`);
       }
     }
     seen.add(m.def.id);
@@ -587,9 +808,14 @@ export function resolveModules(ids: string[], socle: string, lib: Map<string, Lo
  */
 export function librarySegments(lib = moduleLibrary()) {
   const out: Array<{ id: string; label: string; module: string; attribute: string; compare?: number; legacy?: true }> = [];
-  for (const m of lib.values()) {
+  const mods = [...lib.values()];
+  for (const m of [...mods.filter((x) => x.source !== "hub-cache"), ...mods.filter((x) => x.source === "hub-cache")]) {
     for (const s of m.def.segments) {
-      if (out.some((x) => x.id === s.id)) throw new ModuleError(`Dimension « ${s.id} » déclarée par deux modules`);
+      if (out.some((x) => x.id === s.id)) {
+        // Un module du cache du Hub ne peut pas masquer une dimension locale : il la perd (les locaux passent d'abord).
+        if (m.source === "hub-cache") continue;
+        throw new ModuleError(`Dimension « ${s.id} » déclarée par deux modules`);
+      }
       out.push({ id: s.id, label: s.label, module: m.def.id, attribute: s.attribute, ...(s.compare !== undefined && { compare: s.compare }), ...(isLegacy(m) && { legacy: true as const }) });
     }
   }

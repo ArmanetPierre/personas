@@ -14,10 +14,11 @@ import {
 } from "../price-model-en";
 import { roundEquivalent } from "../price-model";
 import type { ResolvedProtocol } from "./protocol";
+import { ATTRIBUTE_RULE, withAttributeRule } from "./attribute-block";
 
 /**
  * Protocole « concept + prix » en anglais (études dont le socle est en locale `en`, ex. Singapour).
- * Traduction fidèle du prompt français (v2, plus la ligne v3 `needFrequency`) : mêmes règles
+ * Traduction fidèle du prompt français (v2, plus la ligne v3 `needFrequency`, plus la règle 10 du v4) : mêmes règles
  * anti-complaisance (inertie par défaut, besoin concret et actuel, contraintes réelles, alternatives,
  * approuver n'est pas agir, pas de fait inventé), même schéma de réponse, mêmes contrôles. Les textes
  * français ne passent jamais par ici.
@@ -285,7 +286,7 @@ export function customBehaviorLinesEn(p: ResolvedProtocol, shownPrice: string): 
 
 // ─── Prompt système ───────────────────────────────────────────────────────────
 
-export function buildSystemPromptEn(project: Project, tiers: number[], version: "2" | "3", audience: Audience, proto: ResolvedProtocol): string {
+export function buildSystemPromptEn(project: Project, tiers: number[], version: "2" | "3" | "4", audience: Audience, proto: ResolvedProtocol): string {
   const known = [...new Set([...project.competitors, ...project.alternatives])];
   const pt = priceTextsEn(project, tiers, audience);
   const text = `You simulate the behaviour of a real person who lives in ${audience.countryName}. They are described at the end of this message by a factual profile, drawn from statistics, and sometimes by a portrait. You are not an assistant, nor a consultant, nor a customer questioned by a polite interviewer: you are this person, in their ordinary day, and you do what they would really do.
@@ -314,7 +315,7 @@ ${known.length ? `What already exists for similar needs (you may or may not know
 
 ## What you return
 A JSON object, and nothing else, with these fields. Text fields are in English, in the first person, short.
-${version === "3" ? `${NEED_FREQUENCY_LINE_EN}\n` : ""}- spontaneousReaction: your immediate thought on seeing the offer, one or two sentences.
+${version === "3" || version === "4" ? `${NEED_FREQUENCY_LINE_EN}\n` : ""}- spontaneousReaction: your immediate thought on seeing the offer, one or two sentences.
 ${proto.custom ? customRelevanceLineEn(proto) : `- relevance: "concerned" if you have today the need the offer addresses; "marginal" if this need exists but remains weak, occasional or distant; "not_concerned" if you do not have it.`}
 - relevanceReason: why, in one sentence.
 - currentSolution: what you do or use today for this need, or “nothing, I don't need it”.
@@ -340,7 +341,7 @@ ${pt.vwReference}  tooCheapEur: a price so low you would doubt the service is se
 - gaborGranger: for each tier (${pt.tierList}), ${pt.ggWhen}, given your budget and your need, otherwise false. A yes at one price implies a yes at lower prices. Your answer at the displayed price must match your behaviour: you do not pay for a service you ignore.
 - budgetFit: if you say yes to at least one price, where the money comes from (what you cut down or drop, or why it fits easily); otherwise empty string.
 - verbatim: one or two sentences you would really say to someone close to you about this offer, in your own words, register and level of language, without advertising style.`;
-  return text;
+  return version === "4" ? withAttributeRule(text, ATTRIBUTE_RULE.en, "\n\n## The offer you come across") : text;
 }
 
 export function buildUserPromptEn(card: string, constraints: string, narrative: string | null | undefined, encounterText: string, child?: string): string {

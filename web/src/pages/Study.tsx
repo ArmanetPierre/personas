@@ -5,9 +5,11 @@ import { Link, useSearch } from "wouter";
 import { api, useApi, useMeta, type Analysis, type Meta, type ProjectDetail, type ResponseRowItem, type StudyState, type SummaryResponse } from "../api";
 import { BehaviorStack, Columns, groupColor, HBars, Heatmap, setBehaviorScale, VanWestendorpChart, type HeatRow } from "../charts";
 import { DriversSection, RecodeControls, RecodedView, useRecoded } from "./StudyP1";
-import { dateFr, dimensionOrder, ErrorBox, eur, int, Loading, money, num, packShort, pct, Seg, Status } from "../ui";
+import { dateFr, dimensionOrder, EmptyState, ErrorBox, eur, int, Loading, money, num, packShort, pct, SegmentedControl, Status } from "../ui";
 import { tr, useDict } from "../i18n";
 import { studyDict } from "../i18n/study";
+import { hostedDict } from "../i18n/hosted";
+import { usePlatform } from "../platform";
 
 export const cap = (s: string) => (s ? s[0]!.toUpperCase() + s.slice(1) : s);
 
@@ -50,6 +52,8 @@ export function withScale(meta: Meta | null, s: SummaryResponse | null | undefin
 
 export function RunPanel({ state, onState }: { state: StudyState; onState: (s: StudyState) => void }) {
   const t = useDict(studyDict).run;
+  const th = useDict(hostedDict).study;
+  const { hosted } = usePlatform();
   const [busy, setBusy] = useState(false);
   const [err, setErr] = useState<string | null>(null);
   const running = state.displayStatus === "running" || state.run?.alive;
@@ -89,7 +93,7 @@ export function RunPanel({ state, onState }: { state: StudyState; onState: (s: S
             {busy ? t.launching : state.responses ? t.resume(missing) : t.launch(missing)}
           </button>
           <span className="small ink2">
-            {state.backend === "claude-cli" ? t.claudeHint : t.ollamaHint}
+            {hosted ? th.hint : state.backend === "claude-cli" ? t.claudeHint : t.ollamaHint}
           </span>
         </div>
       )}
@@ -206,7 +210,7 @@ export function SegmentsSection({ a, meta, onCell }: { a: Analysis; meta: Meta; 
     <section className="section" id="segments">
       <div className="section-head">
         <h2>{t.title}</h2>
-        <Seg label={t.measure} value={kind} onChange={setKind} options={[{ id: "behavior", label: t.behaviors }, { id: "objection", label: t.objections }]} />
+        <SegmentedControl label={t.measure} value={kind} onChange={setKind} options={[{ id: "behavior", label: t.behaviors }, { id: "objection", label: t.objections }]} />
       </div>
       <p className="small ink2" style={{ marginBottom: 14, maxWidth: "80ch" }}>
         <span title={t.cellTitle(kind === "behavior", meta.smallSegment)}>{t.hint}</span>
@@ -575,7 +579,7 @@ export function VerbatimsSection({
             </div>
           </Link>
         ))}
-        {rows && list.length === 0 && <div className="empty">{t.empty}</div>}
+        {rows && list.length === 0 && <EmptyState title={t.emptyTitle} description={t.empty} />}
       </div>
       {list.length > limit && (
         <button className="btn ghost" type="button" style={{ marginTop: 14 }} onClick={() => setLimit(limit + 50)}>
@@ -602,24 +606,26 @@ export function CoherenceSection({ s, meta }: { s: SummaryResponse; meta: Meta }
         <div className="panel">
           <p>{t.summary(pct(a.anomalies.repairedRate), pct(a.anomalies.rate), pct(a.narrativeUsedShare))}</p>
           {codes.length > 0 && (
-            <table className="table small" style={{ marginTop: 12 }}>
-              <thead>
-                <tr>
-                  <th>{t.check}</th>
-                  <th className="r">{t.before}</th>
-                  <th className="r">{t.after}</th>
-                </tr>
-              </thead>
-              <tbody>
-                {codes.map((c) => (
-                  <tr key={c}>
-                    <td>{meta.checks[c] ?? c}</td>
-                    <td className="r num">{a.anomalies.initialByCode[c] ?? 0}</td>
-                    <td className="r num">{a.anomalies.byCode[c] ?? 0}</td>
+            <div className="table-wrap" style={{ marginTop: 12 }}>
+              <table className="table small">
+                <thead>
+                  <tr>
+                    <th>{t.check}</th>
+                    <th className="r">{t.before}</th>
+                    <th className="r">{t.after}</th>
                   </tr>
-                ))}
-              </tbody>
-            </table>
+                </thead>
+                <tbody>
+                  {codes.map((c) => (
+                    <tr key={c}>
+                      <td>{meta.checks[c] ?? c}</td>
+                      <td className="r num">{a.anomalies.initialByCode[c] ?? 0}</td>
+                      <td className="r num">{a.anomalies.byCode[c] ?? 0}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
           )}
         </div>
         <div className="panel">

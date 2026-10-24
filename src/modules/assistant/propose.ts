@@ -43,6 +43,13 @@ export const MAX_REPAIRS = 3;
 export const MAX_RECALIBRATIONS = 2;
 /** Délai d'une requête de recherche web (plusieurs recherches et pages lues). */
 export const RESEARCH_TIMEOUT_MS = 20 * 60_000;
+/**
+ * Requêtes qui écrivent le YAML complet (rédaction, réparation, révision, recalage) : plafond de sortie et délai.
+ * Un module du socle Singapour (libellés anglais, 6 à 8 attributs, ensembles, tables, parts sourcées) dépasse
+ * 16 000 tokens de sortie et 5 minutes de génération (2026-10-22 : 3 rédactions sur 4 en échec).
+ */
+export const YAML_MAX_TOKENS = 32_000;
+export const YAML_TIMEOUT_MS = 15 * 60_000;
 
 export interface ProposeInput {
   draftId?: string;
@@ -91,7 +98,8 @@ async function repairLoop(engine: Engine, meta: DraftMeta, yaml: string, notes: 
       system: generationSystem(),
       messages: [{ role: "user", content: repairPrompt(current, errors) }],
       schema: proposalSchema,
-      maxTokens: 16_000,
+      timeoutMs: YAML_TIMEOUT_MS,
+      maxTokens: YAML_MAX_TOKENS,
     });
     addUsage(meta, r);
     const before = current;
@@ -178,7 +186,8 @@ export async function proposeModule(engine: Engine, input: ProposeInput): Promis
           system: generationSystem(),
           messages: [{ role: "user", content: generationPrompt({ description: meta.description, ...(meta.moduleId && { moduleId: meta.moduleId }), socle, research, ...(input.projectContext && { projectContext: input.projectContext }) }) }],
           schema: proposalSchema,
-          maxTokens: 16_000,
+          timeoutMs: YAML_TIMEOUT_MS,
+          maxTokens: YAML_MAX_TOKENS,
         }),
       log,
     );
@@ -313,7 +322,8 @@ export async function reviseModule(
         system: generationSystem(),
         messages: [{ role: "user", content: revisionPrompt(before, instruction, added) }],
         schema: revisionSchema,
-        maxTokens: 16_000,
+        timeoutMs: YAML_TIMEOUT_MS,
+        maxTokens: YAML_MAX_TOKENS,
       }),
     opts.log,
   );
@@ -343,7 +353,8 @@ export async function reviseModule(
           system: generationSystem(),
           messages: [{ role: "user", content: recalibrationPrompt(current, unmet) }],
           schema: revisionSchema,
-          maxTokens: 16_000,
+          timeoutMs: YAML_TIMEOUT_MS,
+          maxTokens: YAML_MAX_TOKENS,
         }),
       opts.log,
     );

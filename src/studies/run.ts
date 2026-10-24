@@ -2,6 +2,8 @@ import { studyAudience } from "./locale";
 import type { Db } from "../db/client";
 import { responses, type Persona, type Study } from "../db/schema";
 import type { Engine, Usage } from "../engine";
+import { isBudgetExceeded } from "../engine/budget";
+import type { StudyExtra } from "../db/schema";
 import type { Pack } from "../personas/pack";
 import { getProject } from "./project";
 import {
@@ -14,6 +16,8 @@ import {
   priceIssueDetails,
   pickEncounter,
   protocolVersionOf,
+  hasV3Measures,
+  usesAttributeBlock,
   buildRoleSystemPrompt,
   roleAnswerSchema,
   type CoherenceContext,
@@ -31,6 +35,7 @@ import { childBlock, freezeRole, pickChild, prepareChild, projectRoles, type Fro
 import { protocolOfPayload, resolveProtocol, type ResolvedProtocol } from "./protocols/protocol";
 import { packResolver } from "./packs";
 import { personasByIds, studyResponses, updateStudy } from "./store";
+import { reportStudyCompleted } from "../hub/telemetry";
 
 /** Charge utile enregistrée pour chaque réponse du protocole concept + prix. */
 export interface ConceptPricePayload extends Record<string, unknown> {
@@ -48,9 +53,9 @@ export interface ConceptPricePayload extends Record<string, unknown> {
   group?: string;
   /** Réponse d'origine, si la réparation l'a remplacée. */
   originalAnswer?: ConceptPriceAnswer;
-  /** Version du protocole, figée dans la réponse (v3 seulement ; absente : v2). */
-  protocolVersion?: "3";
-  /** Ton du pitch montré (score lexical, v3 seulement), pour l'indice de confiance. */
+  /** Version du protocole, figée dans la réponse (v3 et v4 seulement ; absente : v2). */
+  protocolVersion?: "3" | "4";
+  /** Ton du pitch montré (score lexical, v3 et v4 seulement), pour l'indice de confiance. */
   pitchTone?: { score: number; threshold: number; neutralized: boolean };
   /** Multi-rôles (phase 7) : rôle de la persona, figé ; absent pour un projet sans rôles. */
   role?: FrozenRole;
@@ -94,6 +99,8 @@ export interface RunResult {
   written: number;
   failed: Array<{ personaId: string; error: string }>;
   stoppedForUsageLimit: string | null;
+  /** Plafond de dépense atteint (BudgetGuard) : l'étude est en pause, reprise après relèvement du plafond. */
+  stoppedForBudget: string | null;
   aborted: string | null;
   usage: Usage;
   durationMs: number;
@@ -137,6 +144,7 @@ export async function runStudy(db: Db, engine: Engine, pack: Pack, study: Study,
     written: 0,
     failed: [],
     stoppedForUsageLimit: null,
+    stoppedForBudget: null,
     aborted: null,
     usage: { inputTokens: 0, outputTokens: 0, cacheReadTokens: 0 },
     durationMs: 0,
@@ -163,8 +171,8 @@ export async function runStudy(db: Db, engine: Engine, pack: Pack, study: Study,
   const audience = studyAudience(study);
   const baseSystem = buildSystemPrompt(project, tiers, version, audience);
   const baseSchema = answerSchemaFor(tiers, proto, version);
-  const baseCtx = { ...coherenceContext(project, tiers, audience), ...(proto.custom && { protocol: proto }), ...(version === "3" && { version }) };
-  const tone = version === "3" ? toneWarning(project.pitch, undefined, audience.locale) : null;
+  const baseCtx = { ...coherenceContext(project, tiers, audience), ...(proto.custom && { protocol: proto }), ...(hasV3Measures(version) && { version }) };
+  const tone = hasV3Measures(version) ? toneWarning(project.pitch, undefined, audience.locale) : null;
   const pitchTone = tone && { score: tone.score, threshold: tone.threshold, neutralized: (project.extra as { pitchNeutralized?: boolean }).pitchNeutralized === true };
 
   // Multi-rôles (phase 7) : prompt, schéma, paliers et contrôles propres au rôle du groupe de la persona.
@@ -179,14 +187,14 @@ export async function runStudy(db: Db, engine: Engine, pack: Pack, study: Study,
       const view = roleProject(project, role);
       const rp = rolePrompt(role, roles);
       const rTiers = studyTiers(view, version);
-      const rTone = version === "3" ? toneWarning(view.pitch, undefined, audience.locale) : null;
+      const rTone = hasV3Measures(version) ? toneWarning(view.pitch, undefined, audience.locale) : null;
       st = {
         frozen: freezeRole(role),
         view,
         tiers: rp.pricing ? rTiers : [],
         system: buildRoleSystemPrompt(view, rTiers, version, rp, audience),
         schema: roleAnswerSchema(rTiers, proto, version, rp),
-        ctx: { ...coherenceContext(view, rTiers, audience), ...(proto.custom && { protocol: proto }), ...(version === "3" && { version }), ...(!rp.pricing && { noPricing: true }) },
+        ctx: { ...coherenceContext(view, rTiers, audience), ...(proto.custom && { protocol: proto }), ...(hasV3Measures(version) && { version }), ...(!rp.pricing && { noPricing: true }) },
         pitchTone: rTone && { score: rTone.score, threshold: rTone.threshold, neutralized: (project.extra as { pitchNeutralized?: boolean }).pitchNeutralized === true },
         child: role.child ? prepareChild(role.child, resolveSoclePack(role.target.socle ?? "fr").socle) : null,
       };
@@ -200,6 +208,8 @@ export async function runStudy(db: Db, engine: Engine, pack: Pack, study: Study,
   let stop = false;
   let progress = done.size;
   const queue = [...todo];
+  let engineExtra = study.extra as StudyExtra | undefined;
+  let reportedSaved = false;
 
   const callOpts = {
     ...(opts.temperature !== undefined && { temperature: opts.temperature }),
@@ -215,7 +225,13 @@ export async function runStudy(db: Db, engine: Engine, pack: Pack, study: Study,
     const child = setup?.child ? (pickChild(p, setup.child, study.seed) ?? pickChild(p, { ...setup.child, filter: null }, study.seed)) : null;
     if (setup?.child && !child) throw new Error(`Persona ${p.id} : aucun enfant dans la tranche d'âge du rôle ${setup.frozen.id}.`);
     const childInFilter = child && setup?.child ? pickChild(p, setup.child, study.seed) !== null : true;
-    const user = buildUserPrompt(packOf(p), p, setup?.view ?? project, encounter, { ...(modules && { modules }), ...(child && { child: childBlock(child) }) });
+    // v4 : lignes de module (persona et enfant) dans le bloc délimité ; v2 et v3 : prompt historique, inchangé
+    const block = usesAttributeBlock(version) ? { attributeBlock: audience.locale } : {};
+    const user = buildUserPrompt(packOf(p), p, setup?.view ?? project, encounter, {
+      ...(modules && { modules }),
+      ...(child && { child: childBlock(child, block) }),
+      ...(usesAttributeBlock(version) && { version }),
+    });
     const system = setup?.system ?? baseSystem;
     // Rôle sans prix : réponse sans vanWestendorp, gaborGranger ni budgetFit (le résumé et les contrôles le savent)
     const schema = (setup?.schema ?? baseSchema) as typeof baseSchema;
@@ -240,6 +256,7 @@ export async function runStudy(db: Db, engine: Engine, pack: Pack, study: Study,
     const initial = first0.codes;
     let issues = initial;
     let original: ConceptPriceAnswer | undefined;
+    let budgetHit: unknown = null;
     if (initial.length) {
       try {
         const second = await engine.complete({
@@ -264,6 +281,8 @@ export async function runStudy(db: Db, engine: Engine, pack: Pack, study: Study,
         }
       } catch (err) {
         if (isUsageLimitError(err)) throw err;
+        // Plafond atteint pendant la réparation : on garde la première réponse (déjà payée), puis on s'arrête
+        if (isBudgetExceeded(err)) budgetHit = err;
         // Réparation impossible : on garde la première réponse, anomalies marquées.
       }
     }
@@ -276,7 +295,7 @@ export async function runStudy(db: Db, engine: Engine, pack: Pack, study: Study,
       ...(proto.custom && { protocol: proto }),
       ...(study.personaGroups[p.id] && { group: study.personaGroups[p.id] }),
       ...(original && { originalAnswer: original }),
-      ...(version === "3" && { protocolVersion: "3" as const, ...((setup ? setup.pitchTone : pitchTone) && { pitchTone: (setup ? setup.pitchTone : pitchTone)! }) }),
+      ...(hasV3Measures(version) && { protocolVersion: version, ...((setup ? setup.pitchTone : pitchTone) && { pitchTone: (setup ? setup.pitchTone : pitchTone)! }) }),
       ...(setup && { role: setup.frozen }),
       ...(child && { child: { index: child.index, age: child.age, sex: child.sex, modules: child.modules, lines: child.lines, ...(!childInFilter && { outsideFilter: true as const }) } }),
     };
@@ -302,6 +321,12 @@ export async function runStudy(db: Db, engine: Engine, pack: Pack, study: Study,
       })
       .onConflictDoNothing()
       .run();
+    // Modèle exact rapporté par l'API, figé dans l'étude à la première réponse (études avec moteur enregistré)
+    if (!reportedSaved && engineExtra?.engine && !engineExtra.engine.reportedModel && model) {
+      reportedSaved = true;
+      engineExtra = { ...engineExtra, engine: { ...engineExtra.engine, reportedModel: model } };
+      updateStudy(db, study.id, { extra: engineExtra });
+    }
     addUsage(result.usage, usage);
     result.written++;
     progress++;
@@ -311,6 +336,7 @@ export async function runStudy(db: Db, engine: Engine, pack: Pack, study: Study,
         `${issues.length ? ` ⚠ ${issues.join(",")}` : initial.length ? " (réparée)" : ""}` +
         ` — ${(durationMs / 1000).toFixed(1)} s, ${usage.inputTokens}/${usage.outputTokens} tokens`,
     );
+    if (budgetHit) throw budgetHit;
   };
 
   const worker = async () => {
@@ -322,6 +348,11 @@ export async function runStudy(db: Db, engine: Engine, pack: Pack, study: Study,
         consecutiveFails = 0;
       } catch (err) {
         const msg = (err as Error).message;
+        if (isBudgetExceeded(err)) {
+          stop = true;
+          result.stoppedForBudget = msg;
+          return;
+        }
         if (isUsageLimitError(err)) {
           stop = true;
           result.stoppedForUsageLimit = msg;
@@ -341,7 +372,12 @@ export async function runStudy(db: Db, engine: Engine, pack: Pack, study: Study,
   result.durationMs = Math.round(performance.now() - started);
   const remaining = result.total - progress;
   if (remaining === 0) {
-    updateStudy(db, study.id, { status: "completed", completedAt: new Date().toISOString(), error: null });
+    const completedAt = new Date().toISOString();
+    updateStudy(db, study.id, { status: "completed", completedAt, error: null });
+    // Télémétrie opt-in (désactivée par défaut) : agrégats seulement, jamais de texte du projet (src/hub/telemetry.ts)
+    await reportStudyCompleted({ ...study, completedAt });
+  } else if (result.stoppedForBudget) {
+    updateStudy(db, study.id, { status: "paused", error: result.stoppedForBudget.slice(0, 500) });
   } else if (result.stoppedForUsageLimit) {
     updateStudy(db, study.id, { status: "paused", error: `Quota atteint : ${result.stoppedForUsageLimit.slice(0, 500)}` });
   } else if (result.aborted) {

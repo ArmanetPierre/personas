@@ -67,7 +67,9 @@ export const personas = sqliteTable(
   (t) => [
     index("personas_country_idx").on(t.country, t.packVersion),
     index("personas_age_idx").on(t.age),
-    uniqueIndex("personas_draw_uq").on(t.packVersion, t.seed, t.drawIndex),
+    // Pas d'unicité ici : deux jeux de modules tirés à la même graine donnent deux personas (suffixe -m<empreinte>
+    // de personaIdFor) au même (pack, graine, rang). L'identité est la clé primaire `id` (migration 0005).
+    index("personas_draw_idx").on(t.packVersion, t.seed, t.drawIndex),
   ],
 );
 
@@ -99,6 +101,25 @@ export interface StudyPopulation {
   quotas?: Record<string, Record<string, number>>;
 }
 
+/** Moteur d'une étude (docs/plateforme.md § 7.4), figé à la création ; `reportedModel` au premier appel. */
+export interface StudyEngineInfo {
+  /** Fournisseur (claude-cli, ollama, anthropic, openai…). */
+  provider: string;
+  /** Modèle demandé (celui du profil ou de l'option). */
+  model: string;
+  /** Modèle exact rapporté par l'API à la première réponse. */
+  reportedModel?: string;
+  /** Profil de moteur (claude-cli, ollama : profils intégrés). */
+  profile: string;
+  /** Version de Personas qui a créé l'étude. */
+  personasVersion: string;
+  temperature?: number;
+}
+
+export interface StudyExtra extends Record<string, unknown> {
+  engine?: StudyEngineInfo;
+}
+
 /** Étude : un projet, un échantillon, un protocole, un moteur. */
 export const studies = sqliteTable(
   "studies",
@@ -124,6 +145,8 @@ export const studies = sqliteTable(
     populations: text("populations", { mode: "json" }).$type<StudyPopulation[]>().notNull().default(sql`'[]'`),
     /** Groupe de chaque persona de l'échantillon (id → "target" | "control"). Vide : tout l'échantillon est un seul groupe. */
     personaGroups: text("persona_groups", { mode: "json" }).$type<Record<string, string>>().notNull().default(sql`'{}'`),
+    /** Champs ajoutés plus tard : `engine` (moteur figé à la création, docs/plateforme.md § 7.4). */
+    extra: text("extra", { mode: "json" }).$type<StudyExtra>().notNull().default(sql`'{}'`),
     progressDone: integer("progress_done").notNull().default(0),
     progressTotal: integer("progress_total").notNull().default(0),
     error: text("error"),
@@ -171,6 +194,34 @@ export const responses = sqliteTable(
   ],
 );
 
+/**
+ * Usage des moteurs (docs/plateforme.md § 7.3) : une ligne par appel, coût = usage × prix du modèle
+ * (pricing/models.json ; 0 en local, null si le prix est inconnu). Sert au plafond de dépense
+ * (BudgetGuard : par étude, par jour, par mois et par profil) et aux moyennes de l'estimation.
+ */
+export const engineUsage = sqliteTable(
+  "engine_usage",
+  {
+    id: id(),
+    profile: text("profile").notNull(),
+    provider: text("provider").notNull(),
+    model: text("model").notNull(),
+    studyId: text("study_id"),
+    /** Jour et mois UTC de l'appel (AAAA-MM-JJ, AAAA-MM), pour les plafonds journalier et mensuel. */
+    day: text("day").notNull(),
+    month: text("month").notNull(),
+    inputTokens: integer("input_tokens").notNull().default(0),
+    outputTokens: integer("output_tokens").notNull().default(0),
+    cacheReadTokens: integer("cache_read_tokens").notNull().default(0),
+    cacheWriteTokens: integer("cache_write_tokens").notNull().default(0),
+    costUsd: real("cost_usd"),
+    /** Coût rapporté par le fournisseur (claude-cli : équivalent API). */
+    reportedCostUsd: real("reported_cost_usd"),
+    createdAt: createdAt(),
+  },
+  (t) => [index("engine_usage_study_idx").on(t.studyId), index("engine_usage_profile_day_idx").on(t.profile, t.day), index("engine_usage_profile_month_idx").on(t.profile, t.month)],
+);
+
 /** Rapport : agrégation par segment, exportée en Markdown puis PDF. */
 export const reports = sqliteTable(
   "reports",
@@ -197,3 +248,4 @@ export type Project = typeof projects.$inferSelect;
 export type Study = typeof studies.$inferSelect;
 export type ResponseRow = typeof responses.$inferSelect;
 export type Report = typeof reports.$inferSelect;
+export type EngineUsageRow = typeof engineUsage.$inferSelect;

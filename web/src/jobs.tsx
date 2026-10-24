@@ -72,7 +72,8 @@ export function JobPanel({ job, label, hint }: { job: JobState | null; label: st
   const failed = !job.alive && /Échec|Error|erreur/i.test(lines.slice(-3).join(" "));
   if (!job.alive && !failed) return null;
   return (
-    <div className={job.alive ? "panel" : "error-box"} style={{ marginTop: 12 }} role="status">
+    // Zone live limitée au libellé d'état : le compteur et la dernière ligne du journal restent hors annonce
+    <div className={job.alive ? "panel" : "error-box"} style={{ marginTop: 12 }}>
       {job.alive ? (
         <div className="working">
           <span className="dots" aria-hidden="true">
@@ -81,13 +82,13 @@ export function JobPanel({ job, label, hint }: { job: JobState | null; label: st
             <i />
           </span>
           <span>
-            <b>{label}</b>
+            <b role="status">{label}</b>
             {elapsed && <span className="muted num">{t.since(elapsed)}</span>}
             {lines.length > 0 && <span className="small ink2">{t.lastLine(lines.at(-1)!.slice(0, 160))}</span>}
           </span>
         </div>
       ) : (
-        <p>{t.failed(lines.slice(-2).join(" "))}</p>
+        <p role="alert">{t.failed(lines.slice(-2).join(" "))}</p>
       )}
       {hint && job.alive && <p className="small muted" style={{ marginTop: 6 }}>{hint}</p>}
       {job.log && (

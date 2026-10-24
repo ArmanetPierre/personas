@@ -21,6 +21,7 @@ import {
   type ValidationIssue,
 } from "./modules";
 import { DEFAULT_LANG, L, langOf, messageIn, type Lang } from "./i18n";
+import { draftMetaIn, previewIn } from "./i18n-modules";
 
 /**
  * Routes de l'assistant de modules (phase 5) : bibliothèque, détail, revue d'un brouillon,
@@ -160,7 +161,7 @@ export function registerModuleRoutes(api: Hono, ctx: AppContext): void {
     const log = job ? ctx.launcher.tail(jobKey(id), 6000) : { logPath: null, text: "" };
     // Processus mort sans brouillon prêt : la proposition a échoué
     const stalled = job && !job.alive && (!meta || meta.status === "proposing");
-    return c.json({ draftId: redirect ?? id, meta, job, log: log.text, stalled: Boolean(stalled) });
+    return c.json({ draftId: redirect ?? id, meta: draftMetaIn(langOf(c), meta), job, log: log.text, stalled: Boolean(stalled) });
   });
 
   api.post("/modules/drafts/:id/revise", async (c) => {
@@ -214,7 +215,7 @@ export function registerModuleRoutes(api: Hono, ctx: AppContext): void {
     const n = Math.min(Math.max(Number(c.req.query("n") ?? 2000) || 2000, 100), 20000);
     const sample = Math.min(Math.max(Number(c.req.query("sample") ?? 5) || 5, 0), 10);
     const isDraft = !!readDraftMeta(modulesDir(), id) && !existsSync(join(modulesDir(), id, "module.yaml"));
-    return c.json(await a.previewModule(isDraft ? { draftId: id } : { moduleId: id }, { n, sample }));
+    return c.json(previewIn(langOf(c), await a.previewModule(isDraft ? { draftId: id } : { moduleId: id }, { n, sample })));
   });
 
   api.get("/modules/:id", async (c) => {
@@ -225,7 +226,7 @@ export function registerModuleRoutes(api: Hono, ctx: AppContext): void {
     const draftId = mod.meta?.id ?? (mod.status.startsWith("draft") ? id : undefined);
     return c.json({
       assistant: { available, ...(reason && { reason: messageIn(lang, reason) }) },
-      module: { ...mod, parsed: undefined, validationErrors: mod.validationErrors.map((e) => (typeof e === "string" ? messageIn(lang, e) : { ...e, message: messageIn(lang, e.message) })) },
+      module: { ...mod, parsed: undefined, ...(mod.meta && { meta: draftMetaIn(lang, mod.meta) }), validationErrors: mod.validationErrors.map((e) => (typeof e === "string" ? messageIn(lang, e) : { ...e, message: messageIn(lang, e.message) })) },
       view: mod.yaml ? viewOf(mod.parsed, mod.yaml, lang) : null,
       draftId: draftId ?? null,
       job: draftId ? jobOf(draftId) : null,

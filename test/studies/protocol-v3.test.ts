@@ -119,12 +119,12 @@ describe("protocole v3", () => {
     expect(checkCoherence({ ...payer(), needFrequency: "monthly" }, ctx)).toEqual([]);
   });
 
-  it("crée les nouvelles études en v3, fige la version, le ton et la fréquence dans les réponses", async () => {
+  it("crée une étude v3 (sur demande), fige la version, le ton et la fréquence dans les réponses", async () => {
     const { db, sqlite } = openDb(":memory:");
     runMigrations(db);
     insertPersonas(db, drawPersonas(pack, 99, 20));
     const p = createProject(db, { ...readProjectFile("examples/meal-planner.json"), priceTiers: [5, 9] });
-    const { study } = createStudy(db, pack, { projectId: p.id, n: 3, seed: 7, backend: "ollama", model: "fake" });
+    const { study } = createStudy(db, pack, { projectId: p.id, n: 3, seed: 7, backend: "ollama", model: "fake", protocolVersion: "3" });
     expect(study.protocolVersion).toBe("3");
     const fb = fakeBackend(() => JSON.stringify({ ...answer({ gaborGranger: { at_2_eur: false, at_5_eur: false, at_9_eur: false } }), needFrequency: "few_per_year" }));
     await runStudy(db, new Engine(fb.backend), pack, study);

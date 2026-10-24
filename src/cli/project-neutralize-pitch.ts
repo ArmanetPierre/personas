@@ -4,7 +4,7 @@ import { parseArgs } from "node:util";
 import { loadConfig, loadDotEnv } from "../config";
 import type { Project } from "../db/schema";
 import { openDb, runMigrations } from "../db/client";
-import { getEngine } from "../engine";
+import { assistantEngine } from "../engine/select";
 import { neutralizePitch } from "../studies/pitch-neutralize";
 import { TONE_CATEGORY_LABELS } from "../studies/pitch-tone";
 import { getProject, priceColumns, readProjectFile, slugify } from "../studies/project";
@@ -19,6 +19,7 @@ import { errorText, lang, t } from "./i18n";
 
 const { values } = parseArgs({
   options: {
+    profile: { type: "string" },
     project: { type: "string" },
     out: { type: "string" },
     help: { type: "boolean", short: "h" },
@@ -46,7 +47,7 @@ try {
   } else project = getProject(db, values.project);
   if (!project) throw new Error(t.common.projectNotFound(values.project));
 
-  const r = await neutralizePitch(project, { engine: getEngine("claude-cli", config) });
+  const r = await neutralizePitch(project, { engine: assistantEngine(config, { profile: values.profile, db }) });
   const out = values.out ?? join(dirname(resolve(config.DATABASE_PATH)), "proposals", `${project.id}-pitch.json`);
   mkdirSync(dirname(out), { recursive: true });
   writeFileSync(out, JSON.stringify(r, null, 2));

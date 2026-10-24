@@ -1,14 +1,19 @@
 import { parseArgs } from "node:util";
 import { z } from "zod";
 import { loadConfig, loadDotEnv } from "../config";
-import { BACKEND_NAMES, getEngine, type BackendName } from "../engine";
+import { BACKEND_NAMES, getEngine, getProfileEngine, type Engine, type ProviderKind } from "../engine";
 import { errorText, t } from "./i18n";
 
-/** Vérifie chaque backend : disponibilité, puis UNE petite requête JSON validée. */
+/**
+ * Vérifie chaque backend : disponibilité, puis UNE petite requête JSON validée.
+ * Sans option : claude-cli et ollama (inchangé). `--profile <nom>` : le profil de moteur demandé ; pour un
+ * fournisseur à clé, la requête est réelle et facturée : elle ne part que si l'utilisateur lance la commande.
+ */
 
 const { values } = parseArgs({
   options: {
     backend: { type: "string", short: "b" },
+    profile: { type: "string", short: "p" },
     help: { type: "boolean", short: "h" },
   },
 });
@@ -18,14 +23,14 @@ if (values.help) {
   process.exit(0);
 }
 
-const DEFAULT_BACKENDS: BackendName[] = ["claude-cli", "ollama"];
-let targets: BackendName[] = DEFAULT_BACKENDS;
+const DEFAULT_BACKENDS: string[] = ["claude-cli", "ollama"];
+let targets: string[] = DEFAULT_BACKENDS;
 if (values.backend) {
-  if (!(BACKEND_NAMES as readonly string[]).includes(values.backend)) {
+  if (!BACKEND_NAMES.includes(values.backend)) {
     console.error(t.engineCheck.unknownBackend(values.backend, BACKEND_NAMES.join(", ")));
     process.exit(2);
   }
-  targets = [values.backend as BackendName];
+  targets = [values.backend];
 }
 
 const reactionSchema = z.object({
@@ -50,10 +55,23 @@ loadDotEnv();
 const config = loadConfig();
 let failures = 0;
 
-for (const name of targets) {
-  const engine = getEngine(name, config);
+const PAID: ReadonlySet<string> = new Set(["anthropic", "openai", "openrouter", "gemini"]);
+
+for (const name of values.profile ? [values.profile] : targets) {
+  let engine: Engine;
+  try {
+    engine = values.profile ? getProfileEngine(config, { profile: values.profile }) : getEngine(name as ProviderKind, config);
+  } catch (err) {
+    failures++;
+    console.log(t.engineCheck.engineFailed(errorText(err)));
+    continue;
+  }
   const { backend } = engine;
-  console.log(t.engineCheck.header(name, backend.model, backend.concurrency));
+  console.log(
+    values.profile
+      ? t.engineCheck.profileHeader(name, backend.name, backend.model, backend.concurrency)
+      : t.engineCheck.header(name, backend.model, backend.concurrency),
+  );
 
   const availability = await backend.checkAvailability();
   console.log(t.engineCheck.availability(availability.ok, errorText(availability.detail)));
@@ -63,6 +81,7 @@ for (const name of targets) {
     continue;
   }
 
+  if (PAID.has(backend.name)) console.log(t.engineCheck.paidNotice(backend.name));
   try {
     const res = await engine.complete({
       system,
@@ -74,7 +93,7 @@ for (const name of targets) {
     const u = res.usage;
     console.log(t.engineCheck.latency((res.durationMs / 1000).toFixed(1)));
     console.log(t.engineCheck.model(res.model));
-    console.log(t.engineCheck.tokens(u.inputTokens, u.outputTokens, u.cacheReadTokens, u.costUsd));
+    console.log(t.engineCheck.tokens(u.inputTokens, u.outputTokens, u.cacheReadTokens, u.costUsd, backend.name === "claude-cli" ? "subscription" : "provider"));
     console.log(t.engineCheck.attempts(res.attempts));
     console.log(t.engineCheck.result, JSON.stringify(res.data, null, 2));
   } catch (err) {

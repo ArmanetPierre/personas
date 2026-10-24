@@ -5,6 +5,7 @@ import { parse as parseYaml, parseDocument, stringify as toYaml } from "yaml";
 import type { Db } from "../db/client";
 import { projects } from "../db/schema";
 import { targetSpecSchema } from "../population/target";
+import { runMode } from "../config";
 import { createProject, getProject, projectFileSchema, type ProjectExtra } from "../studies/project";
 import { projectProtocolSchema } from "../studies/protocols/protocol";
 
@@ -37,9 +38,12 @@ export function validateBlock(key: ProjectBlock, value: unknown): { ok: boolean;
   return { ok: false, errors: r.error.issues.map((i) => ({ path: i.path.join("."), message: i.message })) };
 }
 
-/** Fichier source d'un projet, résolu depuis la racine du dépôt ; null s'il n'existe pas. */
+/**
+ * Fichier source d'un projet, résolu depuis la racine du dépôt ; null s'il n'existe pas. Service hébergé : toujours
+ * null (les projets n'existent qu'en base ; un nom de fichier envoyé par un utilisateur n'est jamais lu ni écrit).
+ */
 export function projectSourceFile(root: string, sourceFile: string | undefined): string | null {
-  if (!sourceFile) return null;
+  if (!sourceFile || runMode() === "hosted") return null;
   const abs = isAbsolute(sourceFile) ? sourceFile : resolve(root, sourceFile);
   return existsSync(abs) && /\.(ya?ml|json)$/i.test(abs) ? abs : null;
 }

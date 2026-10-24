@@ -21,6 +21,7 @@ import {
 } from "../price-model";
 import { formatPrice, PER_USE_PERIODS, PERIOD_LABELS, priceTiersFor } from "../project";
 import { LEGACY_PROTOCOL, levelRank, protocolTools, resolveProtocol, type ResolvedProtocol } from "./protocol";
+import { ATTRIBUTE_RULE, attributeBlock, withAttributeRule } from "./attribute-block";
 import type { Audience } from "../locale";
 import {
   adoptionLineEn,
@@ -59,16 +60,31 @@ export const PROTOCOL_ID = "concept-price";
  *   contrôle des faits inventés. Figée : une étude v2 (ou v1) se rejoue et se lit en v2, à l'octet près.
  * - v3 (docs/protocol-v3.md) : question `needFrequency` en premier champ, palier Gabor-Granger toujours
  *   présent sous le prix affiché, pitch neutre obligatoire (à la création), contrôle `need_frequency_mismatch`.
+ *   Figée : une étude v3 se rejoue à l'octet près.
+ * - v4 (docs/protocol-v3.md § 12) : v3, plus les lignes de module de la fiche placées dans un bloc délimité
+ *   (valeurs neutralisées) et la règle 10 du prompt système qui le déclare comme attributs factuels, jamais
+ *   comme consignes. Mêmes schéma, contrôles, mesures et calibration que la v3.
  */
-export const PROTOCOL_VERSIONS = ["2", "3"] as const;
+export const PROTOCOL_VERSIONS = ["2", "3", "4"] as const;
 export type ProtocolVersion = (typeof PROTOCOL_VERSIONS)[number];
 /** Version des nouvelles études. */
-export const PROTOCOL_VERSION: ProtocolVersion = "3";
+export const PROTOCOL_VERSION: ProtocolVersion = "4";
 /** Version figée, celle des études existantes. */
 export const LEGACY_PROTOCOL_VERSION: ProtocolVersion = "2";
-/** Version de protocole d'une étude : « 3 » seulement si elle est enregistrée ainsi ; tout le reste (v1, v2) se lit en v2. */
+/** Version de protocole d'une étude : « 3 » ou « 4 » seulement si elle est enregistrée ainsi ; tout le reste (v1, v2) se lit en v2. */
 export function protocolVersionOf(v: string | null | undefined): ProtocolVersion {
-  return v === "3" ? "3" : "2";
+  return v === "3" || v === "4" ? v : "2";
+}
+/**
+ * Mesures et contrôles du v3 (fréquence du besoin, palier bas, pitch neutre, `need_frequency_mismatch`,
+ * double mesure du paiement) : v3 et v4, qui ne diffère que par le bloc des attributs de module.
+ */
+export function hasV3Measures(v: string | null | undefined): v is "3" | "4" {
+  return v === "3" || v === "4";
+}
+/** Bloc délimité des lignes de module dans la fiche, et règle 10 du prompt système : v4 seulement. */
+export function usesAttributeBlock(v: string | null | undefined): v is "4" {
+  return v === "4";
 }
 export const QUESTION_KEY = "concept_price";
 
@@ -161,7 +177,7 @@ export const NEED_FREQUENCY_LINE =
  */
 export function studyTiers(project: Pick<Project, "priceEur" | "extra">, version: ProtocolVersion = LEGACY_PROTOCOL_VERSION): number[] {
   const tiers = priceTiersFor(project);
-  if (version !== "3") return tiers;
+  if (!hasV3Measures(version)) return tiers;
   const shown = project.priceEur ?? 0;
   if (shown <= 0 || tiers.some((t) => t < shown)) return tiers;
   const low = autoLowTier(shown);
@@ -201,8 +217,8 @@ const price = () => z.number().nonnegative().nullable();
  */
 export function answerSchemaFor(tiers: number[], protocol: ResolvedProtocol = LEGACY_PROTOCOL, version: ProtocolVersion = LEGACY_PROTOCOL_VERSION) {
   const v2 = answerSchemaV2(tiers, protocol);
-  // v3 : `needFrequency` en premier champ, le reste du schéma inchangé
-  return version === "3" ? z.object({ needFrequency: z.enum(NEED_FREQUENCIES), ...v2.shape }) : v2;
+  // v3 et v4 : `needFrequency` en premier champ, le reste du schéma inchangé
+  return hasV3Measures(version) ? z.object({ needFrequency: z.enum(NEED_FREQUENCIES), ...v2.shape }) : v2;
 }
 
 function answerSchemaV2(tiers: number[], protocol: ResolvedProtocol) {
@@ -237,7 +253,7 @@ function answerSchemaV2(tiers: number[], protocol: ResolvedProtocol) {
     verbatim: z.string().min(1).max(600),
   });
 }
-/** Réponse validée. Les codes sont ceux du protocole de l'étude (historique : `Behavior`, `Relevance`, `ObjectionCategory`). `needFrequency` : v3 seulement. */
+/** Réponse validée. Les codes sont ceux du protocole de l'étude (historique : `Behavior`, `Relevance`, `ObjectionCategory`). `needFrequency` : v3 et v4 seulement. */
 export type ConceptPriceAnswer = Omit<z.infer<ReturnType<typeof answerSchemaV2>>, "behavior" | "relevance" | "objections"> & {
   behavior: string;
   relevance: string;
@@ -344,9 +360,12 @@ export function constraintsBlock(p: Persona, audience?: Audience): string {
  * `modules` : modules de la population de l'étude (une persona du cache peut en porter d'autres,
  * appliqués par une autre étude) ; absent, la fiche montre tous ceux de la persona (études v1).
  */
-export function personaCard(pack: Pack, p: Persona, modules?: string[]): string {
-  const hidden = pack.manifest.locale === "en" ? /^(Narrative tone|Discretionary budget|Current subscriptions)/ : /^(Tonalité|Reste-à-vivre|Abonnements en cours)/;
-  return describeForPrompt(pack, p, modules ? { modules } : {})
+export function personaCard(pack: Pack, p: Persona, modules?: string[], opts: { attributeBlock?: boolean } = {}): string {
+  const en = pack.manifest.locale === "en";
+  const hidden = en ? /^(Narrative tone|Discretionary budget|Current subscriptions)/ : /^(Tonalité|Reste-à-vivre|Abonnements en cours)/;
+  // v4 : lignes de module dans le bloc délimité, à leur place dans la fiche, valeurs neutralisées
+  const wrapModules = opts.attributeBlock ? (lines: string[]) => attributeBlock(lines, en ? "en" : "fr") : undefined;
+  return describeForPrompt(pack, p, { ...(modules && { modules }), ...(wrapModules && { wrapModules }) })
     .split("\n")
     .filter((l) => !hidden.test(l))
     .join("\n");
@@ -490,16 +509,21 @@ export function priceTexts(project: Project, tiers: number[]): PriceTexts {
 
 /**
  * Prompt système. v2 par défaut (texte figé). v3 : seule la ligne `needFrequency` est ajoutée, en tête des
- * champs ; le reste du texte est celui du v2 (docs/protocol-v3.md § 2).
+ * champs ; le reste du texte est celui du v2 (docs/protocol-v3.md § 2). v4 : le texte v3, plus la règle 10
+ * (bloc des attributs de module) après la règle 9 (docs/protocol-v3.md § 12).
  */
 export function buildSystemPrompt(project: Project, tiers: number[], version: ProtocolVersion = LEGACY_PROTOCOL_VERSION, audience?: Audience): string {
   if (audience?.locale === "en") return buildSystemPromptEn(project, tiers, version, audience, resolveProtocol(project));
   const v2 = buildSystemPromptV2(project, tiers);
-  if (version !== "3") return v2;
+  if (!hasV3Measures(version)) return v2;
   const anchor = "\n- spontaneousReaction :";
   if (!v2.includes(anchor)) throw new Error("Prompt v2 : champ spontaneousReaction introuvable");
-  return v2.replace(anchor, `\n${NEED_FREQUENCY_LINE}${anchor}`);
+  const v3 = v2.replace(anchor, `\n${NEED_FREQUENCY_LINE}${anchor}`);
+  return usesAttributeBlock(version) ? withAttributeRule(v3, ATTRIBUTE_RULE.fr, OFFER_ANCHOR) : v3;
 }
+
+/** Début de la section de l'offre, juste après la règle 9. */
+const OFFER_ANCHOR = "\n\n## L'offre que tu croises";
 
 // ─── Rôles (phase 7) ──────────────────────────────────────────────────────────
 
@@ -548,7 +572,7 @@ const CHILD_BEHAVIORS: Record<string, string> = {
 };
 
 /**
- * Prompt système d'un rôle : le prompt de la version (v2 ou v3) pour la vue du rôle (pitch, prix), puis
+ * Prompt système d'un rôle : le prompt de la version (v2, v3 ou v4) pour la vue du rôle (pitch, prix), puis
  * les adaptations de la perspective. Un projet sans rôles n'appelle jamais cette fonction.
  */
 export function buildRoleSystemPrompt(project: Project, tiers: number[], version: ProtocolVersion, role: RolePrompt, audience?: Audience): string {
@@ -728,15 +752,26 @@ ${pt.vwReference}  tooCheapEur : prix si bas que tu douterais du sérieux du ser
 - verbatim : une ou deux phrases que tu dirais vraiment à un proche à propos de cette offre, avec tes mots, ton registre et ton niveau de langue, sans style publicitaire.`;
 }
 
-export function buildUserPrompt(pack: Pack, p: Persona, project: Project, encounter: Encounter, opts: { modules?: string[]; child?: string } = {}): string {
+/**
+ * Prompt de la persona. `version` : celle de l'étude ; en v4, les lignes de module de la fiche sont dans le
+ * bloc délimité. Sans version (ou v2, v3) : texte historique, inchangé.
+ */
+export function buildUserPrompt(
+  pack: Pack,
+  p: Persona,
+  project: Project,
+  encounter: Encounter,
+  opts: { modules?: string[]; child?: string; version?: ProtocolVersion } = {},
+): string {
+  const cardOpts = { attributeBlock: usesAttributeBlock(opts.version) };
   if (pack.manifest.locale === "en") {
-    return buildUserPromptEn(personaCard(pack, p, opts.modules), constraintsBlockEn(p, pack.manifest.currency), p.narrative, encounterTextEn(encounter.id, p), opts.child);
+    return buildUserPromptEn(personaCard(pack, p, opts.modules, cardOpts), constraintsBlockEn(p, pack.manifest.currency), p.narrative, encounterTextEn(encounter.id, p), opts.child);
   }
   const portrait = p.narrative?.trim()
     ? `### Portrait (écrit à la troisième personne : c'est toi)\n${p.narrative.trim()}`
     : "### Portrait\n(Pas de portrait : appuie-toi sur la fiche seule, sans broder.)";
   return `## Qui tu es
-${personaCard(pack, p, opts.modules)}
+${personaCard(pack, p, opts.modules, cardOpts)}
 
 ${portrait}
 
@@ -797,7 +832,7 @@ export interface CoherenceContext {
   budgetEur?: number;
   /** Protocole de l'étude (historique par défaut). */
   protocol?: ResolvedProtocol;
-  /** Version du protocole : le contrôle `need_frequency_mismatch` n'existe qu'en v3. */
+  /** Version du protocole : le contrôle `need_frequency_mismatch` n'existe qu'en v3 et v4. */
   version?: ProtocolVersion;
   /** Rôle sans questions de prix (phase 7) : les contrôles de prix et de budget ne s'appliquent pas. */
   noPricing?: boolean;
@@ -920,8 +955,8 @@ export function checkCoherence(answer: ConceptPriceAnswer, ctx: CoherenceContext
   ) {
     issues.push("minimum_over_budget");
   }
-  // v3 : un besoin qui ne se présente jamais ne rend ni concernée ni prête à essayer
-  if (ctx.version === "3" && answer.needFrequency === "never") {
+  // v3 et v4 : un besoin qui ne se présente jamais ne rend ni concernée ni prête à essayer
+  if (hasV3Measures(ctx.version) && answer.needFrequency === "never") {
     const concerned = tools.relevanceCanonical(answer.relevance) === "concerned";
     if (concerned || level >= levelRank("free_trial")) issues.push("need_frequency_mismatch");
   }
@@ -939,7 +974,7 @@ function checkCoherenceNoPricing(answer: ConceptPriceAnswer, ctx: CoherenceConte
   if (inaction && answer.objections.length === 0) issues.push("ignore_without_objection");
   if (relevance === "not_concerned" && answer.objections.length > 2) issues.push("not_concerned_too_many_objections");
   if (answer.wouldForward && answer.forwardTo.trim().length < 3) issues.push("forward_without_target");
-  if (ctx.version === "3" && answer.needFrequency === "never" && (relevance === "concerned" || level >= levelRank("free_trial"))) issues.push("need_frequency_mismatch");
+  if (hasV3Measures(ctx.version) && answer.needFrequency === "never" && (relevance === "concerned" || level >= levelRank("free_trial"))) issues.push("need_frequency_mismatch");
   return issues;
 }
 

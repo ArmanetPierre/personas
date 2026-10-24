@@ -23,6 +23,7 @@ export const FR_AUDIENCE: Audience = { locale: "fr", country: "FR", countryName:
 const COUNTRY_NAMES: Record<string, Record<Locale, string>> = {
   FR: { fr: "France", en: "France" },
   SG: { fr: "Singapour", en: "Singapore" },
+  US: { fr: "États-Unis", en: "the United States" },
 };
 
 export function audienceOfManifest(m: Pick<Pack["manifest"], "locale" | "country" | "currency">): Audience {

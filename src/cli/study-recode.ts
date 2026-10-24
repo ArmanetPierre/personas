@@ -3,7 +3,7 @@ import { dirname, join, resolve } from "node:path";
 import { parseArgs } from "node:util";
 import { loadConfig, loadDotEnv } from "../config";
 import { openDb, runMigrations } from "../db/client";
-import { getEngine } from "../engine";
+import { assistantEngine } from "../engine/select";
 import { OBJECTION_LABELS, QUESTION_KEY, type ObjectionCategory } from "../studies/protocols/concept-price";
 import { readTaxonomy, recodedDistribution, recodeStudy } from "../studies/recode";
 import type { ConceptPricePayload } from "../studies/run";
@@ -15,6 +15,7 @@ import { errorText, lang, t } from "./i18n";
 
 const { values } = parseArgs({
   options: {
+    profile: { type: "string" },
     study: { type: "string" },
     taxonomy: { type: "string" },
     key: { type: "string" },
@@ -38,7 +39,7 @@ try {
   const study = findStudy(db, values.study);
   const tax = readTaxonomy(values.taxonomy, values.key);
   console.log(t.studyRecode.header(study.id, tax.key, tax.objections.length));
-  const r = await recodeStudy(db, getEngine("claude-cli", config), study, tax, { batchSize: Number(values["batch-size"]), log: (m) => console.log(m) });
+  const r = await recodeStudy(db, assistantEngine(config, { profile: values.profile, db }), study, tax, { batchSize: Number(values["batch-size"]), log: (m) => console.log(m) });
   console.log(t.studyRecode.run(r.objections, r.responses, r.calls, r.usage.inputTokens, r.usage.outputTokens));
   if (r.stoppedForUsageLimit) console.log(t.studyRecode.usageLimit(r.stoppedForUsageLimit));
 

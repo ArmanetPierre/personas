@@ -1,7 +1,25 @@
 import type { z } from "zod";
 
-/** `anthropic-api` est réservé : payant, jamais sans demande explicite de l'utilisateur. */
-export type BackendName = "claude-cli" | "ollama" | "anthropic-api";
+/**
+ * Fournisseurs d'IA (docs/plateforme.md § 7.1). `claude-cli` (abonnement de l'utilisateur) et `ollama`
+ * (API native) se configurent par l'environnement ; les autres par un profil de moteur et une clé de
+ * l'utilisateur rangée dans le trousseau du système (src/engine/profiles.ts, src/engine/secrets.ts).
+ */
+export type ProviderKind = "claude-cli" | "anthropic" | "openai" | "openrouter" | "gemini" | "openai-compatible" | "ollama";
+
+/** Ancien nom du type, gardé pour les appelants existants. */
+export type BackendName = ProviderKind;
+
+/** Mode de sortie structurée natif d'un fournisseur (§ 7.2) ; la boucle de réparation de l'Engine reste le filet. */
+export type StructuredMode = "json-schema" | "json-schema-subset" | "tool-call" | "json-mode" | "none";
+
+export interface ProviderCapabilities {
+  structured: StructuredMode;
+  /** Recherche de sources de l'assistant de modules (WebSearch, WebFetch). */
+  webTools: boolean;
+  /** Log-probabilités (pré-tri, src/triage/). */
+  logprobs: boolean;
+}
 
 export interface ChatMessage {
   role: "user" | "assistant";
@@ -52,10 +70,15 @@ export interface Availability {
 }
 
 export interface Backend {
-  readonly name: BackendName;
+  readonly name: ProviderKind;
   readonly model: string;
   /** Nombre maximal d'appels simultanés vers ce backend. */
   readonly concurrency: number;
+  /**
+   * Capacités du fournisseur. Tous les backends du moteur les déclarent ; facultatif dans l'interface
+   * pour les backends simulés des tests (voir `capabilitiesOf`).
+   */
+  readonly capabilities?: ProviderCapabilities;
   checkAvailability(): Promise<Availability>;
   generate(request: BackendRequest): Promise<BackendResponse>;
 }
@@ -76,7 +99,7 @@ export interface CompleteResult<T> {
   /** Usage cumulé sur toutes les tentatives (réparations comprises). */
   usage: Usage;
   durationMs: number;
-  backend: BackendName;
+  backend: ProviderKind;
   model: string;
   /** 1 si la première réponse était valide, plus en cas de réparation. */
   attempts: number;

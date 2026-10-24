@@ -32,7 +32,7 @@ export const fr = {
       "  Sans --write : affiche l'ajustement sans rien écrire.",
     fileNotFound: (f: string) => `Fichier introuvable : ${f}`,
     skipped: (product: string, noStudy: boolean) => `- ${product} : ignoré (${noStudy ? "pas d'étude" : "pas de réel"})`,
-    notV3: (product: string, study: string, version: string) => `${product} : l'étude ${study} est en protocole v${version} ; la conversion s'ajuste sur des études v3.`,
+    notV3: (product: string, study: string, version: string) => `${product} : l'étude ${study} est en protocole v${version} ; la conversion s'ajuste sur des études v3 ou v4 (même mesure).`,
     noLowTier: (product: string, study: string) => `${product} : aucun palier sous le prix affiché dans ${study}.`,
     point: (product: string, study: string, n: number, price: number, yes: number) => `- ${product} : ${study}, n = ${n}, oui à ${price} : ${yes}`,
     refused: (reason: string, version: string, status: string) => `Ajustement refusé : ${reason}\nParamètres inchangés (${version}, ${status}).`,
@@ -40,19 +40,76 @@ export const fr = {
     written: (out: string, next: string) => `Écrit : ${out} (${next}, calibrée).`,
   },
   engineCheck: {
-    usage: (backends: string) => `Usage : npm run engine:check [-- --backend <${backends}>]`,
+    usage: (backends: string) => `Usage : npm run engine:check [-- --backend <${backends}> | --profile <profil>]`,
     unknownBackend: (b: string, expected: string) => `Backend inconnu : ${b} (attendus : ${expected})`,
     header: (name: string, model: string, concurrency: number) => `\n=== ${name} (modèle ${model}, concurrence ${concurrency}) ===`,
     availability: (ok: boolean, detail: string) => `Disponibilité : ${ok ? "OK" : "ÉCHEC"} — ${detail}`,
     latency: (s: string) => `Latence : ${s} s`,
     model: (m: string) => `Modèle : ${m}`,
-    tokens: (input: number, output: number, cacheRead: number | undefined, costUsd: number | undefined) =>
+    tokens: (input: number, output: number, cacheRead: number | undefined, costUsd: number | undefined, billing: "subscription" | "provider" = "subscription") =>
       `Tokens : ${input} en entrée, ${output} en sortie` +
       (cacheRead ? ` (dont ${cacheRead} lus en cache)` : "") +
-      (costUsd ? ` — coût indicatif ${costUsd.toFixed(4)} $ (couvert par l'abonnement)` : ""),
+      (costUsd ? ` — coût indicatif ${costUsd.toFixed(4)} $ (${billing === "subscription" ? "couvert par l'abonnement" : "facturé par le fournisseur"})` : ""),
     attempts: (n: number) => `Tentatives : ${n}`,
     result: "Résultat :",
     requestFailed: (msg: string) => `Requête : ÉCHEC — ${msg}`,
+    profileHeader: (profile: string, provider: string, model: string, concurrency: number) =>
+      `\n=== ${profile} — ${provider} (modèle ${model}, concurrence ${concurrency}) ===`,
+    paidNotice: (provider: string) => `Requête réelle vers ${provider} avec votre clé : quelques centaines de tokens facturés sur votre compte.`,
+    engineFailed: (msg: string) => `Moteur : ÉCHEC — ${msg}`,
+  },
+  engineProfile: {
+    usage:
+      "Usage : npm run engine:profile -- <commande>\n" +
+      "  list                                   profils (intégrés et ~/.personas/config.json), * = actif\n" +
+      "  add --name <nom> --provider <fournisseur> --model <modèle> [--base-url <url>] [--concurrency <n>]\n" +
+      "      [--timeout-ms <ms>] [--key-env <VARIABLE>] [--per-study-usd <n>] [--per-day-usd <n>] [--per-month-usd <n>] [--use]\n" +
+      "  use <nom>                              profil actif par défaut (PERSONAS_PROFILE ou --profile l'emportent)\n" +
+      "  limit <nom> [--per-study-usd <n>] [--per-day-usd <n>] [--per-month-usd <n>] [--clear]\n" +
+      "                                         plafonds de dépense (défaut : 5 $ par étude pour un fournisseur payant)\n" +
+      "  remove <nom>\n" +
+      "Fournisseurs : claude-cli, anthropic, openai, openrouter, gemini, openai-compatible, ollama.\n" +
+      "La clé ne va jamais dans ce fichier : npm run engine:key -- set --profile <nom>.",
+    file: (path: string) => `Fichier : ${path}`,
+    row: (active: boolean, name: string, provider: string, model: string, extra: string) =>
+      `${active ? "*" : " "} ${name} — ${provider}, modèle ${model}${extra ? ` (${extra})` : ""}`,
+    builtin: "intégré, réglé par l'environnement",
+    concurrency: (n: number) => `concurrence ${n}`,
+    keyEnv: (name: string) => `clé : trousseau, sinon ${name}`,
+    limits: (s: string) => `plafonds ${s}`,
+    limitsSet: (name: string, s: string) => `Plafonds du profil ${name} : ${s}. Une étude en pause sur plafond reprend avec npm run study:run -- --study <id>.`,
+    limitsBuiltin: (name: string) => `Le profil intégré ${name} n'a pas de plafond (abonnement ou modèle local).`,
+    activeFrom: (name: string, source: string) => `Profil actif : ${name} (${source})`,
+    sourceFlag: "option --profile",
+    sourceEnv: "variable PERSONAS_PROFILE",
+    sourceFile: "fichier de profils",
+    sourceDefault: "défaut",
+    added: (name: string) => `Profil ${name} enregistré.`,
+    keyHint: (name: string) => `Ranger la clé dans le trousseau : npm run engine:key -- set --profile ${name}`,
+    used: (name: string) => `Profil actif : ${name}.`,
+    removed: (name: string) => `Profil ${name} supprimé. Sa clé reste dans le trousseau : npm run engine:key -- remove --profile ${name}`,
+    missing: (what: string) => `Option manquante : ${what}`,
+    unknownCommand: (c: string) => `Commande inconnue : ${c}`,
+  },
+  engineKey: {
+    usage:
+      "Usage : npm run engine:key -- <set|remove|test> --profile <nom>\n" +
+      "  set     lit la clé sur l'entrée standard (saisie masquée) et la range dans le trousseau (personas/<nom>)\n" +
+      "  remove  retire la clé du trousseau\n" +
+      "  test    vérifie la clé auprès du fournisseur (point d'accès gratuit, aucune génération)",
+    prompt: (profile: string) => `Clé du profil ${profile} (saisie masquée, Entrée pour valider) : `,
+    empty: "Clé vide : rien n'est enregistré.",
+    saved: (profile: string) => `Clé du profil ${profile} rangée dans le trousseau du système (personas/${profile}).`,
+    removed: (profile: string, found: boolean) => (found ? `Clé du profil ${profile} retirée du trousseau.` : `Aucune clé dans le trousseau pour ${profile}.`),
+    noKey: (profile: string, provider: string) => `Le profil ${profile} (${provider}) n'utilise pas de clé.`,
+    keychainUnavailable: (msg: string) =>
+      `${msg}\nStockage en clair refusé. Sans trousseau : nommer une variable dans le profil (engine:profile -- add … --key-env NOM) et l'exporter dans l'environnement.`,
+    source: (s: "keychain" | "env" | "none", env: string | undefined) =>
+      s === "keychain" ? "Clé : trousseau du système" : s === "env" ? `Clé : variable ${env ?? "?"}` : "Clé : aucune",
+  },
+  mcp: {
+    ready: (db: string, tools: number) => `Serveur MCP Personas prêt (stdio) : ${tools} outils, base ${db}.`,
+    fatal: (e: string) => `Serveur MCP arrêté sur une erreur : ${e}`,
   },
   migrate: {
     applied: (path: string) => `Migrations appliquées sur ${path}`,
@@ -145,6 +202,24 @@ export const fr = {
     none: (version: string) => `Aucune persona pour le pack ${version}. Lancer d'abord npm run personas:generate.`,
     header: (version: string, modules: string, n: number, virtual: boolean) =>
       `# Validation des marges — pack ${version}${modules ? ` + ${modules}` : ""}, ${n} personas${virtual ? " virtuelles" : ""}`,
+    /** Rapport des marges et de la plausibilité (src/cli/validate-report.ts). Les libellés des dimensions viennent du pack. */
+    report: {
+      kind: { drawn: "tirée", modelled: "modélisée", info: "info" },
+      /** En-têtes des colonnes : observé, attendu, écart (alignés sur 7, 7 et 8 caractères). */
+      columns: { observed: "base", expected: "cible", deviation: "écart" },
+      dimensionSummary: (maxDev: string, chi2: string, df: number, p: string, verdict: string) => `→ écart max ${maxDev} pt ; chi² ${chi2} (ddl ${df}, p = ${p}) ; ${verdict}`,
+      indicative: "indicatif",
+      ok: "OK",
+      fail: "ÉCHEC",
+      overallTitle: "\n## Indicateur global",
+      maxAbsDev: (dev: string, title: string) => `Écart absolu max : ${dev} pt (${title})`,
+      minPValue: (p: string, title: string) => `Plus petite p-value du chi² (dimensions tirées) : ${p} (${title})`,
+      thresholds: (minP: number, tolerance: string, n: number, maxModelled: number) =>
+        `Seuils : dimensions tirées p ≥ ${minP} et écart ≤ ${tolerance} pt (n=${n}) ; dimensions modélisées écart ≤ ${maxModelled} pt`,
+      resultFail: (titles: string) => `RÉSULTAT : ÉCHEC (${titles})`,
+      resultOk: "RÉSULTAT : OK",
+      plausibilityTitle: "\n## Plausibilité",
+    },
   },
   populationDraw: {
     usage:
@@ -219,9 +294,11 @@ export const fr = {
       "          (fichier ou id d'un projet qui déclare `target` / `control` : ciblage conditionnel, personas tirées à la demande,\n" +
       "           récits manquants écrits via claude-cli sauf --no-narrate)\n" +
       "Projet multi-rôles (bloc `roles`) : un groupe par rôle, chacun avec sa cible ; effectifs par rôle : --role-n coach=20,member=40\n" +
-      "Protocole : --protocol 3 (défaut, pitch neutre exigé ; --force pour passer outre) ou --protocol 2 (protocole figé des études existantes).\n" +
-      "Dimensions de quotas : ageBand, sex, pcs (1-6, none), livingStandard (Q1-Q5), techAdoption, townSize, activityStatus, region.",
-    unknownProtocol: (p: string) => `Protocole inconnu : ${p} (--protocol 2 ou 3).`,
+      "Protocole : --protocol 4 (défaut : v3 et lignes de module dans un bloc délimité ; pitch neutre exigé, --force pour passer outre), --protocol 3 ou --protocol 2 (protocoles figés des études existantes).\n" +
+      "Dimensions de quotas : ageBand, sex, pcs (1-6, none), livingStandard (Q1-Q5), techAdoption, townSize, activityStatus, region.\n" +
+      "Moteur : --profile <nom> (sinon PERSONAS_PROFILE, le profil actif, puis claude-cli) ; --backend claude-cli|ollama garde son sens historique.\n" +
+      "L'estimation du coût est affichée avant la création ; modèle sans prix connu : --accept-unknown-cost.",
+    unknownProtocol: (p: string) => `Protocole inconnu : ${p} (--protocol 2, 3 ou 4).`,
     backendRefused: (b: string) => `Backend refusé : ${b} (claude-cli ou ollama ; jamais l'API payante).`,
     loaded: (id: string, file: string) => `Projet ${id} chargé depuis ${file}.`,
     nRequired: "Taille d'échantillon requise (--n), ou un projet avec un bloc `target`.",
@@ -233,6 +310,9 @@ export const fr = {
       `  ${size} personas, graine ${seed}, ${backend} / ${model}` + (from ? `, échantillon repris de ${from}` : ""),
     shortfalls: (list: string[]) => `  ⚠ Quotas non remplis :\n  - ${list.join("\n  - ")}`,
     narrateBackendRefused: (b: string) => `Backend de récit refusé : ${b}`,
+    unknownCost: (model: string) => `Coût inconnu pour le modèle ${model} (absent de pricing/models.json) : confirmer avec --accept-unknown-cost, ou ajouter son prix au fichier.`,
+    unknownCostAccepted: "Coût inconnu accepté pour cette étude : le plafond comptera chaque appel au prix du modèle le plus cher du fournisseur (pricing/models.json).",
+    engine: (profile: string, provider: string, model: string) => `  Moteur : profil ${profile} (${provider} / ${model})`,
     narratives: (r: NarrativesRun & { missing: unknown[]; aborted?: string | null | undefined }) =>
       narrativesHead(r) +
       (r.missing.length ? ` ; ${r.missing.length} manquant(s), relancer pour reprendre` : "") +
@@ -284,6 +364,13 @@ export const fr = {
   },
   studyRun: {
     usage: "Usage : npm run study:run -- --study <id> [--concurrency N]",
+    usageMore: "  [--profile <nom>] [--no-narrate] [--accept-unknown-cost] ; moteur : le profil enregistré dans l'étude (--profile pour un autre profil du même fournisseur).",
+    profile: (name: string) => `Profil ${name}`,
+    budget: (s: string) => `\n⏸ Plafond de dépense atteint : ${s}`,
+    unknownCostBlocked: (s: string) => `\n⏸ ${s}`,
+    budgetResume: (id: string) => `Les réponses déjà obtenues sont enregistrées. Relever le plafond (npm run engine:profile -- limit <profil> --per-study-usd <n>), puis reprendre :\n  npm run study:run -- --study ${id}`,
+    narrativesBudget: (reason: string, id: string) => `Plafond de dépense atteint pendant les récits : ${reason}\nRelever le plafond puis reprendre : npm run study:run -- --study ${id}`,
+    estimate: (lines: string[]) => lines.map((l) => `  ${l}`).join("\n"),
     backendRefused: (b: string) => `Backend refusé : ${b}`,
     unavailable: (backend: string, detail: string, hint: string | undefined) => `${backend} indisponible : ${detail}${hint ? `\n→ ${hint}` : ""}`,
     header: (id: string, name: string) => `Étude ${id} — ${name}`,
@@ -301,6 +388,12 @@ export const fr = {
     aborted: (reason: string, id: string) => `\n✖ Étude arrêtée : ${reason}\nCorriger la cause puis relancer : npm run study:run -- --study ${id}`,
     failed: (n: number, id: string) => `\n${n} échec(s) ; relancer pour les reprendre : npm run study:run -- --study ${id}`,
     complete: (id: string) => `\nÉtude complète. Résumé : npm run study:summary -- --study ${id}`,
+  },
+  studyEstimate: {
+    usage:
+      "Usage : npm run study:estimate -- --project <id | fichier> [--n 200] [mêmes options de population que study:create] [--profile <nom>] [--json]\n" +
+      "        npm run study:estimate -- --study <id> [--profile <nom>] [--json]   (reste d'une étude existante)\n" +
+      "Estimation avant lancement : appels, tokens, coût (fourchette ±30 %) et durée ; aucune écriture, aucun appel au modèle.",
   },
   studySummary: {
     usage: "Usage : npm run study:summary -- --study <id> [--json] [--out fichier.json]",
@@ -337,6 +430,105 @@ export const fr = {
     calls: (calls: number, cached: number, s: string, failed: number) => `Appels Qwen : ${calls} (+ ${cached} en cache), ${s} s${failed ? ` ; ${failed} personas en échec` : ""}`,
     duration: (s: string) => `\nDurée totale : ${s} s`,
   },
+  hub: {
+    searchUsage:
+      "Usage : personas hub search <texte> [--socle fr] [--limit 20] [--remote] [--json]\n" +
+      "  Recherche locale (BM25) dans la bibliothèque et le catalogue du Hub en cache ; rien n'est envoyé au Hub.\n" +
+      "  --remote : recherche sur le Hub (le texte tapé est envoyé, jamais un projet).",
+    pullUsage: "Usage : personas hub pull <namespace/module>[@version] [--pack]\n  Télécharge dans le cache local (sha256 vérifié) ; sans version : la dernière du catalogue.",
+    syncUsage: "Usage : personas hub sync [--json]\n  Met à jour le catalogue du Hub en cache (ETag). Hors ligne : garde le dernier catalogue.",
+    publishUsage:
+      "Usage : personas hub publish <module.yaml | dossier de pack> --namespace personas [--slug <pays>] [--dry-run]\n" +
+      "  Administration : jeton HUB_ADMIN_TOKEN (environnement) ou trousseau (compte hub-admin), jamais affiché.",
+    lockUsage:
+      "Usage : personas hub lock <projet : id | fichier> [--check]\n" +
+      "  Épingle socle et modules (versions exactes, sha256) dans projects.extra.lock et <projet>.personas.lock.\n" +
+      "  --check : compare sans rien écrire.",
+    hubUrl: (url: string) => `Hub : ${url}`,
+    catalogNetwork: (modules: number, packs: number, at: string) => `Catalogue téléchargé : ${modules} module(s), ${packs} pack(s) (${at}).`,
+    catalogNotModified: (at: string) => `Catalogue à jour (ETag inchangé, ${at}).`,
+    catalogCache: (at: string) => `Hors ligne : dernier catalogue en cache (${at}).`,
+    catalogNone: "Aucun catalogue : Hub injoignable et rien en cache.",
+    offline: (msg: string) => `⚠ ${msg}`,
+    noResults: (q: string) => `Aucun module pour « ${q} ».`,
+    result: (ref: string, version: string, source: string, label: string, quality: string, socles: string) => `- ${ref}@${version} [${source}] ${label}\n  ${quality} ; socles : ${socles}`,
+    sources: { local: "local", cache: "cache", hub: "Hub (à télécharger)" } as Record<string, string>,
+    pulled: (kind: string, ref: string, version: string, sha: string) => `Téléchargé : ${kind} ${ref}@${version} (sha256 ${sha.slice(0, 12)}…)`,
+    alreadyCached: (kind: string, ref: string, version: string) => `Déjà en cache : ${kind} ${ref}@${version} (vérifié)`,
+    bundled: (kind: string, ref: string, version: string) => `Livré avec Personas : ${kind} ${ref}@${version} (packs/ du paquet, prioritaire) ; rien à télécharger ni à mettre en cache.`,
+    kinds: { module: "module", pack: "pack" } as Record<string, string>,
+    warning: (w: string) => `⚠ ${w}`,
+    cacheDir: (dir: string) => `Cache : ${dir}`,
+    noToken: "Jeton d'administration absent : définir HUB_ADMIN_TOKEN ou le ranger dans le trousseau (compte hub-admin).",
+    tokenSource: (source: string) => `Jeton d'administration : ${source} (non affiché).`,
+    tokenSources: { env: "variable HUB_ADMIN_TOKEN", keychain: "trousseau" } as Record<string, string>,
+    dryRun: (kind: string, ref: string, version: string, sha: string) => `Contrôle seul (--dry-run) : ${kind} ${ref}@${version}, sha256 ${sha.slice(0, 12)}…, rien n'est envoyé.`,
+    published: (ref: string, version: string, sha: string, quality: string) => `Publié : ${ref}@${version} (sha256 ${sha.slice(0, 12)}…) ; ${quality}`,
+    lockWritten: (where: string) => `Lock écrit : ${where}`,
+    lockStored: (id: string) => `Lock enregistré dans le projet ${id} (projects.extra.lock).`,
+    lockUnchanged: "Lock inchangé.",
+    lockChanges: "Changements :",
+    lockEntry: (ref: string, version: string, sha: string, source: string) => `  ${ref}@${version}  sha256 ${sha.slice(0, 12)}…  (${source})`,
+    lockSocle: (socle: string, ref: string, version: string, sha: string) => `  socle ${socle} : ${ref}@${version}  sha256 ${sha.slice(0, 12)}…`,
+    lockCheckDiff: "Le lock enregistré diffère de la résolution actuelle (rien n'est écrit) :",
+    lockNoProject: (p: string) => `Projet introuvable : ${p} (ni fichier ni id en base).`,
+    // Phase 3 : compte, publication par l'utilisateur, fork, étoiles, avis, signalements, télémétrie
+    loginUsage: "Usage : personas hub login\n  Connexion par flux d'appareil : un code s'affiche, la validation se fait dans le navigateur ; le jeton personnel est rangé dans le trousseau (compte hub-token), jamais affiché.",
+    logoutUsage: "Usage : personas hub logout\n  Retire le jeton personnel du trousseau.",
+    whoamiUsage: "Usage : personas hub whoami [--json]\n  Compte connecté (GET /v1/me).",
+    loginOpen: (uri: string) => `Ouvrir ${uri} dans le navigateur et se connecter au Hub,`,
+    loginCode: (code: string) => `puis saisir le code : ${code}`,
+    loginDirect: (uri: string) => `(lien direct : ${uri})`,
+    loginWaiting: (min: number) => `En attente de la validation (le code expire dans ${min} min ; Ctrl+C pour annuler)…`,
+    loginDone: (ns: string, name: string, store: string, expires: string) => `Connecté : ${name} (namespace ${ns}). Jeton rangé dans le ${store} (non affiché), valable jusqu'au ${expires}.`,
+    loginStores: { keychain: "trousseau du système", memory: "magasin en mémoire (test)" } as Record<string, string>,
+    loginFailed: (msg: string) => `Connexion impossible : ${msg}`,
+    logoutDone: "Déconnecté : jeton retiré du trousseau.",
+    logoutNone: "Aucun jeton dans le trousseau (rien à retirer).",
+    logoutEnv: "PERSONAS_HUB_TOKEN est défini dans l'environnement : le retirer aussi.",
+    notLoggedIn: "Pas connecté au Hub : lancer personas hub login (ou définir PERSONAS_HUB_TOKEN).",
+    tokenRejected: "Jeton refusé par le Hub (expiré ou révoqué) : relancer personas hub login.",
+    whoami: (name: string, ns: string, role: string, scopes: string, via: string) => `${name} — namespace ${ns}, rôle ${role}\n  portées : ${scopes} ; jeton : ${via} (non affiché)`,
+    whoamiOffline: (msg: string, ns: string) => `⚠ ${msg}\n  Dernier compte connu : namespace ${ns}.`,
+    personalTokenSources: { env: "variable PERSONAS_HUB_TOKEN", keychain: "trousseau" } as Record<string, string>,
+    userPublishUsage:
+      "Usage : personas hub publish <module : id | module.yaml> [--namespace <ns>] [--dry-run]\n" +
+      "        personas hub publish <dossier de pack> [--slug <pays>] [--dry-run]\n" +
+      "  Publie dans le namespace du compte connecté (personas hub login) ; seul le YAML du module est envoyé.\n" +
+      "  Lint de sécurité local avant l'envoi : une erreur bloque.\n" +
+      "  Administration (modules officiels, namespace personas) : --admin, jeton HUB_ADMIN_TOKEN ou trousseau (compte hub-admin).",
+    lintErrors: (n: number) => `Lint de sécurité : ${n} erreur(s), rien n'est envoyé :`,
+    lintWarnings: (n: number) => `Lint de sécurité : ${n} avertissement(s) :`,
+    lintOk: "Lint de sécurité : aucune alerte.",
+    validationErrors: (n: number) => `Validation : ${n} erreur(s), rien n'est envoyé :`,
+    issue: (path: string, msg: string) => `  - ${path ? `${path} : ` : ""}${msg}`,
+    sensitiveDeclared: (keys: string) => `Attributs sensibles déclarés (badge « sensible ») : ${keys}`,
+    publishedAs: (ref: string, version: string, sha: string, status: string) => `Publié : ${ref}@${version} (sha256 ${sha.slice(0, 12)}…), statut ${status}.`,
+    publishedSigned: (kid: string) => `Version signée par le Hub (clé ${kid}).`,
+    forkUsage: "Usage : personas hub fork <namespace/module>[@version] [--as <id>]\n  Fork dans le namespace du compte (filiation enregistrée), téléchargé dans le cache, puis copie éditable dans modules/<id>.",
+    forked: (ref: string, version: string, from: string) => `Fork créé sur le Hub : ${ref}@${version} (depuis ${from}).`,
+    forkLocal: (file: string, id: string) => `Copie éditable : ${file}\n  La modifier (version, libellés…), puis personas hub publish ${id}.`,
+    starUsage: "Usage : personas hub star <namespace/module>\n       personas hub unstar <namespace/module>",
+    starred: (ref: string, n: number) => `★ ${ref} : étoile ajoutée (${n} au total).`,
+    unstarred: (ref: string, n: number) => `${ref} : étoile retirée (${n} au total).`,
+    reviewUsage: "Usage : personas hub review <namespace/module@version> --rating 1-5 [--text « avis »]\n  Avis public sur une version (1000 caractères au plus).",
+    reviewed: (ref: string, version: string, rating: number) => `Avis enregistré : ${ref}@${version}, ${rating}/5.`,
+    reportUsage:
+      "Usage : personas hub report <namespace/module>[@version] --reason <malicious|injection|sensitive|rights|other> [--text « détail »]\n" +
+      "  Signale une version à la modération du Hub (sans version : la dernière du catalogue).",
+    reported: (ref: string, version: string, n: number, status: string) => `Signalement enregistré : ${ref}@${version} (${n} signalement(s), statut ${status}).`,
+    badRating: (v: string) => `Note invalide : ${v} (entier de 1 à 5).`,
+    badReason: (v: string) => `Motif invalide : ${v} (malicious, injection, sensitive, rights ou other).`,
+    needVersion: (ref: string) => `Version requise : ${ref}@<version>.`,
+    telemetryUsage:
+      "Usage : personas hub telemetry on|off|status [--json]\n" +
+      "  Télémétrie opt-in, désactivée par défaut : à la fin d'une étude, seuls des agrégats partent (modules du Hub@version,\n" +
+      "  socle, nombre de personas, protocole, version du moteur, famille de modèle), avec un identifiant d'installation renouvelé\n" +
+      "  chaque mois. Jamais de projet, pitch, cible, réponse ni identifiant d'étude.",
+    telemetryOn: "Télémétrie activée. Exemple de ce qui part à la fin d'une étude :",
+    telemetryOff: "Télémétrie désactivée (file d'attente vidée) : rien n'est envoyé.",
+    telemetryStatus: (on: boolean, pending: number) => `Télémétrie : ${on ? "activée" : "désactivée"}${on && pending ? ` (${pending} agrégat(s) en attente d'envoi)` : ""}.`,
+  },
   targetSuggest: {
     usage:
       "Usage : npm run target:suggest -- --project <id | fichier> [--triage] [--no-preview] [--n 200] [--seed 42] [--out fichier.yaml] [--json]\n" +
@@ -356,6 +548,84 @@ export const fr = {
     note: (n: string) => `Note : ${n}`,
     claude: (calls: number, repairs: number, s: string) => `\nClaude : ${calls} appel(s), ${repairs} réparation(s) ; durée ${s} s`,
     written: (path: string) => `Proposition écrite dans ${path} (rien n'est appliqué au projet).`,
+  },
+  personasCli: {
+    intro: "Personas — simulateur de personas synthétiques : un filtre à mauvaises idées, pas un oracle.",
+    usage: "Usage : personas <commande> [options]\n  personas <commande> --help : options d'une commande.",
+    dashboard: "Tableau de bord",
+    commands: "Commandes",
+    uiDescription: "ouvre le tableau de bord dans le navigateur (port libre de 127.0.0.1, Ctrl+C pour arrêter)",
+    uiUsage: "Usage : personas ui [--port N] [--no-open]\n  --port N   port d'écoute sur 127.0.0.1 (défaut : un port libre)\n  --no-open  ne pas ouvrir le navigateur",
+    paths: (dataDir: string, config: string) => `Données : ${dataDir}\nProfils de moteur : ${config}`,
+    unknown: (cmd: string) => `Commande inconnue : ${cmd}. Voir personas --help.`,
+    unknownOption: (option: string, cmd: string) => `Option inconnue : ${option}. Options de la commande : ${cmd} --help.`,
+    badArguments: (detail: string, cmd: string) => `Arguments invalides (${detail}). Options de la commande : ${cmd} --help.`,
+    group: (group: string) => `Commandes « ${group} » :`,
+    uiReady: (url: string) => `Personas — tableau de bord : ${url}  (Ctrl+C pour arrêter)`,
+    uiData: (dataDir: string) => `Données : ${dataDir}`,
+    uiStopped: "Tableau de bord arrêté.",
+    uiBadPort: (v: string) => `Port invalide : ${v} (entier de 0 à 65535 ; 0 = port libre).`,
+    descriptions: {
+      "calibration:fit": "ajuste la conversion « oui au palier bas » → part payante sur des produits au résultat connu",
+      "db:migrate": "crée ou met à jour la base SQLite",
+      "engine:check": "vérifie les moteurs (une petite requête JSON)",
+      "engine:key": "range, teste ou retire la clé d'un profil dans le trousseau",
+      "engine:profile": "liste, ajoute, active ou retire un profil de moteur",
+      mcp: "serveur MCP local (stdio)",
+      "module:accept": "valide un brouillon de module",
+      "module:preview": "aperçu d'un module sur un tirage",
+      "module:propose": "propose un module avec l'assistant",
+      "module:revise": "révise un brouillon de module",
+      "personas:generate": "tire des personas (sans appel au LLM)",
+      "personas:migrate-modules": "met à jour les modules des personas en base",
+      "personas:narrate": "écrit les récits des personas",
+      "personas:show": "affiche une persona",
+      "personas:validate": "contrôle les marges d'un tirage",
+      "population:draw": "tire la cible d'un projet (sans appel au LLM)",
+      "project:create": "crée ou met à jour un projet depuis un fichier YAML ou JSON",
+      "project:list": "liste les projets",
+      "project:neutralize-pitch": "propose une version factuelle du pitch",
+      "project:suggest-protocol": "propose un protocole adapté au projet",
+      "study:compare": "compare des études",
+      "study:create": "crée une étude",
+      "study:drivers": "facteurs qui expliquent les réponses",
+      "study:list": "liste les études",
+      "study:recode": "reclasse les objections dans une autre taxonomie",
+      "study:recommend": "recommande l'étude suivante",
+      "study:run": "lance une étude",
+      "study:estimate": "estime le coût d'une étude avant lancement (appels, tokens, coût, durée)",
+      "pricing:reference": "mesure la table de référence des tokens (sans identifiant d'étude)",
+      "study:summary": "résumé d'une étude",
+      "target:preview": "aperçu de la cible d'un projet",
+      "target:suggest": "suggère une cible pour un projet",
+      "hub:fork": "forke un module du Hub dans son namespace et en écrit une copie éditable dans modules/",
+      "hub:login": "connexion au Hub (flux d'appareil) ; jeton personnel rangé dans le trousseau",
+      "hub:logout": "retire le jeton personnel du Hub du trousseau",
+      "hub:report": "signale une version de module à la modération du Hub",
+      "hub:review": "publie un avis (note de 1 à 5) sur une version de module",
+      "hub:star": "ajoute une étoile à un module du Hub",
+      "hub:telemetry": "active, coupe ou affiche la télémétrie opt-in (désactivée par défaut)",
+      "hosted:reactivate": "réactive une adresse e-mail supprimée du service hébergé (administration)",
+      "hosted:start": "démarre le service web hébergé (comptes Supabase, clé IA de chaque utilisateur, une base par compte)",
+      "hub:unstar": "retire son étoile d'un module du Hub",
+      "hub:whoami": "affiche le compte du Hub connecté",
+      "hub:lock": "épingle les versions exactes (sha256) du socle et des modules d'un projet (personas.lock)",
+      "hub:publish": "publie un module (namespace du compte, lint de sécurité) ou un pack sur le Hub ; --admin : modules officiels",
+      "hub:pull": "télécharge un module ou un pack du Hub dans le cache local (sha256 vérifié)",
+      "hub:search": "cherche un module en local (bibliothèque et catalogue du Hub), --remote sur le Hub",
+      "hub:sync": "met à jour le catalogue du Hub en cache (ETag ; hors ligne : dernier catalogue)",
+      "triage:validate": "évalue le pré-tri de pertinence",
+    } as Record<string, string>,
+  },
+  hostedReactivate: {
+    usage:
+      "Usage : personas hosted reactivate <e-mail | identifiant Supabase> [--data-root <dossier>]\n" +
+      "Retire un compte supprimé de la liste des comptes refusés du service hébergé (<HOSTED_DATA_ROOT>/_system/deleted-accounts.json).\n" +
+      "Dossier des comptes : --data-root, sinon HOSTED_DATA_ROOT. Le serveur relit la liste sans redémarrage.",
+    missing: "Adresse e-mail (ou identifiant Supabase) requise.",
+    noDataRoot: "Dossier des comptes inconnu : --data-root ou HOSTED_DATA_ROOT requis.",
+    done: (n: number) => `${n} entrée(s) retirée(s) : cette adresse peut de nouveau se connecter (compte vide).`,
+    none: "Aucune entrée pour cette adresse : rien à réactiver.",
   },
   triageValidate: {
     usage: "Usage : npm run triage:validate -- --studies a,b [--portrait] [--limit N] [--out fichier.json]",

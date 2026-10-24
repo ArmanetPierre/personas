@@ -5,8 +5,9 @@ import { loadPack } from "../personas/pack";
 import { resolveModules } from "../modules/registry";
 import { drawPersonas } from "../personas/sampler";
 import { allPersonas } from "../personas/store";
-import { computeMargins, formatPlausibility, formatReports, plausibilityChecks } from "../personas/validate";
+import { computeMargins, plausibilityChecks } from "../personas/validate";
 import { t } from "./i18n";
+import { formatValidationPlausibility, formatValidationReports } from "./validate-report";
 
 /** Compare les marges de la base aux tables cibles du pack ; code de sortie 1 au-delà des seuils. */
 
@@ -44,9 +45,9 @@ try {
   }
   const reports = computeMargins(pack, rows);
   console.log(t.personasValidate.header(pack.manifest.version, pack.modules.ordered.map((m) => m.def.id).join(", "), rows.length, !!values.virtual));
-  console.log(formatReports(reports));
+  console.log(formatValidationReports(reports, t.personasValidate.report));
   const plaus = plausibilityChecks(pack, rows);
-  if (plaus.length) console.log(formatPlausibility(plaus));
+  if (plaus.length) console.log(formatValidationPlausibility(plaus, t.personasValidate.report));
   process.exitCode = reports.every((r) => r.pass) && plaus.every((c) => c.pass) ? 0 : 1;
 } finally {
   sqlite.close();

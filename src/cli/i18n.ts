@@ -1,6 +1,7 @@
 import { readFileSync } from "node:fs";
 import { parseEnv } from "node:util";
 import { messageIn } from "../web/i18n";
+import { cliMessageEn } from "./error-patterns";
 import { en } from "./messages.en";
 import { fr, type CliMessages } from "./messages.fr";
 
@@ -57,5 +58,5 @@ export const numberLocale = lang === "fr" ? "fr-FR" : "en-GB";
  */
 export function errorText(err: unknown, l: CliLang = lang): string {
   const msg = err instanceof Error ? err.message : String(err);
-  return l === "en" ? messageIn("en", msg) : msg;
+  return l === "en" ? messageIn("en", cliMessageEn(msg)) : msg;
 }

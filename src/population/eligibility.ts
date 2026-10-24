@@ -28,7 +28,7 @@ interface Token {
 
 function tokenize(src: string): Token[] {
   const out: Token[] = [];
-  const re = /\s*(?:(\d+(?:\.\d+)?)|("[^"]*"|'[^']*')|(==|!=|<=|>=|<|>|=)|([()[\],])|([A-Za-z_][A-Za-z0-9_.-]*))/y;
+  const re = /\s*(?:(\d+(?:\.\d+)?)|("[^"]*"|'[^']*')|(==|!=|<=|>=|<|>|=)|([()[\],])|([A-Za-z_][A-Za-z0-9_.\/-]*))/y; // « / » : module tiers (alice/sport.attr)
   let i = 0;
   while (i < src.length) {
     if (/^\s*$/.test(src.slice(i))) break;

@@ -3,9 +3,11 @@ import type { DriversResult } from "../../../src/studies/drivers";
 import { api, useApi, type Meta, type SummaryResponse } from "../api";
 import { groupColor, HBars } from "../charts";
 import { JobPanel, useJob, type JobState } from "../jobs";
-import { Cols, num, pct, Seg } from "../ui";
+import { Cols, num, pct, SegmentedControl } from "../ui";
 import { tr, useDict } from "../i18n";
 import { studyDict } from "../i18n/study";
+import { hostedDict } from "../i18n/hosted";
+import { FEATURES, usePlatform } from "../platform";
 
 /** Sections du lot P1 sur la page Étude : facteurs d'engagement, objections recodées. */
 
@@ -25,7 +27,7 @@ export function DriversSection({ d, levelLabels }: { d: DriversResult; levelLabe
     <section className="section" id="facteurs">
       <div className="section-head">
         <h2>{t.title}</h2>
-        <Seg
+        <SegmentedControl
           label={t.level}
           value={level}
           onChange={(l) => {
@@ -120,9 +122,13 @@ export function useRecoded(studyId: string) {
 /** Bascule « catégories d'origine / recodées » et bouton de recodage, en tête de la section Objections. */
 export function RecodeControls({ studyId, rec, view, setView }: { studyId: string; rec: ReturnType<typeof useRecoded>; view: string; setView: (v: string) => void }) {
   const t = useDict(studyDict).recode;
+  const th = useDict(hostedDict).study;
+  const { hosted, has } = usePlatform();
   const [err, setErr] = useState<string | null>(null);
   const d = rec.data;
-  if (!d || (!d.recodings.length && !d.available)) return null;
+  // Service hébergé sans recodage : seules les vues déjà recodées restent lisibles
+  const canRecode = Boolean(d?.available) && has(FEATURES.recode);
+  if (!d || (!d.recodings.length && !canRecode)) return null;
   const launch = async () => {
     setErr(null);
     try {
@@ -135,24 +141,24 @@ export function RecodeControls({ studyId, rec, view, setView }: { studyId: strin
     <div className="stack" style={{ marginBottom: 14 }}>
       <div className="row">
         {d.recodings.length > 0 && (
-          <Seg
+          <SegmentedControl
             label={t.categories}
             value={view}
             onChange={setView}
             options={[{ id: "origin", label: t.origin }, ...d.recodings.map((r) => ({ id: r.key, label: t.recoded(r.key) }))]}
           />
         )}
-        {d.available && (
+        {canRecode && d.available && (
           <button className="btn ghost small" type="button" onClick={launch} disabled={Boolean(rec.job?.alive)}>
             {t.button}
           </button>
         )}
-        {d.available && (
+        {canRecode && d.available && (
           <span className="small muted">{t.available(d.available.count, d.available.source === "protocol")}</span>
         )}
       </div>
       {err && <div className="error-box">{err}</div>}
-      <JobPanel job={rec.job} label={t.jobLabel} hint={t.jobHint} />
+      <JobPanel job={rec.job} label={hosted ? th.recodeJob : t.jobLabel} hint={t.jobHint} />
     </div>
   );
 }

@@ -1,9 +1,12 @@
 import { useState } from "react";
 import { Link, useLocation, useSearch } from "wouter";
 import { api, useApi, useMeta, type ModuleSummary, type ModulesResponse, type ProjectListItem } from "../api";
-import { Cols, dateFr, ErrorBox, Loading } from "../ui";
+import { Cols, dateFr, EmptyState, ErrorBox, Loading, ModuleIcon } from "../ui";
 import { tr, useDict } from "../i18n";
 import { modulesDict } from "../i18n/modules";
+import { hostedDict } from "../i18n/hosted";
+import { FEATURES, usePlatform } from "../platform";
+import { HubCatalogSection } from "./ModulesHub";
 
 /** Libellé du statut d'un brouillon (au rendu, dans la langue courante). */
 export const draftStatusLabel = (st: string): string | undefined => tr(modulesDict).draftStatus[st];
@@ -21,8 +24,22 @@ export function ModuleStatus({ status }: { status: string }) {
 export const moduleHref = (m: Pick<ModuleSummary, "id" | "status" | "draftId">) =>
   m.status === "validated" || !m.draftId ? `/modules/${encodeURIComponent(m.id)}` : `/brouillons/${encodeURIComponent(m.draftId)}`;
 
+/** Service hébergé : l'assistant de modules figure-t-il dans les fonctions disponibles ? (toujours vrai en local) */
+export function useAssistantFeature(): boolean {
+  return usePlatform().has(FEATURES.moduleAssistant);
+}
+
 export function AssistantBanner({ reason }: { reason?: string | undefined }) {
   const t = useDict(modulesDict);
+  const th = useDict(hostedDict).unavailable;
+  const feature = useAssistantFeature();
+  // Hébergé, sans l'assistant : la raison tient en une ligne (pas de mention de modules/ ni de la CLI)
+  if (!feature)
+    return (
+      <p className="note-box small" role="note" style={{ marginTop: 16, maxWidth: "80ch" }}>
+        {th.assistant}
+      </p>
+    );
   return (
     <p className="note-box small" style={{ marginTop: 16, maxWidth: "80ch" }}>
       {reason ?? t.assistant.unavailable}
@@ -35,14 +52,16 @@ export function ModulesPage() {
   const t = useDict(modulesDict);
   const { data, error } = useApi<ModulesResponse>("/modules");
   const [, navigate] = useLocation();
+  const feature = useAssistantFeature();
+  const { has } = usePlatform();
   const list = data?.modules ?? [];
   const drafts = list.filter((m) => m.status !== "validated");
   const validated = list.filter((m) => m.status === "validated");
 
   const table = (rows: ModuleSummary[]) => (
     <div className="table-wrap">
-      <table className="table fixed">
-        <Cols widths={[null, 150, 70, 130, 84, 190, 116]} />
+      <table className="table fixed modules-table">
+        <Cols widths={[null, 130, 70, 130, 84, 170, 116]} />
         <thead>
           <tr>
             <th>{t.list.cols.module}</th>
@@ -59,13 +78,13 @@ export function ModulesPage() {
             <tr key={`${m.id}-${m.draftId ?? ""}`} className="link" onClick={() => navigate(moduleHref(m))}>
               <td>
                 <Link href={moduleHref(m)} onClick={(e) => e.stopPropagation()}>
-                  <b style={{ fontFamily: "var(--font-display)", fontSize: 16, fontWeight: 600 }}>{m.version ? m.label : m.id}</b>
+                  <b className="cell-name">{m.version ? m.label : m.id}</b>
                 </Link>
                 <div className="small muted num">
                   {m.version ? `${m.id} v${m.version}` : t.list.noYaml}
                   {m.draftId && m.draftId !== m.id ? t.list.draftSuffix(m.draftId) : ""}
                 </div>
-                {!m.version && <div className="small ink2" style={{ marginTop: 2, display: "-webkit-box", WebkitLineClamp: 2, WebkitBoxOrient: "vertical", overflow: "hidden" }}>{m.label}</div>}
+                {!m.version && <div className="small ink2 clamp-2" style={{ marginTop: 2 }}>{m.label}</div>}
               </td>
               <td>
                 <ModuleStatus status={m.status} />
@@ -88,30 +107,51 @@ export function ModulesPage() {
       <p className="lede" style={{ marginTop: 10 }}>
         {t.list.lede}
       </p>
-      <div className="row" style={{ marginTop: 22 }}>
-        <Link className="btn" href="/modules/nouveau">
-          {t.list.newModule}
-        </Link>
-      </div>
-      {data && !data.assistant.available && <AssistantBanner reason={data.assistant.reason} />}
+      {feature && (
+        <div className="row" style={{ marginTop: 22 }}>
+          <Link className="btn" href="/modules/nouveau">
+            {t.list.newModule}
+          </Link>
+        </div>
+      )}
+      {(!feature || (data && !data.assistant.available)) && <AssistantBanner reason={data?.assistant.reason} />}
       <ErrorBox error={error} />
       {!data && !error && <Loading />}
       {data && (
         <>
+          {/* Hébergé sans assistant : pas de section Brouillons vide (on ne peut pas en créer) */}
+          {(feature || drafts.length > 0) && (
           <div className="section" style={{ marginTop: 36 }}>
             <div className="section-head">
               <h2>{t.list.draftsTitle}</h2>
               <p className="small ink2">{t.list.draftsHint}</p>
             </div>
-            {drafts.length ? table(drafts) : <div className="empty">{t.list.draftsEmpty}</div>}
+            {drafts.length ? (
+              table(drafts)
+            ) : (
+              <EmptyState
+                icon={<ModuleIcon />}
+                title={t.list.draftsEmptyTitle}
+                description={t.list.draftsEmpty}
+                action={
+                  feature ? (
+                    <Link className="btn ghost" href="/modules/nouveau">
+                      {t.list.newModule}
+                    </Link>
+                  ) : undefined
+                }
+              />
+            )}
           </div>
-          <div className="section">
+          )}
+          <div className="section" style={feature || drafts.length > 0 ? undefined : { marginTop: 36 }}>
             <div className="section-head">
               <h2>{t.list.libraryTitle}</h2>
               <p className="small ink2">{t.list.libraryHint}</p>
             </div>
-            {validated.length ? table(validated) : <div className="empty">{t.list.libraryEmpty}</div>}
+            {validated.length ? table(validated) : <EmptyState icon={<ModuleIcon />} title={t.list.libraryEmptyTitle} description={t.list.libraryEmpty} />}
           </div>
+          {has(FEATURES.hubCatalog) && <HubCatalogSection />}
         </>
       )}
     </>
@@ -140,6 +180,7 @@ export function NewModulePage() {
   const search = useSearch();
   const projects = useApi<ProjectListItem[]>("/projects");
   const status = useApi<ModulesResponse>("/modules");
+  const feature = useAssistantFeature();
   const [, navigate] = useLocation();
   const [f, setF] = useState({ description: "", projectId: new URLSearchParams(search).get("project") ?? "", socle: "fr" });
   const [err, setErr] = useState<string | null>(null);
@@ -171,7 +212,7 @@ export function NewModulePage() {
       <p className="lede" style={{ marginTop: 10 }}>
         {t.create.lede}
       </p>
-      {status.data && !status.data.assistant.available && <AssistantBanner reason={status.data.assistant.reason} />}
+      {(!feature || (status.data && !status.data.assistant.available)) && <AssistantBanner reason={status.data?.assistant.reason} />}
       <form className="panel stack" style={{ marginTop: 22, gap: 18, maxWidth: 820 }} onSubmit={submit}>
         <label className="field">
           <span>{t.create.domain}</span>
@@ -218,7 +259,7 @@ export function NewModulePage() {
         )}
         {err && <div className="error-box">{err}</div>}
         <div className="row">
-          <button className="btn" type="submit" disabled={busy || f.description.trim().length < 10}>
+          <button className="btn" type="submit" disabled={busy || !feature || f.description.trim().length < 10}>
             {busy ? t.create.sending : t.create.submit}
           </button>
           <span className="small ink2">{t.create.duration}</span>

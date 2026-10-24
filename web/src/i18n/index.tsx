@@ -112,19 +112,3 @@ export function useDict<T>(d: Dict<T>): T {
 export function tr<T>(d: Dict<T>): T {
   return d[current];
 }
-
-// ─── Sélecteur ────────────────────────────────────────────────────────────────
-
-export function LocaleSwitch() {
-  const { locale, setLocale } = useLocale();
-  const label = locale === "fr" ? "Langue" : "Language";
-  return (
-    <div className="theme-switch lang-switch" role="group" aria-label={label}>
-      {LOCALES.map((l) => (
-        <button key={l} type="button" lang={l} aria-pressed={locale === l} onClick={() => setLocale(l)} title={l === "fr" ? "Français" : "English"}>
-          {l.toUpperCase()}
-        </button>
-      ))}
-    </div>
-  );
-}

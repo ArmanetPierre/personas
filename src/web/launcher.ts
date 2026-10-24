@@ -1,10 +1,16 @@
 import { spawn, type SpawnOptions } from "node:child_process";
 import { closeSync, existsSync, mkdirSync, openSync, readdirSync, readFileSync, statSync, writeFileSync } from "node:fs";
 import { join, resolve } from "node:path";
+import { IS_COMPILED } from "../config";
 
 /**
  * Lancement d'une étude en tâche de fond : `study:run` dans un processus enfant détaché,
  * journal dans `data/logs/`. L'avancement se lit en base (nombre de réponses), pas dans le processus.
+ *
+ * Deux façons de lancer un fichier `src/…/x.ts` :
+ * - dans le dépôt (sources TypeScript) : le Node courant avec tsx (`node_modules/tsx/dist/cli.mjs src/…/x.ts`) ;
+ * - depuis le paquet compilé (`npm i -g`) : le Node courant (process.execPath) sur l'entrée compilée
+ *   `dist/…/x.js`, sans tsx.
  */
 
 /** Variables jamais transmises à l'enfant : aucune clé ni configuration d'API Anthropic. */
@@ -25,6 +31,9 @@ export interface RunInfo {
   logPath: string;
   startedAt: string;
   command: string[];
+  /** Service hébergé : tâche en file d'attente (pas encore démarrée), et son rang (1 = la prochaine). */
+  queued?: boolean;
+  position?: number;
 }
 
 export type SpawnFn = (cmd: string, args: string[], opts: SpawnOptions) => { pid?: number | undefined; unref(): void };
@@ -36,6 +45,20 @@ export interface LauncherOptions {
   logDir: string;
   spawnFn?: SpawnFn;
   env?: NodeJS.ProcessEnv;
+  /** Lancer les entrées compilées (dist/…/x.js) au lieu des sources par tsx. Défaut : selon le code courant. */
+  compiled?: boolean;
+  /** Dossier courant de l'enfant (défaut : `root`). Le paquet installé y met le dossier de données. */
+  cwd?: string;
+}
+
+/** Entrée compilée d'un fichier source : `src/cli/x.ts` → `dist/cli/x.js`. */
+export function compiledEntry(file: string): string {
+  return file.replace(/^src\//, "dist/").replace(/\.tsx?$/, ".js");
+}
+
+/** Arguments du Node courant pour lancer `file` (chemin relatif à la racine, `src/…/x.ts`). */
+export function nodeArgs(root: string, file: string, compiled: boolean = IS_COMPILED): string[] {
+  return compiled ? [resolve(root, compiledEntry(file))] : [resolve(root, "node_modules/tsx/dist/cli.mjs"), file];
 }
 
 export class Launcher {
@@ -68,7 +91,7 @@ export class Launcher {
    * dans `package.json` (« tsx src/cli/xxx.ts ») : on évite npm, qui ajouterait un processus et ses variables.
    */
   startScript(key: string, script: string, args: string[]): RunInfo {
-    const file = scriptFile(this.opts.root, script);
+    const file = scriptFile(this.opts.root, script, this.opts.compiled ?? IS_COMPILED);
     if (!file) throw new ScriptMissingError(script);
     return this.startFile(key, file, args);
   }
@@ -81,13 +104,12 @@ export class Launcher {
     mkdirSync(this.opts.logDir, { recursive: true });
     const stamp = new Date().toISOString().replace(/[:.]/g, "-");
     const logPath = join(this.opts.logDir, `${key}-${stamp}.log`);
-    const tsxCli = resolve(this.opts.root, "node_modules/tsx/dist/cli.mjs");
-    const argv = [tsxCli, file, ...args];
+    const argv = [...nodeArgs(this.opts.root, file, this.opts.compiled ?? IS_COMPILED), ...args];
     const fd = openSync(logPath, "a");
     let pid: number | undefined;
     try {
       const child = (this.opts.spawnFn ?? spawn)(process.execPath, argv, {
-        cwd: this.opts.root,
+        cwd: this.opts.cwd ?? this.opts.root,
         env: childEnv(this.opts.env ?? process.env),
         detached: true,
         stdio: ["ignore", fd, fd],
@@ -129,12 +151,15 @@ export class ScriptMissingError extends Error {
   }
 }
 
-/** Fichier TypeScript lancé par un script npm « tsx src/cli/xxx.ts », ou null. */
-export function scriptFile(root: string, script: string): string | null {
+/**
+ * Fichier TypeScript lancé par un script npm « tsx src/cli/xxx.ts », ou null. Compilé : le fichier source n'est
+ * pas livré, on vérifie l'entrée `dist/cli/xxx.js`.
+ */
+export function scriptFile(root: string, script: string, compiled: boolean = IS_COMPILED): string | null {
   try {
     const pkg = JSON.parse(readFileSync(join(root, "package.json"), "utf8")) as { scripts?: Record<string, string> };
     const m = pkg.scripts?.[script]?.match(/^tsx\s+(\S+\.ts)\b/);
-    return m && existsSync(join(root, m[1]!)) ? m[1]! : null;
+    return m && existsSync(join(root, compiled ? compiledEntry(m[1]!) : m[1]!)) ? m[1]! : null;
   } catch {
     return null;
   }

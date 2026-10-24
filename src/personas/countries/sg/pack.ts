@@ -1,4 +1,5 @@
 import { existsSync, readFileSync } from "node:fs";
+import { packDir, packSocle } from "../../pack-source";
 import { resolve } from "node:path";
 import { z } from "zod";
 import { resolveModules, type ResolvedModules } from "../../../modules/registry";
@@ -289,10 +290,10 @@ export const SG_FILES: Record<Exclude<keyof SgPackData, "manifest">, string> = {
  */
 function readSgRaw(dir: string, depth = 0): { raw: Record<string, unknown>; socle: string } {
   if (depth > 3) throw new Error(`Chaîne d'héritage trop longue pour le pack ${dir}`);
-  const base = resolve(PACKS_DIR, dir);
+  const base = packDir(dir);
   const read = (file: string) => JSON.parse(readFileSync(resolve(base, file), "utf8")) as unknown;
   const manifest = read("pack.json") as { extends?: string };
-  const parent = manifest.extends ? readSgRaw(manifest.extends, depth + 1) : { raw: {}, socle: dir };
+  const parent = manifest.extends ? readSgRaw(manifest.extends, depth + 1) : { raw: {}, socle: packSocle(dir) };
   const raw: Record<string, unknown> = { ...parent.raw, manifest };
   for (const [k, file] of Object.entries(SG_FILES)) if (existsSync(resolve(base, file))) raw[k] = read(file);
   return { raw, socle: parent.socle };

@@ -2,6 +2,7 @@ import { parseArgs } from "node:util";
 import { loadConfig, loadDotEnv } from "../config";
 import { openDb, runMigrations } from "../db/client";
 import { BACKEND_NAMES, getEngine, type BackendName } from "../engine";
+import { chooseProfile, guardedEngine } from "../engine/select";
 import { formatFrequencyReport, frequencyReport, narratePersonas } from "../personas/narrate";
 import { loadPack } from "../personas/pack";
 import { allPersonas, personasToNarrate, saveNarrative } from "../personas/store";
@@ -16,7 +17,8 @@ const { values } = parseArgs({
   options: {
     limit: { type: "string" },
     "batch-size": { type: "string", default: "10" },
-    backend: { type: "string", default: "claude-cli" },
+    backend: { type: "string" },
+    profile: { type: "string" },
     pack: { type: "string", default: "fr" },
     regenerate: { type: "boolean", default: false },
     before: { type: "string" },
@@ -27,7 +29,7 @@ if (values.help) {
   console.log(t.personasNarrate.usage);
   process.exit(0);
 }
-if (!(BACKEND_NAMES as readonly string[]).includes(values.backend) || values.backend === "anthropic-api") {
+if (values.backend !== undefined && (!(BACKEND_NAMES as readonly string[]).includes(values.backend) || values.backend === "anthropic-api")) {
   console.error(t.personasNarrate.backendRefused(values.backend));
   process.exit(2);
 }
@@ -58,7 +60,8 @@ try {
     console.log(t.personasNarrate.allDone);
     process.exit(0);
   }
-  const engine = getEngine(values.backend as BackendName, config);
+  // --backend historique (claude-cli, ollama), sinon le profil (--profile, PERSONAS_PROFILE, actif, puis claude-cli)
+  const engine = values.backend ? getEngine(values.backend as BackendName, config) : guardedEngine(db, chooseProfile(config, { profile: values.profile }), config);
   const batchSize = Number(values["batch-size"]);
   console.log(t.personasNarrate.start(todo.length, batchSize, engine.backend.name, engine.backend.model, engine.backend.concurrency));
   const written: string[] = [];

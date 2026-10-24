@@ -1,7 +1,7 @@
 import { createHash } from "node:crypto";
 import { appendFileSync, existsSync, mkdirSync, readFileSync } from "node:fs";
 import { dirname, resolve } from "node:path";
-import { OLLAMA_MAX_CONCURRENCY } from "../config";
+import { defaultDataDir, OLLAMA_MAX_CONCURRENCY, runMode } from "../config";
 import { Rng } from "../personas/rng";
 import type { LogprobClient } from "./client";
 import {
@@ -35,7 +35,10 @@ export const DEFAULT_ALERT_SHARE = 0.1;
 export const LOW_MASS = 0.5;
 
 export function defaultCachePath(): string {
-  return process.env.PERSONAS_TRIAGE_CACHE ?? resolve(import.meta.dirname, "../../data/triage/relevance.jsonl");
+  if (process.env.PERSONAS_TRIAGE_CACHE) return process.env.PERSONAS_TRIAGE_CACHE;
+  // Service hébergé : jamais le cache du dépôt (partagé) ; celui du compte
+  if (runMode() === "hosted") return resolve(defaultDataDir(), "triage", "relevance.jsonl");
+  return resolve(import.meta.dirname, "../../data/triage/relevance.jsonl");
 }
 
 export interface TriageItem {

@@ -2,9 +2,9 @@ import { useCallback, useEffect, useRef, useState, type ReactNode } from "react"
 import { wordDiff } from "./ProjectPitch";
 import { ConfidenceDetail, ConfidencePill, PaymentMeasureView } from "../payment";
 import { Link, useLocation, useSearch } from "wouter";
-import { api, ApiError, useApi, useMeta, type Analysis, type Meta, type ProjectDetail, type ResponseRowItem, type StudyState, type SummaryResponse } from "../api";
+import { api, ApiError, useApi, useMetaState, type Analysis, type Meta, type ProjectDetail, type ResponseRowItem, type StudyState, type SummaryResponse } from "../api";
 import { JobPanel, useJob, type JobState } from "../jobs";
-import { Cols, dateFr, ErrorBox, eur, int, Loading, money, num, pct, Seg, Status } from "../ui";
+import { ChartIcon, Cols, dateFr, EmptyState, ErrorBox, eur, int, Loading, money, num, pct, SegmentedControl, Status } from "../ui";
 import { tr, useContentLocale, useDict } from "../i18n";
 import { studyHubDict } from "../i18n/studyHub";
 import {
@@ -152,7 +152,7 @@ interface Ctx {
 
 function StudyFrame({ id, tab, needRows, children }: { id: string; tab: Tab; needRows?: boolean; children: (c: Ctx) => ReactNode }) {
   const t = useDict(studyHubDict);
-  const baseMeta = useMeta();
+  const { meta: baseMeta, error: metaError } = useMetaState();
   const search = useSearch();
   const st = useApi<StudyData>(`/studies/${id}`);
   const [state, setState] = useState<StudyState | null>(null);
@@ -197,6 +197,7 @@ function StudyFrame({ id, tab, needRows, children }: { id: string; tab: Tab; nee
     if (s && !hasGroups) setGroup("all");
   }, [s, hasGroups]);
   if (st.error) return <ErrorBox error={st.error} />;
+  if (metaError && !meta) return <ErrorBox error={metaError} />;
   if (!st.data || !state || !meta) return <Loading />;
   const project = st.data.project;
   const current = !s ? null : group === "all" || !hasGroups ? s.overall : groups.find((x) => x.group === group)?.analysis ?? s.overall;
@@ -225,7 +226,7 @@ function StudyFrame({ id, tab, needRows, children }: { id: string; tab: Tab; nee
       {hasGroups && GROUP_TABS.includes(tab) && (
         <div className="row group-switch">
           <span className="small ink2">{t.frame.groupShownColon}</span>
-          <Seg
+          <SegmentedControl
             label={t.frame.groupShown}
             value={group}
             onChange={setGroup}
@@ -234,9 +235,7 @@ function StudyFrame({ id, tab, needRows, children }: { id: string; tab: Tab; nee
         </div>
       )}
       {!s && state.responses === 0 && tab !== "recommandations" && tab !== "technique" ? (
-        <div className="empty" style={{ marginTop: 24 }}>
-          {t.frame.empty}
-        </div>
+        <EmptyState style={{ marginTop: 24 }} icon={<ChartIcon />} title={t.frame.emptyTitle} description={t.frame.empty} />
       ) : (
         children(ctx)
       )}
@@ -378,7 +377,7 @@ function useRecommendations(id: string) {
       setErr((e as Error).message);
     }
   };
-  return { data: data.data, job, generate, err, reload };
+  return { data: data.data, error: data.error, job, generate, err, reload };
 }
 
 const KIND_ICON: Record<string, string> = { prix: "€", cible: "◎", message: "✎", offre: "◆", questionnaire: "?", autre: "•" };
@@ -739,6 +738,8 @@ export function StudyTechPage({ id }: { id: string }) {
                 <dt>{tt.engine}</dt>
                 <dd>
                   {st.backend}, {tt.model} {st.model}
+                  {st.engine?.reportedModel && st.engine.reportedModel !== st.model && <span className="muted"> {tt.reportedModel(st.engine.reportedModel)}</span>}
+                  {st.engine && !["claude-cli", "ollama"].includes(st.engine.profile) && <span className="muted">, {tt.profileLabel(st.engine.profile)}</span>}
                 </dd>
                 <dt>{tt.questionnaire}</dt>
                 <dd>
@@ -1026,6 +1027,7 @@ export function StudyRecommendationsPage({ id }: { id: string }) {
     <StudyFrame id={id} tab="recommandations">
       {(c) => {
         const d = r.data;
+        if (!d && r.error) return <ErrorBox error={r.error} />;
         if (!d) return <Loading />;
         const rec = d.recommendations;
         const shownPrice = shownPriceOf(c);

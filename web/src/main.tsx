@@ -1,10 +1,11 @@
 import { StrictMode } from "react";
 import { createRoot } from "react-dom/client";
-import { Route, Switch } from "wouter";
+import { Redirect, Route, Switch } from "wouter";
 import "./styles.css";
 import { ComparePage } from "./pages/Compare";
 import { ModulePage } from "./pages/Module";
 import { ModulesPage, NewModulePage } from "./pages/Modules";
+import { OnboardingGate, OnboardingPage } from "./pages/Onboarding";
 import { PersonaPage } from "./pages/Persona";
 import { PersonasPage } from "./pages/Personas";
 import { ProtocolReviewPage } from "./pages/ProjectP1";
@@ -13,6 +14,10 @@ import { ProjectOfferPage, ProjectOverviewPage, ProjectProtocolPage, ProjectStud
 import { ProjectsPage } from "./pages/Projects";
 import { ResponsePage } from "./pages/Response";
 import { StudyBrakesPage, StudyOverviewPage, StudyPricePage, StudyReactionsPage, StudyRecommendationsPage, StudySegmentsPage, StudyTechPage, StudyVerbatimsPage } from "./pages/StudyHub";
+import { AccountPage, EngineSettingsPage } from "./pages/Account";
+import { LegalPage } from "./pages/Legal";
+import { SignInPage } from "./pages/SignIn";
+import { PlatformProvider, SessionProvider, usePlatform } from "./platform";
 import { Layout } from "./ui";
 import { LocaleKeyed, LocaleProvider, useDict } from "./i18n";
 import { commonDict } from "./i18n/common";
@@ -30,10 +35,33 @@ function NotFound() {
 function App() {
   return (
     <LocaleProvider>
+      <PlatformProvider>
+        <SessionProvider>
+          <Routes />
+        </SessionProvider>
+      </PlatformProvider>
+    </LocaleProvider>
+  );
+}
+
+/**
+ * Routes. Service hébergé : connexion, compte, clé IA et textes légaux en plus ; pas d'écran de configuration
+ * locale (/configurer mène à « Ma clé IA »). En local : inchangé.
+ */
+function Routes() {
+  const { hosted } = usePlatform();
+  return (
     <Layout>
+      {!hosted && <OnboardingGate />}
       <LocaleKeyed>
       <Switch>
         <Route path="/" component={ProjectsPage} />
+        {hosted && <Route path="/connexion" component={SignInPage} />}
+        {hosted && <Route path="/compte/moteur" component={EngineSettingsPage} />}
+        {hosted && <Route path="/compte" component={AccountPage} />}
+        {hosted && <Route path="/confidentialite">{() => <LegalPage doc="privacy" />}</Route>}
+        {hosted && <Route path="/conditions">{() => <LegalPage doc="terms" />}</Route>}
+        {hosted ? <Route path="/configurer">{() => <Redirect to="/compte/moteur" replace />}</Route> : <Route path="/configurer" component={OnboardingPage} />}
         <Route path="/projets/:id/protocole/revue">{(p) => <ProtocolReviewPage id={p.id} />}</Route>
         <Route path="/projets/:id/protocole">{(p) => <ProjectProtocolPage key={p.id} id={p.id} />}</Route>
         <Route path="/projets/:id/cible">{(p) => <ProjectTargetPage key={p.id} id={p.id} />}</Route>
@@ -61,7 +89,6 @@ function App() {
       </Switch>
       </LocaleKeyed>
     </Layout>
-    </LocaleProvider>
   );
 }
 

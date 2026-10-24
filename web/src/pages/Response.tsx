@@ -1,5 +1,5 @@
 import { Link } from "wouter";
-import { useApi, useMeta, type ResponseDetail } from "../api";
+import { useApi, useMetaState, type ResponseDetail } from "../api";
 import { dateFr, ErrorBox, eur, int, Loading, money, num } from "../ui";
 import { useContentLocale, useDict } from "../i18n";
 import { studyDict } from "../i18n/study";
@@ -29,11 +29,12 @@ const tierPrice = (k: string) => Number(k.replace(/^at_/, "").replace(/_eur$/, "
 
 export function ResponsePage({ studyId, personaId }: { studyId: string; personaId: string }) {
   const t = useDict(studyDict).response;
-  const baseMeta = useMeta();
+  const { meta: baseMeta, error: metaError } = useMetaState();
   const { data, error } = useApi<ResponseDetail>(`/studies/${studyId}/responses/${encodeURIComponent(personaId)}`);
   useContentLocale(data?.project?.locale);
   const meta = withBehaviorLabels(baseMeta, data?.project?.behaviorLabels);
   if (error) return <ErrorBox error={error} />;
+  if (metaError && !meta) return <ErrorBox error={metaError} />;
   if (!data || !meta) return <Loading />;
   const r = data.response;
   const payload = r.payload as { answer?: Answer; encounter?: string; initialAnomalies?: string[]; originalAnswer?: Answer; priceShown?: number; tiers?: number[] };

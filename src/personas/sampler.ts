@@ -23,6 +23,7 @@ import type { ResolvedModules } from "../modules/registry";
 import { clamp, normalCdf, Rng, sigmoid } from "./rng";
 import { asFr } from "./pack";
 import { drawSgSocle } from "./countries/sg/sampler";
+import { drawUsSocle } from "./countries/us/sampler";
 
 /**
  * Tirage statistique d'une persona. Chaîne conditionnelle :
@@ -225,6 +226,7 @@ export function drawPersona(pack: Pack, seed: number, index: number, opts: DrawO
 
 /** Socle seul d'un pays (contrat de pack pays : chaque générateur fournit sa chaîne de tirage). */
 function drawCountrySocle(pack: Pack, seed: number, index: number): DrawnPersona {
+  if (pack.kind === "us") return drawUsSocle(pack, seed, index);
   return pack.kind === "sg" ? drawSgSocle(pack, seed, index) : drawSocle(pack, seed, index, { ordered: [], quasiDims: new Map() });
 }
 

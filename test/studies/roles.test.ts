@@ -149,7 +149,7 @@ describe("étude multi-rôles (backend simulé)", () => {
     runMigrations(db);
     const project = createProject(db, readProjectFile("examples/team-schedule-no-module.yaml"));
     const { study } = createStudy(db, pack, { projectId: project.id, populations: rolePopulations(project, { manager: 6, member: 9 }), seed: 3, backend: "ollama", model: "fake" });
-    expect(study.protocolVersion).toBe("3");
+    expect(study.protocolVersion).toBe("4");
     expect(study.populations.map((p) => [p.group, p.n])).toEqual([["manager", 6], ["member", 9]]);
     const groups = Object.values(study.personaGroups);
     expect(groups.filter((g) => g === "manager")).toHaveLength(6);
@@ -254,7 +254,7 @@ describe("payer_for_child (Petit Lecteur)", () => {
     // Le rôle « both » garde le prompt standard
     const adultReq = fb.requests.find((q) => !q.system.includes("## Ton rôle"))!;
     const view = roleProject(getProject(db, project.id)!, projectRoles(getProject(db, project.id)!)[1]!);
-    expect(adultReq.system).toBe(buildSystemPrompt(view, studyTiers(view, "3"), "3"));
+    expect(adultReq.system).toBe(buildSystemPrompt(view, studyTiers(view, "4"), "4"));
     const personas = new Map(personasByIds(db, rows.map((x) => x.personaId)).map((p) => [p.id, p]));
     const s = summarize(pack, findStudy(db, study.id), getProject(db, project.id)!, rows, personas);
     expect(s.groups.map((g) => g.analysis.payment !== undefined)).toEqual([true, true]);
