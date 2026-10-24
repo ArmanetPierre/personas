@@ -310,7 +310,9 @@ export function getModule(idOrDraftId: string): {
     const meta = readMeta(idOrDraftId);
     const yaml = readDraftYaml(idOrDraftId) ?? "";
     const v = yaml ? validateModuleYaml(yaml, { socle: meta.socle }) : { ok: false, errors: [{ path: "", message: "Pas encore de YAML" }], warnings: [] };
-    return { yaml, ...(v.module && { parsed: v.module.def }), status: `draft:${meta.status}`, meta, validationErrors: v.errors };
+    // Brouillon à valider : un segment déjà pris bloque l'acceptation (route web), signalé dès l'affichage
+    const conflicts = v.module && meta.status !== "accepted" ? segmentConflicts(v.module.def) : [];
+    return { yaml, ...(v.module && { parsed: v.module.def }), status: `draft:${meta.status}`, meta, validationErrors: [...v.errors, ...conflicts] };
   }
   const file = resolve(modulesRoot(), idOrDraftId, "module.yaml");
   if (!existsSync(file)) throw new Error(`Module ou brouillon introuvable : ${idOrDraftId}`);
@@ -336,6 +338,24 @@ export function saveDraftYaml(draftId: string, yaml: string): { ok: boolean; err
   return { ok: true, errors: [] };
 }
 
+/**
+ * Identifiants de segment (dimensions des résumés et des filtres) du module déjà déclarés par un autre module
+ * de la bibliothèque locale, archivés compris. La bibliothèque refuse deux segments de même id
+ * (librarySegments) : un module accepté malgré ce conflit la rendrait inutilisable. Le module de même id
+ * (remplacement) est ignoré ; un module du cache du Hub aussi (une dimension locale passe toujours devant).
+ */
+export function segmentConflicts(def: ModuleDef, lib: Map<string, LoadedModule> = moduleLibrary(modulesRoot())): ValidationIssue[] {
+  const owner = new Map<string, string>();
+  for (const m of lib.values()) {
+    if (m.def.id === def.id || m.source === "hub-cache") continue;
+    for (const s of m.def.segments) if (!owner.has(s.id)) owner.set(s.id, m.def.id);
+  }
+  return def.segments.flatMap((s, i) => {
+    const other = owner.get(s.id);
+    return other ? [{ path: `segments.${i}.id`, message: `segment « ${s.id} » déjà déclaré par le module ${other} : choisir un autre identifiant` }] : [];
+  });
+}
+
 /** Déplace un brouillon validé vers la bibliothèque. Refuse si la validation échoue ou si le module existe. */
 export function acceptDraft(draftId: string, opts: { replace?: boolean; blockingAlerts?: string[] } = {}): { moduleId: string; file: string } {
   const meta = readMeta(draftId);
@@ -349,6 +369,9 @@ export function acceptDraft(draftId: string, opts: { replace?: boolean; blocking
   const dir = resolve(modulesRoot(), id);
   const file = resolve(dir, "module.yaml");
   if (existsSync(file) && !opts.replace) throw new Error(`Le module ${id} existe déjà (modules/${id}) : ajouter --replace pour le remplacer.`);
+  // Avant toute écriture, sur la bibliothèque relue (un autre brouillon a pu être validé entre-temps)
+  const conflicts = segmentConflicts(v.module!.def, moduleLibrary(modulesRoot(), { fresh: true }));
+  if (conflicts.length) throw new Error(`Segments en double, module refusé :\n${conflicts.map((e) => `- ${e.path} : ${e.message}`).join("\n")}`);
   mkdirSync(dir, { recursive: true });
   writeAtomic(file, yaml.endsWith("\n") ? yaml : `${yaml}\n`);
   writeMeta({ ...meta, status: "accepted", acceptedAs: `modules/${id}/module.yaml`, progress: "Module validé", history: [...meta.history, { at: now(), kind: "accept", summary: `Validé vers modules/${id}/module.yaml` }] });

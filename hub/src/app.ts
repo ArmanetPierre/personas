@@ -19,6 +19,7 @@ import { preferLanguage, rankCatalog, rankedSearch, moduleRankings } from "./ran
 import { registerCollabRoutes } from "./routes";
 import { loadSigner, signatureOf, type Signer } from "./signing";
 import { loadAssets } from "./assets";
+import { prefersHtml, renderApiDocs, renderApiNotice } from "./api-docs";
 import { isUiLang, UI_COOKIE, uiFromAcceptLanguage, type UiLang } from "./i18n";
 import { renderDevice, renderIndex, renderLegal, renderModule, renderNotFound, renderServerError, type PageCtx } from "./pages";
 import {
@@ -152,6 +153,31 @@ export function createHubApp(opts: HubOptions) {
   app.use("/v1/*", async (c, next) => {
     if (c.req.path.startsWith("/v1/admin/")) return next();
     return cors({ origin: "*", allowMethods: ["GET", "HEAD", "OPTIONS"], allowHeaders: ["If-None-Match"], exposeHeaders: ["ETag"], maxAge: 86_400 })(c, next);
+  });
+  // Humain dans un navigateur (Accept : text/html d'abord, JSON non demandé explicitement) sur un GET public :
+  // page HTML « ce n'est pas pour vous » avec un aperçu, au lieu du JSON brut. ?format=json force le JSON ;
+  // les programmes (Accept: application/json, */*, curl, le runner) reçoivent toujours le JSON inchangé.
+  // Page jamais mise en cache (no-store, sans ETag) : un cache partagé ne peut pas la resservir à un programme.
+  app.use("/v1/*", async (c, next) => {
+    await next();
+    if (c.req.method !== "GET" || c.req.path.startsWith("/v1/admin/") || c.req.query("format") === "json" || !prefersHtml(c.req.header("accept"))) return;
+    const res = c.res;
+    if (!(res.headers.get("content-type") ?? "").includes("application/json")) return;
+    let data: unknown = null;
+    try {
+      data = await res.clone().json();
+    } catch {
+      data = null;
+    }
+    const url = new URL(c.req.url);
+    const sp = new URLSearchParams(url.search);
+    sp.delete("ui");
+    sp.set("format", "json");
+    const ctx = pageCtx(c);
+    c.res = new Response(renderApiNotice(ctx, { status: res.status, path: c.req.path, rawHref: `${url.pathname}?${sp.toString()}`, data }), { status: res.status, headers: { "Content-Type": "text/html; charset=UTF-8" } });
+    c.res.headers.delete("ETag");
+    c.res.headers.set("Cache-Control", "no-store");
+    c.res.headers.set("Vary", "Accept, Accept-Language, Cookie");
   });
 
   app.onError((err, c) => {
@@ -436,6 +462,14 @@ export function createHubApp(opts: HubOptions) {
       return c.html(renderLegal(ctx, { doc, lang: legal.has(`${doc}.${ctx.ui}`) ? ctx.ui : ctx.ui === "fr" ? "en" : "fr", version: v.version, markdown: v.markdown }));
     });
   }
+
+  // Documentation de l'API publique (lien « API » du rail) ; /api y mène aussi.
+  app.get("/docs/api", async (c) => {
+    const ctx = pageCtx(c);
+    c.header("Cache-Control", "private, max-age=300");
+    return c.html(renderApiDocs(ctx, { catalog: (await catalog()).data, origin: opts.publicBaseUrl || new URL(c.req.url).origin }));
+  });
+  app.get("/api", (c) => c.redirect("/docs/api", 301));
 
   // Validation de `personas hub login` (flux d'appareil) : connexion Supabase, puis /v1/device/*.
   app.get("/device", (c) => {

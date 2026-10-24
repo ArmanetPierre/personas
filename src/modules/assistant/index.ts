@@ -4,6 +4,7 @@
  */
 export {
   acceptDraft,
+  segmentConflicts,
   createDraft,
   draftExists,
   draftsDir,

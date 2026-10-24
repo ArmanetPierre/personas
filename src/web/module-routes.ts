@@ -17,6 +17,7 @@ import {
   viewOf,
   type AssistantApi,
   type AssistantLoader,
+  type DraftMeta,
   type ModuleSummary,
   type ValidationIssue,
 } from "./modules";
@@ -38,6 +39,30 @@ export function socleList(): Array<{ id: string; pack: string }> {
   } catch {
     return [{ id: "fr", pack: "fr" }];
   }
+}
+
+/** Socle d'un module (applies_to) : pays, langue des personas et libellé court, lus dans le pack courant. */
+export function socleInfo(id: string): { id: string; pack: string; country: string | null; locale: string | null; label: string } {
+  const pack = socleList().find((s) => s.id === id)?.pack ?? id;
+  // Pack courant rangé dans son dossier versionné (fr-2026.2) ou dans le dossier du pays (us)
+  const file = [join(PACKS_DIR, pack, "pack.json"), join(PACKS_DIR, id, "pack.json")].find((f) => existsSync(f));
+  try {
+    if (!file) throw new Error("pack introuvable");
+    const m = JSON.parse(readFileSync(file, "utf8")) as { country?: string; locale?: string; shortLabel?: string; label?: string };
+    return { id, pack, country: m.country ?? null, locale: m.locale ?? null, label: m.shortLabel ?? m.label ?? id };
+  } catch {
+    return { id, pack, country: null, locale: null, label: id };
+  }
+}
+
+/** Brouillon d'origine d'un module validé (le plus récent accepté vers cet id), pour « Comment ce module a été créé ». */
+function originDraft(modulesDir: string, moduleId: string): DraftMeta | null {
+  const dd = draftsDir(modulesDir);
+  if (!existsSync(dd)) return null;
+  const hits = readdirSync(dd)
+    .map((d) => readDraftMeta(modulesDir, d))
+    .filter((m): m is DraftMeta => !!m && m.status === "accepted" && m.moduleId === moduleId);
+  return hits.sort((a, b) => (b.updatedAt ?? "").localeCompare(a.updatedAt ?? ""))[0] ?? null;
 }
 
 const loaders = new WeakMap<AppContext, AssistantLoader>();
@@ -224,11 +249,17 @@ export function registerModuleRoutes(api: Hono, ctx: AppContext): void {
     const { api: a, available, reason } = await apiOf(ctx);
     const mod = await a.getModule(id);
     const draftId = mod.meta?.id ?? (mod.status.startsWith("draft") ? id : undefined);
+    const view = mod.yaml ? viewOf(mod.parsed, mod.yaml, lang) : null;
+    const origin = !draftId && view ? originDraft(modulesDir(), view.id) : null;
     return c.json({
       assistant: { available, ...(reason && { reason: messageIn(lang, reason) }) },
       module: { ...mod, parsed: undefined, ...(mod.meta && { meta: draftMetaIn(lang, mod.meta) }), validationErrors: mod.validationErrors.map((e) => (typeof e === "string" ? messageIn(lang, e) : { ...e, message: messageIn(lang, e.message) })) },
-      view: mod.yaml ? viewOf(mod.parsed, mod.yaml, lang) : null,
+      view,
       draftId: draftId ?? null,
+      /** Socles du module (pays, langue, libellé) ; brouillon : le socle de sa demande. */
+      socles: (view?.appliesTo ?? (mod.meta?.socle ? [mod.meta.socle] : [])).map(socleInfo),
+      /** Module validé : le brouillon dont il vient (demande, historique, notes), s'il est encore là. */
+      origin: origin ? draftMetaIn(lang, origin) : null,
       job: draftId ? jobOf(draftId) : null,
     });
   });

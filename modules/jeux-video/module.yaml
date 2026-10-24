@@ -1,0 +1,548 @@
+id: jeux-video
+version: "2026.2"
+changelog:
+  - version: "2026.2"
+    date: "2026-10-22"
+    changes: ["Première version (socle v2) : fréquence de jeu, temps hebdomadaire, supports (consoles et cloud, PC, smartphone, tablette), genres, mode principal, dépenses, abonnements et canaux d'achat. Information de fiche seulement, sans effet sur le budget du socle."]
+label: Jeux vidéo
+short_label: Jeux vidéo
+description: >-
+  Pratique du jeu vidéo en France (console, PC, mobile, cloud) : fréquence et temps de jeu, supports, genres,
+  mode de jeu principal, dépenses, abonnements de jeu et canaux d'achat. Module générique, réutilisable par tout
+  projet (app, jeu, service, matériel). Conditionné à l'âge, au sexe, aux enfants de moins de 12 ans, au niveau de vie,
+  à l'équipement et au profil d'adoption technologique du socle. Les non-joueurs ont des valeurs nulles.
+applies_to: [fr]
+requires: []
+
+sources:
+  sell_mediametrie_2025_cp:
+    org: "SELL / Médiamétrie"
+    title: "Les Français et le jeu vidéo en 2025 (communiqué de presse)"
+    year: 2025
+    url: "https://www.sell.fr/sites/default/files/espace-presse/cp_etude_les_francais_et_le_jeu_video_en_2025.pdf"
+    detail: "Individus de 10 à 80 ans, enquête en ligne juin-juillet 2025 (n = 4 001) ; 40,2 M de joueurs ; 76 % jouent au moins une fois par semaine ; 49 % de femmes parmi les joueurs ; smartphone 59 %, console 58 % ; 2,2 supports en moyenne ; réguliers : 7 h 55 par semaine"
+  bdm_jv_2025:
+    org: "Blog du Modérateur (relais SELL / Médiamétrie)"
+    title: "Le jeu vidéo en France : profils des joueurs et usages en 2025"
+    year: 2025
+    url: "https://www.blogdumoderateur.com/jeu-video-france-profils-joueurs-usages-2025/"
+    detail: "Âge moyen 40 ans ; 6 h 25 par semaine ; smartphone 55 %, console 47 %, PC 40 % ; 119 € par an hors abonnements ; 52 % achètent en magasin ; 44 % ont un abonnement ; genres : casual 39 %, stratégie 28 %, course 27 %, RPG/aventure 27 % ; 65 % jouent à plusieurs"
+  afjv_sell_2025:
+    org: "AFJV"
+    title: "Étude Médiamétrie - SELL « Les français et le jeu vidéo » en 2025"
+    year: 2025
+    url: "https://afjv.com/news/11790_etude-mediametrie-sell-francais-jeux-video-2025.htm"
+    detail: "Non vérifiée : joueuses 5 h 52 par semaine, smartphone 59 %, casual 45 % chez les joueuses"
+  cnc_publics_2025:
+    org: "CNC (via AFJV)"
+    title: "Qui joue vraiment en France ? Le CNC publie « Les publics du jeu vidéo »"
+    year: 2025
+    url: "https://afjv.com/news/11832_joueurs-france-cnc-etude-publics-jeux-video.htm"
+    detail: "Enquête Toluna, octobre 2025, 4 ans et plus : près de 3 Français sur 4 jouent ; dépenses variables selon l'engagement (casual, midcore, hardcore)"
+  sell_essentiel_avril_2026:
+    org: "SELL"
+    title: "L'Essentiel du jeu vidéo, avril 2026 : bilan du marché français 2025"
+    year: 2026
+    url: "https://www.sell.fr/sites/default/files/essentiel-jeu-video/ejv_avril_2026_final_.pdf"
+    detail: "Non vérifiée (PDF non lisible) : PC utilisé par 40 % des joueurs"
+
+conditions:
+  playing: {attr: player_frequency, in: [occasionnel, regulier_hebdomadaire, quotidien]}
+  male: {attr: socle.sex, eq: M}
+  female: {attr: socle.sex, eq: F}
+  young: {attr: socle.age, lt: 35}
+  under_40: {attr: socle.age, lt: 40}
+  over_50: {attr: socle.age, gt: 49}
+  young_male: {all: [{attr: socle.sex, eq: M}, {attr: socle.age, lt: 35}]}
+  mid_old: {attr: socle.age, gt: 44}
+  senior: {attr: socle.age, gt: 59}
+  parent: {attr: socle.children_under_12, gt: 0}
+  no_smartphone: {attr: socle.has_smartphone, eq: false}
+  no_computer: {attr: socle.has_computer, eq: false}
+  no_internet: {attr: socle.has_internet, eq: false}
+  early_tech: {attr: socle.tech_adoption, in: [innovator, early_adopter]}
+  late_tech: {attr: socle.tech_adoption, in: [late_majority, laggard]}
+  on_ps5: {attr: console_platforms, in: [console_ps5]}
+  on_xbox: {attr: console_platforms, in: [console_xbox_series]}
+  on_switch: {attr: console_platforms, in: [console_nintendo_switch]}
+  on_pc: {attr: pc_gaming, eq: true}
+  on_phone: {attr: phone_gaming, eq: true}
+  on_tablet: {attr: tablet_gaming, eq: true}
+  on_mobile: {any: [{attr: phone_gaming, eq: true}, {attr: tablet_gaming, eq: true}]}
+  on_console: {attr: console_platforms, in: [console_ps5, console_xbox_series, console_nintendo_switch]}
+  on_console_or_cloud: {attr: console_platforms, in: [console_ps5, console_xbox_series, console_nintendo_switch, cloud_gaming]}
+  no_console_pc: {all: [{not: {attr: console_platforms, in: [console_ps5, console_xbox_series, console_nintendo_switch]}}, {not: {attr: pc_gaming, eq: true}}]}
+  mobile_only:
+    all:
+      - {any: [{attr: phone_gaming, eq: true}, {attr: tablet_gaming, eq: true}]}
+      - {not: {attr: console_platforms, in: [console_ps5, console_xbox_series, console_nintendo_switch, cloud_gaming]}}
+      - {not: {attr: pc_gaming, eq: true}}
+  mobile_only_over_50:
+    all:
+      - {attr: socle.age, gt: 49}
+      - {any: [{attr: phone_gaming, eq: true}, {attr: tablet_gaming, eq: true}]}
+      - {not: {attr: console_platforms, in: [console_ps5, console_xbox_series, console_nintendo_switch, cloud_gaming]}}
+      - {not: {attr: pc_gaming, eq: true}}
+  no_spend: {attr: monthly_spend, eq: aucune}
+  buys_or_subscribes:
+    any:
+      - {not: {attr: monthly_spend, eq: aucune}}
+      - {attr: gaming_subscriptions, in: [game_pass, ps_plus, nintendo_switch_online, autre_service]}
+
+tables:
+  play_rate_age:
+    label: "Probabilité de jouer au moins occasionnellement, par âge (18-79 ans)"
+    bands:
+      - {from: 18, to: 24, value: 0.92}
+      - {from: 25, to: 34, value: 0.88}
+      - {from: 35, to: 44, value: 0.82}
+      - {from: 45, to: 54, value: 0.72}
+      - {from: 55, to: 64, value: 0.58}
+      - {from: 65, to: 79, value: 0.40}
+    sources: [sell_mediametrie_2025_cp, cnc_publics_2025]
+    assumption: true
+    justification: "Plus de 7 Français sur 10 de 10 à 80 ans jouent (SELL), près de 3 sur 4 des 4 ans et plus (CNC) ; la part est plus basse chez les 60-79 ans, d'où un objectif de 62-68 % chez les 18-79 ans. Profil par âge : hypothèse, calée sur l'âge moyen des joueurs (40 ans)."
+  play_sex:
+    label: "Coefficient de sexe sur la probabilité de jouer"
+    values: {M: 1.04, F: 0.96}
+    sources: [sell_mediametrie_2025_cp]
+    assumption: true
+    justification: "49 % de femmes parmi les joueurs (SELL) : quasi-parité, léger écart en faveur des hommes pour compenser la part des femmes dans la population adulte."
+  play_tech:
+    label: "Coefficient d'adoption technologique sur la probabilité de jouer"
+    values: {innovator: 1.15, early_adopter: 1.1, early_majority: 1.0, late_majority: 0.9, laggard: 0.7}
+    assumption: true
+    justification: "Aucune donnée publique croisant adoption technologique et jeu ; coefficients modérés, supposés."
+  occasional_share:
+    label: "Part des occasionnels (moins d'une fois par semaine) parmi les joueurs, par âge"
+    bands:
+      - {from: 18, to: 34, value: 0.18}
+      - {from: 35, to: 54, value: 0.24}
+      - {from: 55, to: 79, value: 0.34}
+    sources: [sell_mediametrie_2025_cp]
+    assumption: true
+    justification: "76 % des joueurs jouent au moins une fois par semaine (SELL), soit ≈ 24 % d'occasionnels en moyenne ; répartition par âge supposée."
+  daily_share:
+    label: "Part des joueurs quotidiens parmi les joueurs, par âge"
+    bands:
+      - {from: 18, to: 34, value: 0.32}
+      - {from: 35, to: 54, value: 0.22}
+      - {from: 55, to: 79, value: 0.18}
+    assumption: true
+    justification: "Le partage entre jeu hebdomadaire et quotidien n'est pas publié ; hypothèse (≈ 23 % des joueurs jouent presque tous les jours)."
+  living_standard_factor:
+    label: "Coefficient de niveau de vie sur les dépenses et abonnements (niveau de vie / médiane)"
+    bands:
+      - {from: 0, to: 0.7, value: 0.75}
+      - {from: 0.7, to: 1.2, value: 1.0}
+      - {from: 1.2, to: 10, value: 1.25}
+    assumption: true
+    justification: "Aucune donnée publique ; la dépense et les abonnements augmentent modérément avec le niveau de vie (hypothèse)."
+  solo_age_factor:
+    label: "Coefficient d'âge du jeu principalement en solo"
+    bands:
+      - {from: 18, to: 34, value: 0.85}
+      - {from: 35, to: 54, value: 1.0}
+      - {from: 55, to: 79, value: 1.35}
+    assumption: true
+    justification: "65 % des joueurs jouent à plusieurs (SELL) mais le mode principal n'est pas publié ; les plus âgés jouent davantage seuls (hypothèse)."
+  competitive_age_factor:
+    label: "Coefficient d'âge du jeu compétitif"
+    bands:
+      - {from: 18, to: 34, value: 1.5}
+      - {from: 35, to: 54, value: 0.8}
+      - {from: 55, to: 79, value: 0.35}
+    assumption: true
+    justification: "Compétition plus fréquente chez les jeunes (hypothèse)."
+  solo_sex_factor:
+    label: "Coefficient de sexe du jeu en solo"
+    values: {M: 0.9, F: 1.12}
+    assumption: true
+    justification: "Hypothèse : les joueuses jouent plus souvent en solo, sur mobile ou casual."
+  competitive_sex_factor:
+    label: "Coefficient de sexe du jeu compétitif"
+    values: {M: 1.45, F: 0.55}
+    assumption: true
+    justification: "Hypothèse : le jeu compétitif est plus masculin."
+  playtime_high_age_factor:
+    label: "Coefficient d'âge des tranches de temps de jeu élevées (10 h et plus par semaine)"
+    bands:
+      - {from: 18, to: 34, value: 1.35}
+      - {from: 35, to: 49, value: 0.9}
+      - {from: 50, to: 64, value: 0.6}
+      - {from: 65, to: 79, value: 0.45}
+    assumption: true
+    justification: "Aucune donnée publique par âge ; les temps de jeu élevés sont supposés concentrés chez les moins de 35 ans. Seule la moyenne est sourcée (6 h 25 par semaine, 7 h 55 pour les réguliers, SELL)."
+  playtime_low_age_factor:
+    label: "Coefficient d'âge des tranches de temps de jeu faibles (moins de 5 h par semaine)"
+    bands:
+      - {from: 18, to: 34, value: 0.85}
+      - {from: 35, to: 49, value: 1.05}
+      - {from: 50, to: 64, value: 1.2}
+      - {from: 65, to: 79, value: 1.3}
+    assumption: true
+    justification: "Contrepartie du coefficient des temps élevés : les plus âgés jouent plus souvent peu d'heures (hypothèse)."
+
+attributes:
+  - key: player_frequency
+    label: Fréquence de jeu vidéo
+    type: enum
+    values:
+      - {code: jamais, label: "ne joue pas aux jeux vidéo"}
+      - {code: occasionnel, label: "joue occasionnellement (moins d'une fois par semaine)"}
+      - {code: regulier_hebdomadaire, label: "joue chaque semaine"}
+      - {code: quotidien, label: "joue tous les jours ou presque"}
+    distribution:
+      weights:
+        jamais:
+          add:
+            - 1
+            - mul:
+                - -1
+                - &p_play
+                  min:
+                    - 0.97
+                    - mul:
+                        - {lookup: play_rate_age, by: socle.age}
+                        - {lookup: play_sex, by: socle.sex}
+                        - {lookup: play_tech, by: socle.tech_adoption}
+                        - {if: parent, then: 1.08, else: 1}
+                        - {if: no_smartphone, then: 0.75, else: 1}
+        occasionnel: {mul: [*p_play, {lookup: occasional_share, by: socle.age}]}
+        regulier_hebdomadaire:
+          mul:
+            - *p_play
+            - add:
+                - 1
+                - {mul: [-1, {lookup: occasional_share, by: socle.age}]}
+                - {mul: [-1, {lookup: daily_share, by: socle.age}]}
+        quotidien: {mul: [*p_play, {lookup: daily_share, by: socle.age}]}
+      sampler: quasi
+    sources: [sell_mediametrie_2025_cp, bdm_jv_2025, cnc_publics_2025]
+    assumption: true
+    justification: "Cibles sourcées : plus de 7 Français sur 10 jouent (10-80 ans, SELL), 76 % des joueurs jouent chaque semaine, 49 % de femmes. Les 18-79 ans jouent un peu moins (≈ 62-68 %). Décroissance avec l'âge, bonus pour les parents d'enfants de moins de 12 ans, effet de l'adoption technologique et partage hebdomadaire/quotidien : hypothèses."
+
+  - key: weekly_playtime
+    label: Temps de jeu hebdomadaire
+    type: enum
+    when: playing
+    values:
+      - {code: moins_2h, label: "moins de 2 h par semaine"}
+      - {code: de_2_5h, label: "2 à 5 h par semaine"}
+      - {code: de_5_10h, label: "5 à 10 h par semaine"}
+      - {code: de_10_20h, label: "10 à 20 h par semaine"}
+      - {code: plus_20h, label: "plus de 20 h par semaine"}
+    distribution:
+      weights:
+        moins_2h:
+          mul:
+            - {pick: player_frequency, values: {occasionnel: 0.6, regulier_hebdomadaire: 0.1}, default: 0}
+            - {lookup: playtime_low_age_factor, by: socle.age}
+        de_2_5h:
+          mul:
+            - {pick: player_frequency, values: {occasionnel: 0.3, regulier_hebdomadaire: 0.4, quotidien: 0.2}, default: 0}
+            - {lookup: playtime_low_age_factor, by: socle.age}
+        de_5_10h:
+          pick: player_frequency
+          values: {occasionnel: 0.1, regulier_hebdomadaire: 0.35, quotidien: 0.4}
+          default: 0
+        de_10_20h:
+          mul:
+            - {pick: player_frequency, values: {regulier_hebdomadaire: 0.13, quotidien: 0.32}, default: 0}
+            - {lookup: playtime_high_age_factor, by: socle.age}
+        plus_20h:
+          mul:
+            - {pick: player_frequency, values: {regulier_hebdomadaire: 0.02, quotidien: 0.08}, default: 0}
+            - {lookup: playtime_high_age_factor, by: socle.age}
+    sources: [bdm_jv_2025, sell_mediametrie_2025_cp, afjv_sell_2025]
+    assumption: true
+    justification: "Seules les moyennes sont publiées : 6 h 25 par semaine pour l'ensemble des joueurs, 7 h 55 pour les réguliers (SELL). Les tranches par fréquence sont calibrées pour s'en approcher (≈ 6,4 h, ≈ 7,8 h pour les réguliers). L'effet d'âge (temps élevés concentrés chez les moins de 35 ans, temps faibles plus fréquents après 50 ans) est une hypothèse, sans donnée publique ; il ne change pas la fréquence de jeu. Pas de conditionnement par sexe faute de données."
+
+  - key: console_platforms
+    label: Consoles de salon et cloud gaming utilisés
+    type: set
+    when: playing
+    items:
+      - {code: console_ps5, label: "Console de salon PlayStation 5", card_label: "PlayStation 5", rate: {base: 0.27, factors: {male: 1.25, female: 0.7, young: 1.25, mid_old: 0.7}}}
+      - {code: console_xbox_series, label: "Console de salon Xbox Series", card_label: "Xbox Series", rate: {base: 0.09, factors: {male: 1.4, female: 0.55, young: 1.1, mid_old: 0.75}}}
+      - {code: console_nintendo_switch, label: "Nintendo Switch / Switch 2", card_label: "Nintendo Switch / Switch 2", rate: {base: 0.28, factors: {male: 1.05, female: 0.95, young: 1.1, mid_old: 0.85, parent: 1.25}}}
+      - {code: cloud_gaming, label: "Cloud gaming", card_label: "cloud gaming", rate: {base: 0.04, factors: {no_internet: 0, early_tech: 2.0, male: 1.2, mid_old: 0.6}}}
+    rate_cap: 0.95
+    display: {empty: aucune console ni cloud gaming}
+    sources: [sell_mediametrie_2025_cp, bdm_jv_2025]
+    assumption: true
+    justification: "Console utilisée par 47-58 % des joueurs (SELL, relais presse). Répartition PS5 / Xbox / Switch, cloud gaming et profils par âge et sexe : hypothèses. Pas de cloud gaming sans internet."
+
+  - key: pc_gaming
+    label: Joue sur ordinateur
+    type: boolean
+    when: {all: [playing, {attr: socle.has_computer, eq: true}]}
+    rate:
+      mul:
+        - 0.42
+        - {if: male, then: 1.35, else: 0.65}
+        - {if: young, then: 1.15, else: {if: mid_old, then: 0.8, else: 1}}
+        - {if: early_tech, then: 1.2, else: {if: late_tech, then: 0.8, else: 1}}
+    labels: {yes: joue sur ordinateur, no: ne joue pas sur ordinateur}
+    sources: [bdm_jv_2025, sell_essentiel_avril_2026]
+    assumption: true
+    justification: "PC utilisé par 40 % des joueurs (SELL, relais presse ; un chiffre non vérifié). Uniquement chez les personas équipées d'un ordinateur. Profils par âge, sexe et adoption technologique : hypothèses."
+
+  - key: phone_gaming
+    label: Joue sur smartphone
+    type: boolean
+    when: {all: [playing, {attr: socle.has_smartphone, eq: true}]}
+    rate:
+      mul:
+        - 0.55
+        - {if: female, then: 1.15, else: 0.88}
+        - {if: senior, then: 1.1, else: 1}
+    labels: {yes: joue sur smartphone, no: ne joue pas sur smartphone}
+    sources: [sell_mediametrie_2025_cp, bdm_jv_2025, afjv_sell_2025]
+    assumption: true
+    justification: "Smartphone utilisé par 55-59 % des joueurs (SELL, relais presse). Uniquement chez les personas équipées d'un smartphone. Écarts par sexe et âge : hypothèses."
+
+  - key: tablet_gaming
+    label: Joue sur tablette
+    type: boolean
+    when: {all: [playing, {attr: socle.has_tablet, eq: true}]}
+    rate:
+      mul:
+        - 0.2
+        - {if: parent, then: 1.4, else: 1}
+        - {if: female, then: 1.1, else: 0.9}
+    labels: {yes: joue sur tablette, no: ne joue pas sur tablette}
+    assumption: true
+    justification: "Aucune donnée publique distincte pour la tablette (regroupée avec le smartphone dans les études) ; taux supposé, uniquement chez les personas équipées d'une tablette, plus élevé chez les parents."
+
+  - key: preferred_genres
+    label: Genres de jeu préférés
+    type: set
+    when: playing
+    items:
+      - {code: action_aventure, label: "Action / aventure", card_label: "action/aventure", rate: {base: 0.30, factors: {male: 1.1, female: 0.9, young: 1.1, senior: 0.7, mobile_only: 0.5}}}
+      - {code: rpg, label: "RPG", card_label: "RPG", rate: {base: 0.27, factors: {under_40: 1.3, mid_old: 0.7, male: 1.05, female: 0.95, mobile_only: 0.6}}}
+      - {code: sport_course, label: "Sport / course", card_label: "sport/course", rate: {base: 0.27, factors: {male: 1.2, female: 0.75, young_male: 1.3, senior: 0.8, mobile_only: 0.7}}}
+      - {code: strategie, label: "Stratégie", card_label: "stratégie", rate: {base: 0.28, factors: {male: 1.2, female: 0.8, senior: 1.1}}}
+      - {code: casual_puzzle_reflexion, label: "Casual / puzzle / réflexion", card_label: "casual/puzzle/réflexion", rate: {base: 0.39, factors: {female: 1.2, male: 0.8, over_50: 1.25, young: 0.95, mobile_only: 2.0}}}
+      - {code: mmo, label: "MMO", card_label: "MMO", rate: {base: 0.07, factors: {male: 1.5, female: 0.5, young: 1.3, senior: 0.5, no_computer: 0.5, mobile_only: 0.3}}}
+      - {code: simulation, label: "Simulation", card_label: "simulation", rate: {base: 0.13, factors: {female: 1.3, over_50: 1.4, young: 0.9, mobile_only: 1.2}}}
+      - {code: tir_fps, label: "Tir / FPS", card_label: "tir/FPS", rate: {base: 0.17, factors: {male: 1.7, female: 0.4, young: 1.3, young_male: 1.4, mid_old: 0.7, no_computer: 0.6, mobile_only: 0.4}}}
+      - {code: combat, label: "Combat", card_label: "combat", rate: {base: 0.08, factors: {male: 1.5, female: 0.5, young: 1.4, young_male: 1.3, senior: 0.4, mobile_only: 0.5}}}
+      - {code: jeux_societe_numeriques, label: "Jeux de société numériques", card_label: "jeux de société numériques", rate: {base: 0.08, factors: {mid_old: 1.3, female: 1.1, parent: 1.3, mobile_only: 2.0}}}
+    min_items: 1
+    max_items: 4
+    rate_cap: 0.8
+    display: {empty: aucun genre préféré}
+    sources: [bdm_jv_2025, afjv_sell_2025]
+    assumption: true
+    justification: "Taux de base sourcés pour casual/mobile (39 %), stratégie (28 %), course (27 %) et RPG/aventure (27 %) ; les autres genres et tous les écarts sont des hypothèses : casual 45 % chez les joueuses (AFJV, non vérifiée), FPS, combat et sport/course plus fréquents chez les hommes de moins de 35 ans, RPG plus fréquent avant 40 ans, simulation et casual plus fréquents chez les femmes et après 50 ans. Chez les joueurs seulement sur mobile (smartphone ou tablette, ni console, ni cloud, ni PC), casual/puzzle/réflexion et jeux de société numériques dominent et les genres de console ou de PC sont réduits. Chaque joueur retient 1 à 4 genres, ce qui rabote un peu les taux."
+
+  - key: main_play_mode
+    label: Mode de jeu principal
+    type: enum
+    when: playing
+    values:
+      - {code: solo, label: "surtout en solo"}
+      - {code: multijoueur_cooperatif_en_ligne, label: "surtout en multijoueur coopératif ou en ligne"}
+      - {code: competitif, label: "surtout en compétitif"}
+    distribution:
+      weights:
+        solo:
+          mul:
+            - 45
+            - {lookup: solo_age_factor, by: socle.age}
+            - {lookup: solo_sex_factor, by: socle.sex}
+            - {if: no_console_pc, then: 1.2, else: 1}
+            - {pick: player_frequency, values: {occasionnel: 1.3, quotidien: 0.8}, default: 1}
+        multijoueur_cooperatif_en_ligne:
+          mul:
+            - 38
+            - {cases: [{when: mobile_only_over_50, value: 0.6}, {when: over_50, value: 0.75}, {else: 1}]}
+        competitif:
+          mul:
+            - 17
+            - {lookup: competitive_age_factor, by: socle.age}
+            - {lookup: competitive_sex_factor, by: socle.sex}
+            - {if: no_console_pc, then: 0.4, else: 1}
+            - {pick: player_frequency, values: {occasionnel: 0.5, quotidien: 1.5}, default: 1}
+            - {cases: [{when: mobile_only_over_50, value: 0.6}, {when: over_50, value: 0.85}, {else: 1}]}
+    sources: [bdm_jv_2025]
+    assumption: true
+    justification: "Seul « jouer à plusieurs » est sourcé (65 % des joueurs, SELL via relais presse). Le mode principal est supposé : ≈ 45 % solo, 38 % coopératif ou en ligne, 17 % compétitif, avec plus de compétition chez les jeunes hommes sur PC ou console. Effet d'âge supplémentaire (hypothèse) : multijoueur et compétitif plus rares après 50 ans, encore plus chez les joueurs seulement sur mobile."
+
+  - key: monthly_spend
+    label: Dépenses mensuelles de jeu vidéo hors abonnements
+    type: enum
+    when: playing
+    values:
+      - {code: aucune, label: "aucune dépense (jeux gratuits ou déjà possédés)"}
+      - {code: moins_5, label: "moins de 5 € par mois"}
+      - {code: de_5_15, label: "5 à 15 € par mois"}
+      - {code: de_15_30, label: "15 à 30 € par mois"}
+      - {code: plus_30, label: "plus de 30 € par mois"}
+    distribution:
+      weights:
+        aucune: {div: [{pick: player_frequency, values: {occasionnel: 0.55, regulier_hebdomadaire: 0.30, quotidien: 0.22}}, {lookup: living_standard_factor, by: socle.living_standard_ratio}]}
+        moins_5: {pick: player_frequency, values: {occasionnel: 0.25, regulier_hebdomadaire: 0.25, quotidien: 0.20}}
+        de_5_15: {pick: player_frequency, values: {occasionnel: 0.13, regulier_hebdomadaire: 0.22, quotidien: 0.25}}
+        de_15_30: {mul: [{pick: player_frequency, values: {occasionnel: 0.05, regulier_hebdomadaire: 0.15, quotidien: 0.20}}, {lookup: living_standard_factor, by: socle.living_standard_ratio}]}
+        plus_30: {mul: [{pick: player_frequency, values: {occasionnel: 0.02, regulier_hebdomadaire: 0.08, quotidien: 0.13}}, {lookup: living_standard_factor, by: socle.living_standard_ratio}]}
+    sources: [bdm_jv_2025, cnc_publics_2025]
+    assumption: true
+    justification: "Moyenne sourcée : 119 € par an et par joueur hors abonnements (≈ 10 € par mois, SELL via relais presse). Les tranches sont supposées pour approcher cette moyenne (≈ 8-10 €), avec une forte part de dépenses nulles et une queue longue ; la dépense augmente avec la fréquence de jeu (CNC : dépenses variables selon l'engagement) et avec le niveau de vie. Les abonnements sont à part (attribut suivant)."
+
+  - key: gaming_subscriptions
+    label: Abonnements de jeu détenus
+    type: set
+    when: playing
+    items:
+      - code: game_pass
+        label: Xbox Game Pass
+        card_label: "Xbox Game Pass"
+        rate:
+          mul:
+            - {cases: [{when: on_xbox, value: 0.45}, {when: on_pc, value: 0.2}, {else: 0.02}]}
+            - {lookup: living_standard_factor, by: socle.living_standard_ratio}
+            - {pick: player_frequency, values: {occasionnel: 0.5, quotidien: 1.3}, default: 1}
+        subscription: {name: "Xbox Game Pass Premium", category: jeu vidéo, monthly_eur: 14.99}
+      - code: ps_plus
+        label: PlayStation Plus
+        card_label: "PlayStation Plus"
+        rate:
+          mul:
+            - {cases: [{when: on_ps5, value: 0.6}, {else: 0.02}]}
+            - {lookup: living_standard_factor, by: socle.living_standard_ratio}
+            - {pick: player_frequency, values: {occasionnel: 0.5, quotidien: 1.3}, default: 1}
+        subscription: {name: "PlayStation Plus Essential", category: jeu vidéo, monthly_eur: 8.99}
+      - code: nintendo_switch_online
+        label: Nintendo Switch Online
+        card_label: "Nintendo Switch Online"
+        rate:
+          mul:
+            - {cases: [{when: on_switch, value: 0.5}, {else: 0.02}]}
+            - {lookup: living_standard_factor, by: socle.living_standard_ratio}
+            - {pick: player_frequency, values: {occasionnel: 0.5, quotidien: 1.3}, default: 1}
+        subscription: {name: "Nintendo Switch Online", category: jeu vidéo, monthly_eur: 1.67}
+      - code: autre_service
+        label: "Autre service de jeu (Apple Arcade, Ubisoft+, EA Play, Google Play Pass…)"
+        card_label: "autre service de jeu"
+        rate:
+          mul:
+            - {cases: [{when: on_mobile, value: 0.06}, {else: 0.03}]}
+            - {lookup: living_standard_factor, by: socle.living_standard_ratio}
+        subscription: {name: "Autre service de jeu", category: jeu vidéo, monthly_eur: 8}
+    display: {empty: aucun abonnement de jeu}
+    sources: [bdm_jv_2025]
+    assumption: true
+    justification: "Sourcé : 44 % des joueurs ont un abonnement de jeu (SELL via relais presse ; le chiffre peut inclure des abonnements mobiles). Taux par service liés au support utilisé, plus élevés avec le niveau de vie et le jeu quotidien : hypothèses. Prix publics approximatifs (Game Pass Premium, PS Plus Essential, Switch Online en formule annuelle), non vérifiés. Pas d'effet sur le reste-à-vivre du socle (pas de affects_budget)."
+
+  - key: purchase_channels
+    label: Canaux d'achat de jeux
+    type: set
+    when: {all: [playing, buys_or_subscribes]}
+    items:
+      - {code: steam, label: Steam, card_label: "Steam", rate: {mul: [{if: on_pc, then: 0.7, else: 0}, {if: no_spend, then: 0.5, else: 1}]}}
+      - {code: stores_consoles, label: "Stores des consoles", card_label: "stores des consoles", rate: {mul: [{if: on_console, then: 0.8, else: 0}, {if: no_spend, then: 0.5, else: 1}]}}
+      - {code: epic_games, label: "Epic Games Store", card_label: "Epic Games Store", rate: {mul: [{if: on_pc, then: 0.3, else: 0}, {if: no_spend, then: 0.5, else: 1}]}}
+      - {code: boite_magasin, label: "Boîte en magasin", card_label: "boîte en magasin", rate: {mul: [{cases: [{when: on_console, value: 0.85}, {when: on_pc, value: 0.5}, {else: 0.4}]}, {if: mid_old, then: 1.15, else: 1}, {if: no_spend, then: 0.5, else: 1}]}}
+      - {code: stores_mobiles, label: "Stores mobiles (App Store, Google Play)", card_label: "stores mobiles", rate: {mul: [{if: on_mobile, then: 0.55, else: 0}, {if: no_spend, then: 0.5, else: 1}]}}
+    min_items: 1
+    display: {empty: aucun achat de jeu}
+    sources: [bdm_jv_2025]
+    assumption: true
+    justification: "Seule la part d'achat en magasin est sourcée : 52 % des joueurs (SELL via relais presse), déclarée en validation.shares. Les canaux ne sont tirés que chez les joueurs qui dépensent ou ont un abonnement (au moins un canal, par cohérence avec les dépenses), les autres joueurs n'ont pas de canal d'achat. Les autres canaux découlent des supports (Steam et Epic pour le PC, stores consoles pour la console, stores mobiles pour le mobile) et les taux sont supposés ; boîte en magasin plus probable chez les joueurs console ; moins d'achats quand la dépense mensuelle est nulle (abonnés seulement). Taux calés pour rester dans la fourchette de la part en magasin parmi tous les joueurs. Twitch, Discord et YouTube sont exclus : aucune donnée publique trouvée."
+
+  - key: gaming_devices
+    label: Supports de jeu (récapitulatif pour la fiche)
+    type: set
+    when:
+      all:
+        - playing
+        - any:
+            - on_console_or_cloud
+            - {all: [on_pc, {attr: socle.has_computer, eq: true}]}
+            - {all: [on_phone, {attr: socle.has_smartphone, eq: true}]}
+            - {all: [on_tablet, {attr: socle.has_tablet, eq: true}]}
+    items:
+      - {code: console_ps5, label: "PlayStation 5", card_label: "PlayStation 5", rate: {if: {attr: console_platforms, in: [console_ps5]}, then: 1, else: 0}}
+      - {code: console_xbox_series, label: "Xbox Series", card_label: "Xbox Series", rate: {if: {attr: console_platforms, in: [console_xbox_series]}, then: 1, else: 0}}
+      - {code: console_nintendo_switch, label: "Nintendo Switch / Switch 2", card_label: "Nintendo Switch / Switch 2", rate: {if: {attr: console_platforms, in: [console_nintendo_switch]}, then: 1, else: 0}}
+      - {code: cloud_gaming, label: "Cloud gaming", card_label: "cloud gaming", rate: {if: {attr: console_platforms, in: [cloud_gaming]}, then: 1, else: 0}}
+      - {code: ordinateur, label: "Ordinateur", card_label: "ordinateur", rate: {if: on_pc, then: 1, else: 0}}
+      - {code: smartphone, label: "Smartphone", card_label: "smartphone", rate: {if: on_phone, then: 1, else: 0}}
+      - {code: tablette, label: "Tablette", card_label: "tablette", rate: {if: on_tablet, then: 1, else: 0}}
+    display: {empty: aucun support renseigné}
+    sources: [sell_mediametrie_2025_cp, bdm_jv_2025, sell_essentiel_avril_2026, afjv_sell_2025]
+    assumption: true
+    justification: "Attribut dérivé, sans tirage propre : il recopie les supports déjà tirés (console_platforms, pc_gaming, phone_gaming, tablet_gaming) pour les lister sur une seule ligne de fiche ; il hérite de leurs sources et hypothèses. Présent dès qu'au moins un support est tiré ; l'ordinateur, le smartphone et la tablette ne figurent que chez les personas équipées (socle), comme les attributs d'origine. Déclaré en dernier : les tirages des autres attributs sont inchangés."
+
+card:
+  - when: {attr: player_frequency, eq: jamais}
+    template: "Jeux vidéo : ne joue pas"
+  - when: playing
+    template: "Jeux vidéo : {player_frequency}, {weekly_playtime}"
+  - when: playing
+    template: "Supports de jeu : {gaming_devices}"
+  - when: playing
+    template: "Goûts de jeu : {preferred_genres} ; {main_play_mode}"
+  - when: playing
+    template: "Dépenses de jeu : {monthly_spend} ; abonnements : {gaming_subscriptions} ; achats : {purchase_channels}"
+
+segments:
+  - {id: jvFrequency, attribute: player_frequency, label: Fréquence de jeu vidéo, compare: 4}
+  - {id: jvPlaytime, attribute: weekly_playtime, label: Temps de jeu hebdomadaire}
+  - {id: jvPlayMode, attribute: main_play_mode, label: Mode de jeu principal}
+  - {id: jvSpend, attribute: monthly_spend, label: Dépenses de jeu vidéo}
+
+eligibility_helpers:
+  player: "jeux-video.player_frequency != jamais"
+  regular_player: "jeux-video.player_frequency in [regulier_hebdomadaire, quotidien]"
+  daily_player: "jeux-video.player_frequency == quotidien"
+  young_regular_player: "age < 35 and jeux-video.player_frequency in [regulier_hebdomadaire, quotidien]"
+  console_player: "jeux-video.console_platforms in [console_ps5, console_xbox_series, console_nintendo_switch]"
+  pc_player: "jeux-video.pc_gaming"
+  mobile_player: "jeux-video.phone_gaming or jeux-video.tablet_gaming"
+  subscriber: "jeux-video.gaming_subscriptions in [game_pass, ps_plus, nintendo_switch_online, autre_service]"
+  high_spender: "jeux-video.monthly_spend in [de_15_30, plus_30]"
+  parent_player: "children > 0 and jeux-video.player_frequency != jamais"
+
+validation:
+  margins:
+    - {attribute: player_frequency, title: "Fréquence de jeu vidéo (attendue selon l'âge, le sexe et l'équipement)"}
+    - {attribute: weekly_playtime, title: "Temps de jeu hebdomadaire (attendu selon la fréquence et l'âge)"}
+    - {attribute: main_play_mode, title: "Mode de jeu principal"}
+    - {attribute: monthly_spend, title: "Dépenses mensuelles de jeu vidéo"}
+  shares:
+    - label: "Joueurs parmi les adultes (SELL : plus de 7 Français sur 10 de 10 à 80 ans ; moins chez les 60-79 ans)"
+      among: {attr: socle.age, gt: 17}
+      share_of: playing
+      range: [0.58, 0.72]
+    - label: "Joueurs au moins hebdomadaires parmi les joueurs (SELL : 76 %)"
+      among: playing
+      share_of: {attr: player_frequency, in: [regulier_hebdomadaire, quotidien]}
+      range: [0.70, 0.82]
+    - label: "Femmes parmi les joueurs (SELL : 49 %)"
+      among: playing
+      share_of: {attr: socle.sex, eq: F}
+      range: [0.44, 0.54]
+    - label: "Joueurs sur smartphone ou tablette (SELL : 55-59 %)"
+      among: playing
+      share_of: on_mobile
+      range: [0.52, 0.68]
+    - label: "Joueurs sur console (SELL : 47-58 %)"
+      among: playing
+      share_of: on_console
+      range: [0.40, 0.60]
+    - label: "Joueurs sur PC (SELL : 40 %)"
+      among: playing
+      share_of: on_pc
+      range: [0.32, 0.46]
+    - label: "Joueurs abonnés à un service de jeu (SELL : 44 %)"
+      among: playing
+      share_of: {attr: gaming_subscriptions, in: [game_pass, ps_plus, nintendo_switch_online, autre_service]}
+      range: [0.34, 0.54]
+    - label: "Joueurs achetant en magasin (SELL : 52 %)"
+      among: playing
+      share_of: {attr: purchase_channels, in: [boite_magasin]}
+      range: [0.40, 0.62]

@@ -1,4 +1,4 @@
-import { cpSync, existsSync, mkdtempSync, readFileSync, rmSync } from "node:fs";
+import { cpSync, existsSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join, resolve } from "node:path";
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
@@ -7,6 +7,7 @@ import type { Backend, BackendRequest } from "../../src/engine/types";
 import { buildClaudeArgs } from "../../src/engine/backends/claude-cli";
 import {
   acceptDraft,
+  createDraft,
   getModule,
   lineDiff,
   listModules,
@@ -171,6 +172,27 @@ describe("proposition, réparation, révision, validation", () => {
     expect(getModule("test-eco").status).toBe("validated");
     expect(readMeta("test-eco-1").status).toBe("accepted");
     expect(() => acceptDraft("test-eco-2")).toThrow(/existe déjà/);
+  });
+
+  it("refuse, avant d'écrire, un brouillon dont un segment est déjà déclaré par un module de la bibliothèque", () => {
+    // test-eco (validé ci-dessus) déclare le segment ecoTestOs ; autre module, même identifiant de segment
+    const twin = VALID.replace("id: test-eco", "id: test-eco-twin").replace('"test-eco.computer_os == macos"', '"test-eco-twin.computer_os == macos"');
+    createDraft({ id: "test-eco-twin-1", description: "OS (doublon de segment)", moduleId: "test-eco-twin", socle: "fr" });
+    const d = join(dir, "_drafts", "test-eco-twin-1");
+    writeFileSync(join(d, "module.yaml"), twin);
+    writeFileSync(join(d, "meta.json"), JSON.stringify({ ...readMeta("test-eco-twin-1"), status: "ready" }));
+    // Affichage et route web (validationErrors de getModule) : l'erreur est visible et bloque l'acceptation
+    expect(getModule("test-eco-twin-1").validationErrors).toContainEqual({ path: "segments.0.id", message: expect.stringMatching(/segment « ecoTestOs » déjà déclaré par le module test-eco/) });
+    // module:accept : refus propre, rien n'est écrit, la bibliothèque reste cohérente
+    expect(() => acceptDraft("test-eco-twin-1")).toThrow(/Segments en double, module refusé/);
+    expect(existsSync(join(dir, "test-eco-twin"))).toBe(false);
+    expect(readMeta("test-eco-twin-1").status).toBe("ready");
+    // Segment renommé : accepté
+    writeFileSync(join(d, "module.yaml"), twin.replace("id: ecoTestOs", "id: ecoTwinOs"));
+    expect(getModule("test-eco-twin-1").validationErrors).toEqual([]);
+    expect(acceptDraft("test-eco-twin-1").moduleId).toBe("test-eco-twin");
+    // Remplacement d'un module par lui-même : ses propres segments ne sont pas des doublons
+    expect(getModule("test-eco").validationErrors).toEqual([]);
   });
 });
 

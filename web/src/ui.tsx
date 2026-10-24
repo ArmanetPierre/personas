@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState, type CSSProperties, type KeyboardEvent, type ReactNode } from "react";
+import { useEffect, useId, useLayoutEffect, useRef, useState, type CSSProperties, type KeyboardEvent, type ReactNode } from "react";
 import { createPortal } from "react-dom";
 import { Link, useLocation } from "wouter";
 import { packInfos, type Meta } from "./api";
@@ -443,6 +443,458 @@ export function EmptyState({ icon, title, description, action, style }: { icon?:
       <p className="empty-state-title">{title}</p>
       {description && <p className="empty-state-desc">{description}</p>}
       {action && <div className="empty-state-action">{action}</div>}
+    </div>
+  );
+}
+
+/* ─── Barre de filtres ─── */
+
+export interface FilterValueDef {
+  id: string;
+  label: string;
+  /** Effectif affiché en fin de ligne. */
+  count?: number;
+}
+
+export interface FilterFieldDef {
+  id: string;
+  label: string;
+  /** Intitulé du groupe dans la liste des champs (ex. module d'origine). */
+  group?: string;
+  values: FilterValueDef[];
+}
+
+export interface FilterToolbarProps {
+  fields: FilterFieldDef[];
+  /** Filtres actifs : identifiant du champ → identifiant de la valeur (une valeur par champ). */
+  value: Record<string, string>;
+  onChange: (next: Record<string, string>) => void;
+  /** Nom du groupe pour les lecteurs d'écran. */
+  label: string;
+  addLabel: string;
+  clearAllLabel: string;
+  searchPlaceholder: string;
+  noMatch: string;
+  backLabel: string;
+  removeLabel: (field: string, value: string) => string;
+  /** Libellé accessible d'une pastille (qui rouvre ses valeurs). Par défaut « champ séparateur valeur ». */
+  editLabel?: (field: string, value: string) => string;
+  /** Annonce polie du nombre de filtres actifs. */
+  activeLabel?: (n: number) => string;
+  /** Séparateur entre le champ et la valeur dans une pastille (ex. « : » en français). */
+  separator?: string;
+  formatCount?: (n: number) => string;
+}
+
+type FtbOption =
+  | { kind: "field"; field: FilterFieldDef; group?: string }
+  | { kind: "value"; field: FilterFieldDef; value: FilterValueDef; nested?: boolean };
+
+const fold = (s: string) => s.normalize("NFD").replace(/\p{M}/gu, "").toLowerCase();
+
+const CloseIcon = () => (
+  <svg width="12" height="12" viewBox="0 0 12 12" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" aria-hidden="true" focusable="false">
+    <path d="M3 3l6 6M9 3l-6 6" />
+  </svg>
+);
+const PlusIcon = () => (
+  <svg width="12" height="12" viewBox="0 0 12 12" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" aria-hidden="true" focusable="false">
+    <path d="M6 2v8M2 6h8" />
+  </svg>
+);
+const ChevronIcon = ({ dir }: { dir: "left" | "right" }) => (
+  <svg width="12" height="12" viewBox="0 0 12 12" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true" focusable="false">
+    <path d={dir === "left" ? "M7.5 2.5L4 6l3.5 3.5" : "M4.5 2.5L8 6l-3.5 3.5"} />
+  </svg>
+);
+const CheckIcon = () => (
+  <svg width="12" height="12" viewBox="0 0 12 12" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true" focusable="false">
+    <path d="M2.5 6.5l2.3 2.3L9.5 3.5" />
+  </svg>
+);
+
+/**
+ * Barre de filtres : pastilles « champ : valeur » retirables, « Tout effacer », et menu « + Filtre » en deux
+ * étapes (champ, puis valeur avec effectifs). Le champ de recherche du panneau est une combobox
+ * (aria-activedescendant) : flèches, Entrée, Échap, Retour arrière sur recherche vide pour revenir aux champs.
+ * Adapté du « Filter Toolbar » de 21st.dev (kuratlielia), sans motion ni lucide : animations CSS coupées
+ * sous prefers-reduced-motion, une seule valeur par champ.
+ */
+export function FilterToolbar(props: FilterToolbarProps) {
+  const { fields, value, onChange, label, addLabel, clearAllLabel, searchPlaceholder, noMatch, backLabel, removeLabel } = props;
+  const sep = props.separator ?? ": ";
+  const fmt = props.formatCount ?? ((n: number) => String(n));
+  const uid = useId();
+  const panelId = `${uid}-panel`;
+  const listId = `${uid}-list`;
+  const rootRef = useRef<HTMLDivElement>(null);
+  const addRef = useRef<HTMLButtonElement>(null);
+  const panelRef = useRef<HTMLDivElement>(null);
+  const inputRef = useRef<HTMLInputElement>(null);
+  const chipRefs = useRef(new Map<string, HTMLButtonElement>());
+  const opener = useRef<HTMLElement | null>(null);
+  const pendingFocus = useRef<string | null>(null);
+  // null : fermé ; "" : étape 1 (champs) ; sinon : étape 2, valeurs du champ
+  const [step, setStep] = useState<string | null>(null);
+  const [query, setQuery] = useState("");
+  const [active, setActive] = useState(0);
+  const [panelLeft, setPanelLeft] = useState(0);
+  const open = step !== null;
+
+  const byId = new Map(fields.map((f) => [f.id, f]));
+  const chips = Object.entries(value)
+    .filter(([, v]) => v)
+    .map(([fid, vid]) => {
+      const field = byId.get(fid);
+      return { fid, vid, fieldLabel: field?.label ?? fid, valueLabel: field?.values.find((v) => v.id === vid)?.label ?? vid };
+    });
+
+  // Options de l'étape courante (la recherche porte sur le champ ET sur ses valeurs)
+  const q = fold(query.trim());
+  const options: FtbOption[] = [];
+  if (step === "") {
+    for (const field of fields) {
+      const fieldHit = !q || fold(field.label).includes(q);
+      const valueHits = q && !fieldHit ? field.values.filter((v) => fold(v.label).includes(q)).slice(0, 6) : [];
+      if (!fieldHit && valueHits.length === 0) continue;
+      options.push({ kind: "field", field, group: field.group });
+      for (const v of valueHits) options.push({ kind: "value", field, value: v, nested: true });
+    }
+  } else if (step) {
+    const field = byId.get(step);
+    for (const v of field?.values ?? []) if (!q || fold(v.label).includes(q)) options.push({ kind: "value", field: field!, value: v });
+  }
+  const current = Math.min(active, Math.max(0, options.length - 1));
+  const optionId = (i: number) => `${uid}-opt-${i}`;
+
+  const close = (restore = true) => {
+    setStep(null);
+    setQuery("");
+    if (restore) (opener.current ?? addRef.current)?.focus();
+  };
+  const goStep = (s: string) => {
+    setStep(s);
+    setQuery("");
+    // à l'étape 2, on se place sur la valeur déjà choisie s'il y en a une
+    const field = byId.get(s);
+    const idx = field ? field.values.findIndex((v) => v.id === value[s]) : -1;
+    setActive(Math.max(0, idx));
+  };
+  const openAt = (s: string, from: HTMLElement | null) => {
+    opener.current = from;
+    goStep(s);
+  };
+  const choose = (o: FtbOption) => {
+    if (o.kind === "field") return goStep(o.field.id);
+    onChange({ ...value, [o.field.id]: o.value.id });
+    close();
+  };
+  const remove = (fid: string) => {
+    const i = chips.findIndex((c) => c.fid === fid);
+    pendingFocus.current = chips[i + 1]?.fid ?? "__add";
+    const next = { ...value };
+    delete next[fid];
+    onChange(next);
+  };
+
+  // Focus après retrait : pastille suivante, sinon « + Filtre »
+  useEffect(() => {
+    const target = pendingFocus.current;
+    if (!target) return;
+    pendingFocus.current = null;
+    (target === "__add" ? addRef.current : chipRefs.current.get(target) ?? addRef.current)?.focus();
+  });
+
+  // Focus sur la recherche à l'ouverture et à chaque changement d'étape
+  useEffect(() => {
+    if (open) inputRef.current?.focus();
+  }, [open, step]);
+
+  // Clic extérieur
+  useEffect(() => {
+    if (!open) return;
+    const onDown = (e: PointerEvent) => {
+      if (!rootRef.current?.contains(e.target as Node)) close(false);
+    };
+    document.addEventListener("pointerdown", onDown);
+    return () => document.removeEventListener("pointerdown", onDown);
+  });
+
+  // Panneau aligné sur son déclencheur, sans dépasser la barre
+  useLayoutEffect(() => {
+    if (!open) return;
+    const root = rootRef.current;
+    const panel = panelRef.current;
+    const anchor = opener.current ?? addRef.current;
+    if (!root || !panel || !anchor) return;
+    const r = root.getBoundingClientRect();
+    const left = anchor.getBoundingClientRect().left - r.left;
+    setPanelLeft(Math.max(0, Math.min(left, r.width - panel.offsetWidth)));
+  }, [open, step]);
+
+  // Option active visible
+  useEffect(() => {
+    if (open) document.getElementById(optionId(current))?.scrollIntoView({ block: "nearest" });
+  });
+
+  const onInputKey = (e: KeyboardEvent<HTMLInputElement>) => {
+    const n = options.length;
+    if (e.key === "ArrowDown" || e.key === "ArrowUp") {
+      e.preventDefault();
+      if (n) setActive((current + (e.key === "ArrowDown" ? 1 : n - 1)) % n);
+    } else if (e.key === "Home" && !query) {
+      e.preventDefault();
+      setActive(0);
+    } else if (e.key === "End" && !query) {
+      e.preventDefault();
+      setActive(Math.max(0, n - 1));
+    } else if (e.key === "Enter") {
+      e.preventDefault();
+      const o = options[current];
+      if (o) choose(o);
+    } else if (e.key === "Escape") {
+      e.preventDefault();
+      close();
+    } else if (e.key === "Backspace" && !query && step) {
+      e.preventDefault();
+      goStep("");
+    }
+  };
+
+  const stepField = step ? byId.get(step) : undefined;
+  let lastGroup: string | undefined;
+
+  return (
+    <div className="ftb" ref={rootRef} role="group" aria-label={label}>
+      <ul className="ftb-chips">
+        {chips.map((c) => (
+          <li className="ftb-chip" key={c.fid}>
+            <button
+              type="button"
+              className="ftb-chip-main"
+              ref={(el) => {
+                if (el) chipRefs.current.set(c.fid, el);
+                else chipRefs.current.delete(c.fid);
+              }}
+              aria-haspopup="listbox"
+              aria-expanded={step === c.fid}
+              aria-controls={step === c.fid ? panelId : undefined}
+              aria-label={props.editLabel ? props.editLabel(c.fieldLabel, c.valueLabel) : undefined}
+              onClick={(e) => (step === c.fid ? close() : openAt(c.fid, e.currentTarget))}
+            >
+              <span className="ftb-chip-field">
+                {c.fieldLabel}
+                {sep}
+              </span>
+              <span className="ftb-chip-value">{c.valueLabel}</span>
+            </button>
+            <button type="button" className="ftb-chip-x" aria-label={removeLabel(c.fieldLabel, c.valueLabel)} onClick={() => remove(c.fid)}>
+              <CloseIcon />
+            </button>
+          </li>
+        ))}
+        <li className="ftb-tools">
+          <button
+            type="button"
+            ref={addRef}
+            className="ftb-add"
+            aria-haspopup="listbox"
+            aria-expanded={step === ""}
+            aria-controls={panelId}
+            onClick={(e) => (step === "" ? close() : openAt("", e.currentTarget))}
+          >
+            <PlusIcon />
+            {addLabel}
+          </button>
+          {chips.length > 0 && (
+            <button
+              type="button"
+              className="ftb-clear"
+              onClick={() => {
+                onChange({});
+                addRef.current?.focus();
+              }}
+            >
+              {clearAllLabel}
+            </button>
+          )}
+        </li>
+      </ul>
+      {props.activeLabel && (
+        <span className="sr-only" aria-live="polite">
+          {props.activeLabel(chips.length)}
+        </span>
+      )}
+      {open && (
+        <div className="ftb-panel" id={panelId} ref={panelRef} style={{ left: panelLeft }}>
+          {stepField && (
+            <div className="ftb-head">
+              <button type="button" className="ftb-back" onClick={() => goStep("")}>
+                <ChevronIcon dir="left" />
+                <span className="sr-only">{backLabel}</span>
+              </button>
+              <span className="ftb-head-title">{stepField.label}</span>
+            </div>
+          )}
+          <input
+            ref={inputRef}
+            className="ftb-search"
+            type="text"
+            role="combobox"
+            aria-expanded="true"
+            aria-controls={listId}
+            aria-autocomplete="list"
+            aria-activedescendant={options.length ? optionId(current) : undefined}
+            aria-label={stepField ? `${stepField.label}, ${searchPlaceholder}` : searchPlaceholder}
+            placeholder={searchPlaceholder}
+            value={query}
+            onChange={(e) => {
+              setQuery(e.target.value);
+              setActive(0);
+            }}
+            onKeyDown={onInputKey}
+          />
+          <ul className="ftb-list" id={listId} role="listbox" aria-label={stepField?.label ?? addLabel}>
+            {options.length === 0 && <li className="ftb-empty">{noMatch}</li>}
+            {options.map((o, i) => {
+              const head = step === "" && o.kind === "field" && o.group && o.group !== lastGroup ? o.group : null;
+              if (o.kind === "field") lastGroup = o.group;
+              const selected = o.kind === "value" && value[o.field.id] === o.value.id;
+              const filtered = o.kind === "field" && Boolean(value[o.field.id]);
+              return (
+                <li key={o.kind === "field" ? `f:${o.field.id}` : `v:${o.field.id}:${o.value.id}`} role="presentation">
+                  {head && (
+                    <div className="ftb-group" role="presentation">
+                      {head}
+                    </div>
+                  )}
+                  <div
+                    id={optionId(i)}
+                    role="option"
+                    aria-selected={i === current}
+                    aria-checked={o.kind === "value" ? selected : undefined}
+                    className={`ftb-opt${i === current ? " active" : ""}${o.kind === "value" && o.nested ? " nested" : ""}`}
+                    onPointerMove={() => i !== current && setActive(i)}
+                    onPointerDown={(e) => e.preventDefault()}
+                    onClick={() => choose(o)}
+                  >
+                    {o.kind === "field" ? (
+                      <>
+                        <span className="ftb-opt-label">{o.field.label}</span>
+                        {filtered && <span className="ftb-dot" aria-hidden="true" />}
+                        <ChevronIcon dir="right" />
+                      </>
+                    ) : (
+                      <>
+                        <span className="ftb-check">{selected && <CheckIcon />}</span>
+                        <span className="ftb-opt-label">{o.value.label}</span>
+                        {o.value.count !== undefined && <span className="ftb-count">{fmt(o.value.count)}</span>}
+                      </>
+                    )}
+                  </div>
+                </li>
+              );
+            })}
+          </ul>
+        </div>
+      )}
+    </div>
+  );
+}
+
+/* ─── Curseur à deux poignées ─── */
+
+export interface RangeSliderProps {
+  min: number;
+  max: number;
+  step?: number;
+  value: [number, number];
+  onChange: (next: [number, number]) => void;
+  /** Appelé au relâchement du pointeur avec la dernière valeur (au clavier, chaque pas passe par `onChange`). */
+  onCommit?: (next: [number, number]) => void;
+  label: string;
+  formatValue?: (n: number) => string;
+  thumbLabels: [string, string];
+}
+
+/**
+ * Curseur à deux poignées : deux <input type="range"> superposés (clavier natif : flèches, PageUp/PageDown,
+ * Home/End ; aria-valuetext via `formatValue`), poignées qui ne se croisent pas, piste remplie entre elles,
+ * bulle de valeur au focus clavier et au glissement. Adapté du « Slider » de 21st.dev (wensity), sans Base UI.
+ */
+export function RangeSlider({ min, max, step = 1, value, onChange, onCommit, label, formatValue, thumbLabels }: RangeSliderProps) {
+  const fmt = formatValue ?? ((n: number) => String(n));
+  const labelId = useId();
+  const [drag, setDrag] = useState<0 | 1 | null>(null);
+  const latest = useRef(value);
+  latest.current = value;
+  const lo = Math.max(min, Math.min(value[0], max));
+  const hi = Math.max(lo, Math.min(value[1], max));
+  const span = max - min || 1;
+  const pct = (n: number) => ((n - min) / span) * 100;
+  const set = (i: 0 | 1, raw: number) => {
+    const next: [number, number] = i === 0 ? [Math.min(raw, hi), hi] : [lo, Math.max(raw, lo)];
+    if (next[0] !== lo || next[1] !== hi) onChange(next);
+  };
+  // Fin de glissement écoutée sur la fenêtre : le pointeur peut être relâché hors de la poignée
+  useEffect(() => {
+    if (drag === null) return;
+    const end = () => {
+      setDrag(null);
+      onCommit?.(latest.current);
+    };
+    window.addEventListener("pointerup", end);
+    window.addEventListener("pointercancel", end);
+    return () => {
+      window.removeEventListener("pointerup", end);
+      window.removeEventListener("pointercancel", end);
+    };
+  }, [drag, onCommit]);
+  // Centre d'une poignée de 18 px : la piste utile va de 9 px à (100 % - 9 px)
+  const at = (n: number) => `calc(${pct(n)}% + ${9 - pct(n) * 0.18}px)`;
+  // Poignées confondues en haut de la piste : la basse passe dessus pour rester attrapable
+  const loOnTop = lo === hi && lo >= min + span / 2;
+
+  const thumb = (i: 0 | 1) => {
+    const v = i === 0 ? lo : hi;
+    return (
+      <div className={`rsl-thumb${drag === i ? " dragging" : ""}`} style={{ zIndex: i === 0 ? (loOnTop ? 3 : 2) : 2 }}>
+        <input
+          type="range"
+          min={min}
+          max={max}
+          step={step}
+          value={v}
+          aria-label={thumbLabels[i]}
+          aria-valuetext={fmt(v)}
+          onChange={(e) => set(i, Number(e.target.value))}
+          onPointerDown={() => setDrag(i)}
+          onBlur={() => setDrag(null)}
+        />
+        <span className="rsl-bubble" aria-hidden="true" style={{ left: at(v) }}>
+          {fmt(v)}
+        </span>
+      </div>
+    );
+  };
+
+  return (
+    <div className="rsl" role="group" aria-labelledby={labelId}>
+      <div className="rsl-head">
+        <span id={labelId} className="rsl-label">
+          {label}
+        </span>
+        <span className="rsl-values num" aria-hidden="true">
+          {fmt(lo)} – {fmt(hi)}
+        </span>
+      </div>
+      <div className="rsl-control">
+        <div className="rsl-track" aria-hidden="true">
+          <div className="rsl-fill" style={{ left: at(lo), width: `calc(${at(hi)} - ${at(lo)})` }} />
+        </div>
+        {thumb(0)}
+        {thumb(1)}
+      </div>
     </div>
   );
 }

@@ -2,7 +2,8 @@ import { useEffect, useRef, useState, type ReactNode } from "react";
 import { Link, useLocation } from "wouter";
 import { api, ApiError, useApi, type DraftStatus, type ModulePreview, type ModuleResponse, type ModuleView, type ValidationIssue } from "../api";
 import { dateFr, ErrorBox, Loading, num, pct } from "../ui";
-import { tr, useDict } from "../i18n";
+import { intlLocale, tr, useDict } from "../i18n";
+import "../module-page.css";
 import { modulesDict } from "../i18n/modules";
 import { AssistantBanner, draftStatusLabel, ModuleStatus, useAssistantFeature } from "./Modules";
 import { FEATURES, usePlatform } from "../platform";
@@ -101,6 +102,11 @@ export function ModulePage({ id, draft = false }: { id: string; draft?: boolean 
   const m = mod.data?.module;
   const accepted = meta?.status === "accepted";
 
+  const socles = mod.data?.socles ?? [];
+  const request = draft ? meta?.description : mod.data?.origin?.description;
+  const origin = draft ? meta : mod.data?.origin ?? null;
+  const canAct = draft && !accepted && hasYaml;
+
   return (
     <>
       <div className="crumbs">
@@ -108,44 +114,242 @@ export function ModulePage({ id, draft = false }: { id: string; draft?: boolean 
         <span>/</span>
         <span>{draft ? t.page.draftCrumb(id) : id}</span>
       </div>
-      <header className="module-head">
-        <div>
-          <div className="row small" style={{ gap: 12 }}>
-            <ModuleStatus status={m?.status ?? (meta ? `draft:${meta.status}` : "draft:proposing")} />
-            {view && (
-              <span className="muted num">
-                {view.id} v{view.version}
-              </span>
-            )}
+      <ModuleHero
+        view={view}
+        title={view?.label ?? (typeof meta?.moduleId === "string" ? meta.moduleId : null) ?? id}
+        status={m?.status ?? (meta ? `draft:${meta.status}` : "draft:proposing")}
+        socles={socles}
+        meta={meta}
+        actions={
+          canAct ? (
+            <div className="mp-actions">
+              <a className="btn" href="#mp-accept">{t.accept.button}</a>
+              <a className="btn ghost" href="#mp-revise">{t.revise.title}</a>
+              <a className="btn ghost" href="#mp-yaml">{t.head.editYaml}</a>
+            </div>
+          ) : null
+        }
+      />
+      {mod.data && !assistantOk && <AssistantBanner reason={mod.data.assistant.reason} />}
+
+      {draft && <WorkPanel status={status.data} meta={meta} working={working} />}
+
+      {m && hasYaml && m.validationErrors.length > 0 && (
+        <section className="section" style={{ marginTop: 32 }}>
+          <div className="section-head">
+            <h2>{t.page.validationTitle}</h2>
+            <p className="small ink2">{t.page.validationHint}</p>
           </div>
-          <h1 style={{ marginTop: 8 }}>{view?.label ?? (typeof meta?.moduleId === "string" ? meta.moduleId : null) ?? id}</h1>
-          {view?.description && <p className="lede" style={{ marginTop: 12 }}>{view.description}</p>}
-          {draft && meta?.description && (
-            <p className="small ink2" style={{ marginTop: 10, maxWidth: "72ch" }}>
-              {t.page.request(meta.description)}
-            </p>
+          <div className="alerts">
+            {m.validationErrors.map((e, i) => (
+              <div key={i} className="alert error">
+                <span className="lvl">{t.page.error}</span>
+                <span>{issueText(e)}</span>
+              </div>
+            ))}
+          </div>
+        </section>
+      )}
+
+      {view && <UseSection view={view} preview={preview.data} />}
+
+      {hasYaml && <PreviewSections preview={preview.data} error={preview.error} loading={preview.loading} assistantOk={assistantOk} draft={draft} />}
+
+      {view && <ModuleBody view={view} />}
+
+      {!draft && m?.status === "validated" && view && has(FEATURES.hubPublish) && <PublishSection moduleId={view.id} />}
+
+      {draft && meta?.notes && meta.notes.length > 0 && (
+        <section className="section">
+          <details className="panel more">
+            <summary>
+              <b>{t.page.notesTitle}</b> <span className="small ink2">{t.head.notesCount(meta.notes.length)}</span>
+            </summary>
+            <div style={{ marginTop: 10 }}>
+              <Notes notes={meta.notes} />
+            </div>
+          </details>
+        </section>
+      )}
+
+      {draft && !accepted && hasYaml && (
+        <div id="mp-revise" className="mp-anchor">
+          <ReviseSection id={id} disabled={working || !assistantOk} onStarted={() => void status.reload()} />
+        </div>
+      )}
+
+      {m && hasYaml && (
+        <div id="mp-yaml" className="mp-anchor">
+          {draft && !accepted ? <YamlEditor id={id} yaml={m.yaml} disabled={working} onDirty={setYamlDirty} onSaved={() => { void mod.reload(); void preview.reload(); void status.reload(); }} /> : <YamlView yaml={m.yaml} />}
+        </div>
+      )}
+
+      {draft && m && (
+        <div id="mp-accept" className="mp-anchor">
+          <AcceptSection
+            id={id}
+            label={view?.label ?? id}
+            moduleId={view?.id ?? null}
+            exists={Boolean(view && library.data?.modules.some((x) => x.id === view.id && x.status === "validated"))}
+            meta={meta}
+            working={working}
+            assistantOk={assistantOk}
+            errors={[...m.validationErrors.map(issueText), ...(preview.data?.alerts ?? []).filter((a) => a.level === "error").map((a) => a.message)]}
+            dirty={yamlDirty}
+            job={status.data?.job ?? null}
+            log={status.data?.log ?? ""}
+            refresh={status.reload}
+          />
+        </div>
+      )}
+
+      <OriginSection request={request ?? null} origin={origin} changelog={view?.changelog ?? []} showNotes={!draft} />
+    </>
+  );
+}
+
+/** Découpe une description : première phrase (résumé) et suite (« En savoir plus »). Courte : pas de suite. */
+export function splitSummary(d: string): { lead: string; rest: string } {
+  const text = d.trim();
+  if (text.length <= 220) return { lead: text, rest: "" };
+  const m = /^(.+?[.!?])\s+(?=[A-ZÀ-ÖØ-Þ«“"(])/su.exec(text);
+  if (!m || m[1]!.length > 320) return { lead: text, rest: "" };
+  return { lead: m[1]!, rest: text.slice(m[0].length).trim() };
+}
+
+/** Date seule (« 22 oct. 2026 »), pour les versions du changelog (AAAA-MM-JJ). */
+const dayOf = (d: string) => {
+  const x = new Date(`${d.slice(0, 10)}T12:00:00`);
+  return Number.isNaN(x.getTime()) ? d : x.toLocaleDateString(intlLocale(), { day: "numeric", month: "short", year: "numeric" });
+};
+
+const rangeText = (r: [number, number]) => (Math.round(r[0] * 100) === Math.round(r[1] * 100) ? pct(r[0]) : `${Math.round(r[0] * 100)}–${pct(r[1])}`);
+
+// ─── En-tête : titre, résumé, pastilles, chiffres clés, fiche ─────────────────
+
+function ModuleHero({
+  view,
+  title,
+  status,
+  socles,
+  meta,
+  actions,
+}: {
+  view: ModuleView | null;
+  title: string;
+  status: string;
+  socles: NonNullable<ModuleResponse["socles"]>;
+  meta: DraftStatus["meta"];
+  actions: ReactNode;
+}) {
+  const t = useDict(modulesDict);
+  const h = t.head;
+  const desc = view?.description ? splitSummary(view.description) : null;
+  const n = view?.attributes.length ?? 0;
+  const share = view?.validationShares?.[0];
+  const helpers = view?.eligibilityHelpers ?? [];
+  const sourced = view?.sourcedCount ?? 0;
+  const openSources = () => document.getElementById("mp-sources")?.setAttribute("open", "");
+  const version = view?.changelog?.find((c) => c.version === view.version);
+  return (
+    <header className="mp-hero">
+      <div className="mp-main">
+        <div className="mp-badges">
+          <ModuleStatus status={status} />
+          {socles.map((s) => (
+            <span key={s.id} className="tag" title={h.socleHint(s.pack, s.locale)}>
+              {s.label}
+              {s.locale && <span className="mp-lang">{s.locale.toUpperCase()}</span>}
+            </span>
+          ))}
+          {view && <span className="tag num">v{view.version}</span>}
+          {view && view.sensitive?.length > 0 && (
+            <span className="tag warn" title={h.sensitiveHint(view.sensitive.join(", "))}>
+              {t.hub.badges.sensitive}
+            </span>
           )}
         </div>
-        <dl className="facts">
+        <h1>{title}</h1>
+        {desc && <p className="mp-summary">{desc.lead}</p>}
+        {desc?.rest && (
+          <details className="mp-readmore">
+            <summary>{h.readMore}</summary>
+            <p>{desc.rest}</p>
+          </details>
+        )}
+        {view && (
+          <ul className="mp-kpis">
+            <li>
+              <b className="num">{n}</b>
+              <span>{h.kpiAttributes}</span>
+            </li>
+            <li>
+              <b className="num">{n ? pct(sourced / n) : "–"}</b>
+              <span>{h.kpiSourced}</span>
+              <span className="mp-meter" aria-hidden="true">
+                <i style={{ width: `${n ? (sourced / n) * 100 : 0}%` }} />
+              </span>
+              <small>{h.kpiSourcedSub(sourced, n, view.assumptionCount ?? 0)}</small>
+            </li>
+            {share && (
+              <li title={share.note ?? undefined}>
+                <b className="num">{rangeText(share.range)}</b>
+                <span>{share.title}</span>
+                <small>{h.kpiShareSub}</small>
+              </li>
+            )}
+            {helpers.length > 0 && (
+              <li>
+                <a href="#mp-use" className="num">{helpers.length}</a>
+                <span>{h.kpiFilters}</span>
+                <small>{h.kpiFiltersSub(view.segments.length)}</small>
+              </li>
+            )}
+          </ul>
+        )}
+        {actions}
+      </div>
+      <aside className="mp-facts" aria-label={h.factsAria}>
+        <dl>
           {view && (
             <>
-              <dt>{t.page.socles}</dt>
-              <dd>{view.appliesTo.join(", ")}</dd>
-              <dt>{t.page.requires}</dt>
+              <dt>{h.socle}</dt>
+              <dd>{socles.length ? socles.map((s) => `${s.label} (${s.pack})`).join(", ") : view.appliesTo.join(", ")}</dd>
+              <dt>{h.requires}</dt>
               <dd>
                 {view.requires.length
                   ? view.requires.map((r, i) => (
                       <span key={r}>
                         {i > 0 && ", "}
-                        <Link href={`/modules/${r}`}>{r}</Link>
+                        <Link href={`/modules/${encodeURIComponent(r.split("@")[0]!)}`}>{r}</Link>
                       </span>
                     ))
                   : t.page.noModule}
               </dd>
-              <dt>{t.page.attributes}</dt>
-              <dd className="num">{view.attributes.length}</dd>
-              <dt>{t.page.sources}</dt>
-              <dd className="num">{view.sources.length}</dd>
+              <dt>{h.sources}</dt>
+              <dd>
+                {view.sources.length === 0 && <span className="muted">{h.noSource}</span>}
+                <ul className="mp-srcs">
+                  {view.sources.slice(0, 3).map((s) => (
+                    <li key={s.key}>
+                      <a href={s.url} target="_blank" rel="noreferrer" title={s.title}>
+                        {s.org} {s.year}
+                      </a>
+                      <span className="mp-src-title">{s.title}</span>
+                    </li>
+                  ))}
+                </ul>
+                {view.sources.length > 3 && (
+                  <a href="#mp-sources" className="small" onClick={openSources}>
+                    {h.allSources(view.sources.length)}
+                  </a>
+                )}
+              </dd>
+              <dt>{h.version}</dt>
+              <dd className="num">
+                {view.version}
+                {version?.date && <span className="muted"> · {dayOf(version.date)}</span>}
+              </dd>
             </>
           )}
           {meta?.projectId && (
@@ -175,97 +379,173 @@ export function ModulePage({ id, draft = false }: { id: string; draft?: boolean 
             </>
           )}
         </dl>
-      </header>
-      {mod.data && !assistantOk && <AssistantBanner reason={mod.data.assistant.reason} />}
+      </aside>
+    </header>
+  );
+}
 
-      {draft && <WorkPanel status={status.data} meta={meta} working={working} />}
+// ─── À quoi sert ce module : filtres, repères sourcés, segments ───────────────
 
-      {draft && meta?.notes && meta.notes.length > 0 && (
-        <section className="section" style={{ marginTop: 32 }}>
-          <div className="section-head">
-            <h2>{t.page.notesTitle}</h2>
-          </div>
-          <div className="panel">
-            <Notes notes={meta.notes} />
-          </div>
-        </section>
-      )}
-
-      {m && hasYaml && m.validationErrors.length > 0 && (
-        <section className="section" style={{ marginTop: 32 }}>
-          <div className="section-head">
-            <h2>{t.page.validationTitle}</h2>
-            <p className="small ink2">{t.page.validationHint}</p>
-          </div>
-          <div className="alerts">
-            {m.validationErrors.map((e, i) => (
-              <div key={i} className="alert error">
-                <span className="lvl">{t.page.error}</span>
-                <span>{issueText(e)}</span>
-              </div>
-            ))}
-          </div>
-        </section>
-      )}
-
-      {hasYaml && <PreviewSections preview={preview.data} error={preview.error} loading={preview.loading} assistantOk={assistantOk} draft={draft} />}
-
-      {view && <ModuleBody view={view} />}
-
-      {!draft && m?.status === "validated" && view && has(FEATURES.hubPublish) && <PublishSection moduleId={view.id} />}
-
-      {draft && !accepted && hasYaml && <ReviseSection id={id} disabled={working || !assistantOk} onStarted={() => void status.reload()} />}
-
-      {m && hasYaml && (draft && !accepted ? <YamlEditor id={id} yaml={m.yaml} disabled={working} onDirty={setYamlDirty} onSaved={() => { void mod.reload(); void preview.reload(); void status.reload(); }} /> : <YamlView yaml={m.yaml} />)}
-
-      {draft && meta?.history && meta.history.length > 0 && (
-        <section className="section">
-          <div className="section-head">
-            <h2>{t.page.historyTitle}</h2>
-          </div>
-          <div className="timeline">
-            {meta.history.map((h, i) => {
-              const o = (h && typeof h === "object" ? h : {}) as Record<string, unknown>;
-              const at = (o.at ?? o.date ?? o.createdAt) as string | undefined;
-              const rawKind = (o.kind ?? o.action ?? o.type) as string | undefined;
-              const kind = rawKind && (t.page.historyKinds[rawKind] ?? rawKind);
+function UseSection({ view, preview }: { view: ModuleView; preview: ModulePreview | null }) {
+  const t = useDict(modulesDict);
+  const u = t.use;
+  const helpers = view.eligibilityHelpers ?? [];
+  const shares = view.validationShares ?? [];
+  const rates = new Map(
+    (Array.isArray(preview?.eligibilityHelpers) ? (preview.eligibilityHelpers as Array<{ name: string; rate: number }>) : []).map((h) => [h.name, h.rate]),
+  );
+  if (!helpers.length && !shares.length && !view.segments.length) return null;
+  return (
+    <section className="section" id="mp-use">
+      <div className="section-head">
+        <h2>{u.title}</h2>
+        <p className="small ink2">{u.hint}</p>
+      </div>
+      {helpers.length > 0 && (
+        <div className="panel">
+          <h3 className="mp-h3">{u.filters}</h3>
+          <p className="small ink2">{rates.size ? u.filtersHint(num(preview?.n ?? 2000)) : u.filtersHintNoRate}</p>
+          <ul className="mp-filters">
+            {helpers.map((hp) => {
+              const rate = rates.get(hp.name);
               return (
-                <div key={i}>
-                  <span className="muted small">{at ? dateFr(at) : t.page.step(i + 1)}</span>
-                  <span>
-                    {kind && <b>{kind}{t.colon}</b>}
-                    {textOf(h)}
-                    {typeof o.diff === "string" && o.diff.trim() && (
-                      <details style={{ marginTop: 4 }}>
-                        <summary className="small ink2" style={{ cursor: "pointer" }}>{t.page.changes}</summary>
-                        <pre className="yaml" style={{ marginTop: 6, maxHeight: 280 }}>{o.diff}</pre>
-                      </details>
-                    )}
-                  </span>
-                </div>
+                <li key={hp.name}>
+                  <div className="mp-filter-text">
+                    <span>{hp.text ?? hp.expression}</span>
+                    <code title={hp.expression}>{hp.name}</code>
+                  </div>
+                  {rate !== undefined ? (
+                    <div className="mp-bar" title={`${hp.name}${t.colon}${pct(rate, 1)}`}>
+                      <span className="t" aria-hidden="true">
+                        <i style={{ width: `${Math.max(0, Math.min(1, rate)) * 100}%` }} />
+                      </span>
+                      <span className="num">{pct(rate, rate > 0 && rate < 0.1 ? 1 : 0)}</span>
+                    </div>
+                  ) : (
+                    <span />
+                  )}
+                </li>
               );
             })}
-          </div>
-        </section>
+          </ul>
+        </div>
       )}
+      {(shares.length > 0 || view.segments.length > 0) && (
+        <div className="grid-2" style={{ marginTop: 16 }}>
+          {shares.length > 0 && (
+            <div className="panel">
+              <h3 className="mp-h3">{u.shares}</h3>
+              <p className="small ink2">{u.sharesHint}</p>
+              <ul className="mp-shares">
+                {shares.map((sh, i) => (
+                  <li key={i}>
+                    <div className="mp-share-head">
+                      <span>{sh.title}</span>
+                      <b className="num">{rangeText(sh.range)}</b>
+                    </div>
+                    <span className="mp-range" aria-hidden="true">
+                      <i style={{ left: `${sh.range[0] * 100}%`, width: `${Math.max(0.5, (sh.range[1] - sh.range[0]) * 100)}%` }} />
+                    </span>
+                    {sh.note && <span className="small muted">{sh.note}</span>}
+                  </li>
+                ))}
+              </ul>
+            </div>
+          )}
+          {view.segments.length > 0 && (
+            <div className="panel">
+              <h3 className="mp-h3">{t.body.segments}</h3>
+              <p className="small ink2">{u.segmentsHint}</p>
+              <ul className="mp-segs">
+                {view.segments.map((sg) => (
+                  <li key={sg.id}>
+                    <span>{sg.label}</span>
+                    <span className="small muted">{sg.attributeLabel}</span>
+                  </li>
+                ))}
+              </ul>
+            </div>
+          )}
+        </div>
+      )}
+    </section>
+  );
+}
 
-      {draft && m && (
-        <AcceptSection
-          id={id}
-          label={view?.label ?? id}
-          moduleId={view?.id ?? null}
-          exists={Boolean(view && library.data?.modules.some((x) => x.id === view.id && x.status === "validated"))}
-          meta={meta}
-          working={working}
-          assistantOk={assistantOk}
-          errors={[...m.validationErrors.map(issueText), ...(preview.data?.alerts ?? []).filter((a) => a.level === "error").map((a) => a.message)]}
-          dirty={yamlDirty}
-          job={status.data?.job ?? null}
-          log={status.data?.log ?? ""}
-          refresh={status.reload}
-        />
-      )}
-    </>
+// ─── Comment ce module a été créé (replié) ─────────────────────────────────────
+
+function OriginSection({ request, origin, changelog, showNotes }: { request: string | null; origin: DraftStatus["meta"]; changelog: ModuleView["changelog"]; showNotes: boolean }) {
+  const t = useDict(modulesDict);
+  const o = t.origin;
+  const history = origin?.history ?? [];
+  const notes = showNotes ? origin?.notes ?? [] : [];
+  if (!request && !history.length && !notes.length && !changelog.length) return null;
+  return (
+    <section className="section">
+      <details className="panel more mp-origin">
+        <summary>
+          <b>{o.title}</b> <span className="small ink2">{o.hint}</span>
+        </summary>
+        <div className="stack" style={{ marginTop: 14, gap: 20 }}>
+          {changelog.length > 0 && (
+            <div>
+              <h3 className="mp-h3">{o.versions}</h3>
+              <ul className="mp-versions">
+                {changelog.map((c) => (
+                  <li key={c.version}>
+                    <span className="num muted small">
+                      v{c.version} · {dayOf(c.date)}
+                    </span>
+                    <span className="small">{c.changes.join(" ")}</span>
+                  </li>
+                ))}
+              </ul>
+            </div>
+          )}
+          {request && (
+            <div>
+              <h3 className="mp-h3">{o.request}</h3>
+              <p className="small muted">{o.requestHint}</p>
+              <pre className="mp-request">{request}</pre>
+            </div>
+          )}
+          {notes.length > 0 && (
+            <div>
+              <h3 className="mp-h3">{t.page.notesTitle}</h3>
+              <Notes notes={notes} />
+            </div>
+          )}
+          {history.length > 0 && (
+            <div>
+              <h3 className="mp-h3">{t.page.historyTitle}</h3>
+              <div className="timeline">
+                {history.map((hh, i) => {
+                  const ob = (hh && typeof hh === "object" ? hh : {}) as Record<string, unknown>;
+                  const at = (ob.at ?? ob.date ?? ob.createdAt) as string | undefined;
+                  const rawKind = (ob.kind ?? ob.action ?? ob.type) as string | undefined;
+                  const kind = rawKind && (t.page.historyKinds[rawKind] ?? rawKind);
+                  return (
+                    <div key={i}>
+                      <span className="muted small">{at ? dateFr(at) : t.page.step(i + 1)}</span>
+                      <span>
+                        {kind && <b>{kind}{t.colon}</b>}
+                        {textOf(hh)}
+                        {typeof ob.diff === "string" && ob.diff.trim() && (
+                          <details style={{ marginTop: 4 }}>
+                            <summary className="small ink2" style={{ cursor: "pointer" }}>{t.page.changes}</summary>
+                            <pre className="yaml" style={{ marginTop: 6, maxHeight: 280 }}>{ob.diff}</pre>
+                          </details>
+                        )}
+                      </span>
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+          )}
+        </div>
+      </details>
+    </section>
   );
 }
 
@@ -399,28 +679,6 @@ function PreviewSections({ preview, error, loading, assistantOk, draft }: { prev
                 ))}
               </div>
             ))}
-          </div>
-        </section>
-      )}
-      {preview && Array.isArray(preview.eligibilityHelpers) && preview.eligibilityHelpers.length > 0 && (
-        <section className="section">
-          <div className="section-head">
-            <h2>{t.preview.helpersTitle}</h2>
-            <p className="small ink2">{t.preview.helpersHint}</p>
-          </div>
-          <div className="panel">
-            <dl className="facts">
-              {(preview.eligibilityHelpers as Array<{ name: string; expression: string; rate: number }>).map((h) => (
-                <div key={h.name} style={{ display: "contents" }}>
-                  <dt>
-                    <b>{h.name}</b> <span className="num">{pct(h.rate, h.rate < 0.1 ? 1 : 0)}</span>
-                  </dt>
-                  <dd>
-                    <code className="expr">{h.expression}</code>
-                  </dd>
-                </div>
-              ))}
-            </dl>
           </div>
         </section>
       )}
@@ -635,7 +893,7 @@ function ModuleBody({ view }: { view: ModuleView }) {
       )}
 
       <section className="section">
-        <details className="panel more">
+        <details className="panel more" id="mp-sources">
           <summary>
             <b>{t.body.sourcesTitle}</b> <span className="small ink2">{t.body.sourcesCount(view.sources.length)}</span>
           </summary>
@@ -661,41 +919,22 @@ function ModuleBody({ view }: { view: ModuleView }) {
 
       <section className="section">
         <div className="section-head">
-          <h2>{t.body.cardSegTitle}</h2>
+          <h2>{t.body.cardLines}</h2>
+          <p className="small ink2">{t.body.cardLinesHint}</p>
         </div>
-        <div className="grid-2">
-          <div className="panel">
-            <h3 style={{ marginBottom: 8 }}>{t.body.cardLines}</h3>
-            {view.card.length ? (
-              <ul className="notes">
-                {view.card.map((c, i) => (
-                  <li key={i}>
-                    <code className="expr">{c.template}</code>
-                    {c.when && <div className="small muted" style={{ marginTop: 2 }}>{t.body.cardIf(c.when)}</div>}
-                  </li>
-                ))}
-              </ul>
-            ) : (
-              <p className="ink2">{t.body.noCardLine}</p>
-            )}
-          </div>
-          <div className="panel">
-            <h3 style={{ marginBottom: 8 }}>{t.body.segments}</h3>
-            {view.segments.length ? (
-              <dl className="facts">
-                {view.segments.map((s) => (
-                  <div key={s.id} style={{ display: "contents" }}>
-                    <dt>{s.label}</dt>
-                    <dd>
-                      {s.attributeLabel} <span className="muted small num">({s.id})</span>
-                    </dd>
-                  </div>
-                ))}
-              </dl>
-            ) : (
-              <p className="ink2">{t.body.noSegment}</p>
-            )}
-          </div>
+        <div className="panel">
+          {view.card.length ? (
+            <ul className="notes">
+              {view.card.map((c, i) => (
+                <li key={i}>
+                  <code className="expr">{c.template}</code>
+                  {c.when && <div className="small muted" style={{ marginTop: 2 }}>{t.body.cardIf(c.when)}</div>}
+                </li>
+              ))}
+            </ul>
+          ) : (
+            <p className="ink2">{t.body.noCardLine}</p>
+          )}
         </div>
       </section>
     </>

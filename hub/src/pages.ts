@@ -3,6 +3,8 @@ import type { moduleDeps, moduleVersions } from "../db/schema";
 import { DICTS, endonym, formatters, type HubDict, type UiLang } from "./i18n";
 import type { ModuleRanking, RankedHit } from "./ranking";
 import type { SocleLocales } from "./repo";
+import type { ModuleDef } from "../../src/modules/schema";
+import { attributeValues, eligibilityText, firstSentence, headerNotes, MODULE_PAGE, parseModuleYaml, PROVENANCES, provenanceOf, splitShareLabel } from "./module-view";
 
 /**
  * Pages publiques du Hub : HTML rendu côté serveur, page sœur du tableau de bord (mêmes jetons,
@@ -46,11 +48,11 @@ export function emptyState(o: { icon?: EmptyIcon; title: string; description?: s
 type Fmt = ReturnType<typeof formatters>;
 const ctxOf = (c: PageCtx) => ({ t: DICTS[c.ui], f: formatters(c.ui) });
 
-function layout(c: PageCtx, page: { title: string; body: string; current?: "modules" | "packs"; path?: string; description?: string; script?: string }): string {
+export function layout(c: PageCtx, page: { title: string; body: string; current?: "modules" | "packs" | "api"; path?: string; description?: string; script?: string }): string {
   const { t } = ctxOf(c);
   const base = c.baseUrl?.replace(/\/$/, "");
   const canonical = base && page.path !== undefined ? `<link rel="canonical" href="${esc(base + page.path)}">` : "";
-  const navLink = (href: string, label: string, key: "modules" | "packs") => `<a href="${esc(href)}"${page.current === key ? ' aria-current="page"' : ""}>${esc(label)}</a>`;
+  const navLink = (href: string, label: string, key: "modules" | "packs" | "api") => `<a href="${esc(href)}"${page.current === key ? ' aria-current="page"' : ""}>${esc(label)}</a>`;
   const uiLink = (l: UiLang) => `<a href="${esc(c.uiHref(l))}" hreflang="${l}" lang="${l}"${l === c.ui ? ' aria-current="true"' : ""}>${l.toUpperCase()}<span class="sr-only"> (${esc(endonym(l))})</span></a>`;
   return `<!doctype html>
 <html lang="${t.htmlLang}">
@@ -72,7 +74,7 @@ ${page.script ? `<script src="${esc(page.script)}" defer></script>` : ""}
 <div class="shell">
 <header class="rail">
 <a class="brand" href="/" aria-label="${esc(t.brandHome)}"><span class="brand-mark" aria-hidden="true"><i class="on"></i><i></i><i></i><i></i><i></i><i></i></span><span class="brand-name">Personas</span><span class="brand-sub">${esc(t.hub)}</span></a>
-<nav class="main-nav" aria-label="${esc(t.nav.label)}">${navLink("/", t.nav.modules, "modules")}${navLink("/?view=packs#packs", t.nav.packs, "packs")}<a href="/v1/catalog">${esc(t.nav.api)}</a></nav>
+<nav class="main-nav" aria-label="${esc(t.nav.label)}">${navLink("/", t.nav.modules, "modules")}${navLink("/?view=packs#packs", t.nav.packs, "packs")}${navLink("/docs/api", t.nav.api, "api")}</nav>
 <div class="rail-foot">
 <p>${esc(t.tagline)}</p>
 <nav class="ui-switch" aria-label="${esc(t.uiSwitch)}">${uiLink("fr")}${uiLink("en")}</nav>
@@ -245,87 +247,209 @@ export interface ModuleInput {
 
 export function renderModule(c: PageCtx, input: ModuleInput): string {
   const { t, f } = ctxOf(c);
+  const p = MODULE_PAGE[c.ui];
   const { card, latest } = input;
   const qs = latest.quality;
+  const def = parseModuleYaml(latest.yaml);
   const langs = [...new Set(card.appliesTo.map((s) => input.locales.get(s)).filter((x): x is string => !!x))];
+  const contentLang = langs[0];
+  const inLang = contentLang ? ` lang="${esc(contentLang)}"` : "";
   const pull = `personas hub pull ${card.ref}@${card.latest}`;
   const yamlHref = `/v1/modules/${card.ref}/${encodeURIComponent(card.latest)}`;
   const r = input.ranking;
   const ex = input.extras;
+  const preview = latest.preview;
+  const pctRange = (lo: number, hi: number) => {
+    const n = (x: number) => Math.round(x * 100).toLocaleString(t.htmlLang);
+    return `${lo === hi ? n(lo) : `${n(lo)}–${n(hi)}`}${c.ui === "fr" ? " %" : "%"}`;
+  };
+  const pct0 = (x: number) => `${Math.round(x * 100)}${c.ui === "fr" ? " %" : "%"}`;
+
+  // ── En-tête : titre, résumé, pastilles, filiation ──
+  const description = (def?.description ?? card.description).replace(/\s+/g, " ").trim();
+  const summary = firstSentence(description);
   const forkedFrom = r?.forkedFrom ?? ex?.forkedFrom ?? null;
+  const badgeRow = badgesHtml(r?.badges ?? ex?.badges ?? [], latest.status, t);
+  const pills = [
+    badgeRow,
+    ...card.appliesTo.map((s) => `<span class="tag">${esc(t.index.socle)} ${esc(s)} · ${esc(socleName(s, input.packs, f))}</span>`),
+    ...langs.map((l) => `<span class="tag lang" lang="${esc(l)}">${esc(endonym(l))}</span>`),
+    `<span class="tag">${esc(p.version)} <span class="mono">${esc(card.latest)}</span></span>`,
+    badgeRow ? "" : `<span class="tag"><span class="status ${esc(latest.status)}">${esc(t.status[latest.status] ?? latest.status)}</span></span>`,
+  ].join("");
+  const deps = input.deps.length ? `<p class="deps">${esc(t.module.requires)}${esc(t.colon)}${input.deps.map((d) => `<a href="/m/${esc(d.ref)}"><code>${esc(d.ref)}@${esc(d.version)}</code></a>`).join(", ")}</p>` : "";
   const lineage = [
     forkedFrom ? `<p class="deps">${esc(t.social.forkOf)} <a href="/m/${esc(forkedFrom.ref)}"><code>${esc(forkedFrom.ref)}@${esc(forkedFrom.version)}</code></a></p>` : "",
     ex?.author ? `<p class="deps">${esc(t.social.author)}${esc(t.colon)}${esc(ex.authorDeleted ? t.social.deletedAuthor : ex.author)}</p>` : "",
-    ex?.signature ? `<p class="deps">${esc(t.social.signed(ex.signature.kid))}</p>` : "",
   ].join("");
-  const badgeRow = badgesHtml(r?.badges ?? ex?.badges ?? [], latest.status, t);
-  const rankLine = r
-    ? `<div class="rank"><span class="rank-r" title="${esc(t.social.rHint)}">${esc(t.social.r)} <b class="num">${f.dec2(r.r)}</b></span>${socialHtml(r, t, f)}</div>`
+  const rankLine = r ? `<div class="rank mh-rank"><span class="rank-r" title="${esc(t.social.rHint)}">${esc(t.social.r)} <b class="num">${f.dec2(r.r)}</b></span>${socialHtml(r, t, f)}</div>` : "";
+
+  // ── Chiffres clés (données réelles : Q, attributs, parts sourcées, filtres) ──
+  const attrs = def?.attributes ?? [];
+  const prov = attrs.map(provenanceOf);
+  const nAttrs = def ? attrs.length : card.attributes.length;
+  const counts = PROVENANCES.map((k) => [k, prov.filter((x) => x === k).length] as const).filter(([, n]) => n > 0);
+  const provText = counts.map(([k, n]) => p.prov[k]!(n)).join(" · ");
+  const split = nAttrs && def
+    ? `<span class="kf-split" role="img" aria-label="${esc(`${p.provenanceSplit}${t.colon}${provText}`)}">${counts.map(([k, n]) => `<i class="${k} ${w(n / nAttrs)}"></i>`).join("")}</span><span class="kf-sub">${esc(provText)}</span>`
+    : "";
+  const shares = def?.validation.shares ?? [];
+  const helpers = Object.entries(def?.eligibility_helpers ?? {});
+  const segments = def?.segments ?? [];
+  const kfQ = `<div class="kf kf-q"><dt>${esc(t.q.title)}</dt><dd>${qs ? `<div class="kf-qrow"><span class="kf-big num">${qs.q.toFixed(0)}<small>/100</small></span>${qBars(qs, t, f)}</div>` : `<span class="kf-big muted">–</span><span class="kf-sub">${esc(latest.status === "yanked" ? t.q.noneYanked : t.q.none)}</span>`}</dd></div>`;
+  const kfAttrs = `<div class="kf"><dt>${esc(t.module.attributes)}</dt><dd><span class="kf-big num">${nAttrs}</span>${split}</dd></div>`;
+  const kfShares = `<div class="kf kf-shares"><dt>${esc(p.shares)}</dt><dd>${
+    shares.length
+      ? `<ul class="kf-list">${shares
+          .slice(0, 3)
+          .map((s) => `<li><b class="num">${esc(pctRange(s.range[0], s.range[1]))}</b> <span${inLang}>${esc(splitShareLabel(s.label).title)}</span></li>`)
+          .join("")}</ul><span class="kf-sub">${esc(preview ? t.q.checks(preview.checks.passed, preview.checks.total) : p.sharesHint)}${shares.length > 3 ? ` · ${esc(p.more(shares.length - 3))}` : ""}</span>`
+      : `<span class="kf-sub">${esc(p.noShares)}</span>`
+  }</dd></div>`;
+  const kfFilters = `<div class="kf"><dt>${esc(p.helpers)}</dt><dd><span class="kf-big num">${helpers.length}</span><span class="kf-sub">${esc(p.filters(helpers.length))} · ${esc(p.segmentsCount(segments.length))}</span></dd></div>`;
+  const keyFigures = `<section class="mh-kf" aria-labelledby="s-kf"><h2 id="s-kf" class="sr-only">${esc(p.keyFigures)}</h2><dl class="kfs">${kfQ}${kfAttrs}${def ? kfFilters + kfShares : ""}</dl></section>`;
+
+  // ── Installation ──
+  const install = `<section class="install-box" aria-labelledby="s-install"><div><h2 id="s-install">${esc(p.install)}</h2><p class="small ink2">${esc(t.module.installHint)}</p></div>
+<pre class="cmd" aria-describedby="install-copy"><code>${esc(pull)}</code></pre>
+<p class="small muted"><span id="install-copy">${esc(p.installCopy)}</span> ${esc(t.module.useHint(card.ref))}</p>
+<p class="install-links small"><a href="${esc(yamlHref)}">${esc(t.module.yaml)}</a><a href="/docs/api">${esc(p.apiDoc)}</a></p></section>`;
+
+  const fullDesc = description.length > summary.length ? `<details class="mdesc"><summary>${esc(p.fullDescription)}</summary><p${inLang}>${esc(description)}</p></details>` : "";
+
+  // ── À quoi sert ce module : filtres prêts à l'emploi, segments ──
+  const rates = new Map((preview?.eligibilityHelpers ?? []).map((h) => [h.name, h.rate]));
+  const helperList = helpers.length
+    ? `<ul class="uselist">${helpers
+        .map(([name, expr]) => {
+          const rate = rates.get(name);
+          return `<li><div class="use-top"><span${inLang}>${esc(def ? eligibilityText(expr, def, c.ui) : expr)}</span>${rate === undefined ? "" : `<span class="use-share num">${esc(p.helperShare(pct0(rate)))}</span>`}</div><code class="use-expr">${esc(expr)}</code></li>`;
+        })
+        .join("")}</ul>`
+    : `<p class="small ink2">${esc(p.noHelpers)}</p>`;
+  const segmentList = segments.length
+    ? `<ul class="uselist">${segments.map((s) => `<li><div class="use-top"><span${inLang}>${esc(s.label)}</span></div><span class="small muted"${inLang}>${esc(attrs.find((a) => a.key === s.attribute)?.label ?? s.attribute)} <code>${esc(s.attribute)}</code></span></li>`).join("")}</ul>`
+    : `<p class="small ink2">${esc(p.noSegments)}</p>`;
+  const purpose = def
+    ? `<section class="section" aria-labelledby="s-purpose"><div class="section-head"><h2 id="s-purpose">${esc(p.purpose)}</h2></div><div class="use-grid">
+<div class="panel"><h3>${esc(p.helpers)} <span class="muted num">${helpers.length}</span></h3><p class="small ink2 use-hint">${esc(p.helpersHint)}</p>${helperList}</div>
+<div class="panel"><h3>${esc(p.segments)} <span class="muted num">${segments.length}</span></h3><p class="small ink2 use-hint">${esc(p.segmentsHint)}</p>${segmentList}</div>
+</div></section>`
     : "";
 
-  const qPanel = `<aside class="panel qpanel" aria-labelledby="q-title">
-<h2 id="q-title" class="sr-only">${esc(t.q.title)}</h2>
-${rankLine}
-${qs ? `<div class="qtop">${qBig(qs, t)}<span class="small ink2">${esc(t.q.title)}${latest.preview ? `<br><span class="muted">${esc(t.q.checks(latest.preview.checks.passed, latest.preview.checks.total))}</span>` : ""}</span></div>
-${qBars(qs, t, f, "lg")}
-<p class="note">${esc(t.q.weights)} ${esc(t.q.recomputed(f.int(latest.preview?.n ?? 10_000)))}</p>` : `<p class="small ink2">${esc(latest.status === "yanked" ? t.q.noneYanked : t.q.none)}</p>`}
-<div class="install"><h2>${esc(t.module.install)}</h2><p class="small ink2">${esc(t.module.installHint)}</p><pre class="cmd"><code>${esc(pull)}</code></pre><p class="small muted">${esc(t.module.useHint(card.ref))} <a href="${esc(yamlHref)}">${esc(t.module.yaml)}</a></p></div>
-</aside>`;
+  // ── Attributs : libellé, type, valeurs, marge principale, provenance ──
+  const sensitive = new Set(ex?.sensitive ?? []);
+  const marginOf = new Map((preview?.margins ?? []).map((m) => [m.attribute, m]));
+  const sourceIds = Object.keys(def?.sources ?? {});
+  const srcLink = (k: string) => {
+    const i = sourceIds.indexOf(k);
+    return i < 0 ? `<code>${esc(k)}</code>` : `<a href="#src-${esc(k)}" title="${esc(def!.sources[k]!.org)}">[${i + 1}]</a>`;
+  };
+  const marginBars = (key: string) => {
+    const m = marginOf.get(key);
+    if (!m) return "";
+    const absent = m.values.find((v) => v.code === "__absent");
+    const top = m.values.filter((v) => v.code !== "__absent").sort((a, b) => b.share - a.share).slice(0, 3);
+    return `<div class="attr-margin">${top
+      .map((v) => {
+        const share = v.share;
+        // Tranches numériques de l'aperçu (« 8 à 22 ») : tiret, lisible dans les deux langues
+        const label = m.type === "number" ? v.label.replace(/^(-?[\d.,]+) à (-?[\d.,]+)/, "$1–$2") : v.label;
+        return `<div class="mbar"><span class="l" title="${esc(label)}"${inLang}>${esc(label)}</span><span class="t" aria-hidden="true"><i class="${w(share)}"></i></span><span class="v">${f.pct(share)}</span></div>`;
+      })
+      .join("")}${absent && absent.share > 0 ? `<p class="small muted">${esc(p.concerns(pct0(1 - absent.share)))}</p>` : ""}</div>`;
+  };
+  const attrItem = (a: ModuleDef["attributes"][number], i: number) => {
+    const values = attributeValues(a, c.ui);
+    const shown = values.slice(0, 10);
+    const pv = prov[i]!;
+    const provHtml =
+      pv === "sourced"
+        ? `${esc(p.sourcesOf)} ${a.sources.map(srcLink).join(" ")}`
+        : pv === "modeled"
+          ? `<span class="prov-mod">${esc(p.modeled)}</span> · ${esc(p.sourcesOf)} ${a.sources.map(srcLink).join(" ")}`
+          : pv === "assumption"
+            ? `<span class="prov-hyp">${esc(p.assumption)}</span>`
+            : `<span class="prov-none">${esc(p.noSource)}</span>`;
+    return `<li class="attr">
+<div class="attr-head"><h3${inLang}>${esc(a.label)}</h3>${sensitive.has(a.key) || a.sensitive ? ` <span class="badge b-sensitive">${esc(t.social.sensitiveAttr)}</span>` : ""}</div>
+<p class="attr-meta small"><span class="tag">${esc(p.type[a.type] ?? a.type)}${a.type === "number" && a.unit ? ` · ${esc(a.unit)}` : ""}</span><code>${esc(a.key)}</code><span class="attr-prov">${provHtml}</span></p>
+${a.description ? `<p class="small ink2"${inLang}>${esc(a.description)}</p>` : ""}
+${shown.length ? `<ul class="pills"${inLang}>${shown.map((v) => `<li>${esc(v)}</li>`).join("")}${values.length > shown.length ? `<li class="more">${esc(p.more(values.length - shown.length))}</li>` : ""}</ul>` : ""}
+${marginBars(a.key)}
+</li>`;
+  };
+  const attributes = def
+    ? `<ul class="attrs">${attrs.map(attrItem).join("\n")}</ul>`
+    : `<p class="small ink2">${esc(p.noParse)}</p><ul class="attr-list">${card.attributes.map((a) => `<li><span>${esc(a.label)}${sensitive.has(a.key) ? ` <span class="badge b-sensitive">${esc(t.social.sensitiveAttr)}</span>` : ""}</span><code>${esc(a.key)}</code></li>`).join("")}</ul>`;
+  const attrSection = `<section class="section" aria-labelledby="s-attrs"><div class="section-head"><h2 id="s-attrs">${esc(t.module.attributes)} <span class="muted num">${nAttrs}</span></h2>${preview ? `<p class="small ink2">${esc(t.module.margins)}${esc(t.colon)}${esc(t.module.marginsHint(preview.socle))}</p>` : ""}</div>${attributes}${preview?.margins.length ? "" : emptyState({ icon: "chart", title: t.module.noPreviewTitle, description: t.module.noPreview })}</section>`;
 
-  const margins = latest.preview?.margins.length
-    ? `<div class="margins">${latest.preview.margins
-        .slice(0, 8)
-        .map((m) => {
-          const values = [...m.values].sort((a, b) => (a.code === "__absent" ? 1 : b.code === "__absent" ? -1 : b.share - a.share)).slice(0, 6);
-          return `<div class="margin"><h3>${esc(m.label)} <code>${esc(m.attribute)}</code></h3>${values
-            .map((v) => {
-              const na = v.code === "__absent";
-              const label = na ? t.module.notApplicable : v.label;
-              return `<div class="mbar${na ? " na" : ""}"><span class="l" title="${esc(label)}">${esc(label)}</span><span class="t" aria-hidden="true"><i class="${w(v.share)}"></i></span><span class="v">${f.pct(v.share)}</span></div>`;
-            })
-            .join("")}</div>`;
+  // ── Sources et hypothèses ──
+  const sources = sourceIds.length
+    ? `<ol class="sources"${inLang}>${sourceIds
+        .map((k) => {
+          const s = def!.sources[k]!;
+          return `<li id="src-${esc(k)}"><a href="${esc(s.url)}" rel="noopener noreferrer external">${esc(s.org)} — ${esc(s.title)}</a> <span class="muted num">(${s.year})</span>${s.detail ? `<p class="small ink2">${esc(s.detail)}</p>` : ""}</li>`;
         })
-        .join("\n")}</div>`
-    : emptyState({ icon: "chart", title: t.module.noPreviewTitle, description: t.module.noPreview });
+        .join("")}</ol>`
+    : "";
+  const hypoItem = (h: { label: string; j: string | undefined }) => `<li><b>${esc(h.label)}</b>${h.j ? `<span class="ink2">${esc(h.j)}</span>` : ""}</li>`;
+  const hypoAttrs = attrs.filter((a) => a.assumption).map((a) => ({ label: a.label, j: a.justification }));
+  const hypoTables = Object.entries(def?.tables ?? {})
+    .filter(([, tb]) => tb.assumption)
+    .map(([k, tb]) => ({ label: tb.label ?? k, j: tb.justification }));
+  const nHypo = hypoAttrs.length + hypoTables.length;
+  const hypoList = nHypo
+    ? `${hypoAttrs.length ? `<ul class="hypos"${inLang}>${hypoAttrs.map(hypoItem).join("")}</ul>` : ""}${hypoTables.length ? `<details class="hypo-tables"><summary>${esc(p.tables(hypoTables.length))}</summary><ul class="hypos"${inLang}>${hypoTables.map(hypoItem).join("")}</ul></details>` : ""}`
+    : `<p class="small ink2">${esc(p.noAssumption)}</p>`;
+  const sourcesSection = def
+    ? `<section class="section" aria-labelledby="s-sources"><div class="section-head"><h2 id="s-sources">${esc(p.sources)} <span class="muted num">${sourceIds.length}</span></h2></div>${sources || `<p class="small ink2">–</p>`}</section>
+<section class="section" aria-labelledby="s-hypos"><div class="section-head"><h2 id="s-hypos">${esc(p.assumptions)} <span class="muted num">${nHypo}</span></h2><p class="small ink2">${esc(p.assumptionsHint)}</p></div>${hypoList}</section>`
+    : "";
 
-  // Divulgation progressive : erreurs et avertissements visibles, informations repliées.
-  const alertItem = (a: { level: string; message: string }) => `<li class="alert ${esc(a.level)}"><span class="lvl">${esc(t.module.alertLevel[a.level] ?? a.level)}</span><span>${esc(a.message)}</span></li>`;
-  const allAlerts = latest.preview?.alerts ?? [];
-  const major = allAlerts.filter((a) => a.level !== "info");
-  const infos = allAlerts.filter((a) => a.level === "info");
-  const alerts = allAlerts.length
-    ? `${major.length ? `<ul class="alerts">${major.map(alertItem).join("")}</ul>` : ""}${infos.length ? `<details class="more-alerts"${major.length ? "" : " open"}><summary>${esc(t.module.moreAlerts(infos.length))}</summary><ul class="alerts">${infos.map(alertItem).join("")}</ul></details>` : ""}`
-    : `<p class="small ink2">${esc(t.module.noAlert)}</p>`;
-
+  // ── En bas, replié : versions, historique, notes, détail du score ──
   const versions = `<div class="table-wrap"><table class="table"><thead><tr><th scope="col">${esc(t.module.colVersion)}</th><th scope="col">${esc(t.module.colDate)}</th><th scope="col">${esc(t.module.colStatus)}</th><th scope="col" class="r">${esc(t.module.colQ)}</th><th scope="col">${esc(t.module.colSha)}</th></tr></thead><tbody>${[...card.versions]
     .reverse()
     .map(
       (v) =>
         `<tr><td><a href="/v1/modules/${esc(card.ref)}/${encodeURIComponent(v.version)}"><code>${esc(v.version)}</code></a></td><td class="num">${esc(f.date(v.publishedAt))}</td><td><span class="status ${esc(v.status)}">${esc(t.status[v.status] ?? v.status)}</span></td><td class="r">${v.quality ? v.quality.q.toFixed(0) : "–"}</td><td><code class="muted">${esc(v.sha256.slice(0, 12))}…</code></td></tr>`,
     )
-    .join("")}</tbody></table></div>`;
-
-  const sensitive = new Set(input.extras?.sensitive ?? []);
-  const attributes = `<ul class="attr-list">${card.attributes.map((a) => `<li><span>${esc(a.label)}${sensitive.has(a.key) ? ` <span class="badge b-sensitive">${esc(t.social.sensitiveAttr)}</span>` : ""}</span><code>${esc(a.key)}</code></li>`).join("")}</ul>`;
-  const deps = input.deps.length ? `<p class="deps">${esc(t.module.requires)}${esc(t.colon)}${input.deps.map((d) => `<a href="/m/${esc(d.ref)}"><code>${esc(d.ref)}@${esc(d.version)}</code></a>`).join(", ")}</p>` : "";
-  const contentLang = langs[0];
+    .join("")}</tbody></table></div>${ex?.signature ? `<p class="deps">${esc(t.social.signed(ex.signature.kid))}</p>` : ""}<p class="small muted">${esc(t.module.license)} ${esc(latest.license)}${card.tags.length ? ` · ${card.tags.map((tag) => `<span class="tag">${esc(tag)}</span>`).join(" ")}` : ""}</p>`;
+  const changelog = def?.changelog.length
+    ? `<ol class="changelog"${inLang}>${def.changelog.map((e) => `<li><p><code>${esc(e.version)}</code> <span class="muted num">${esc(e.date)}</span></p><ul>${e.changes.map((x) => `<li>${esc(x)}</li>`).join("")}</ul></li>`).join("")}</ol>`
+    : "";
+  const notes = headerNotes(latest.yaml);
+  const alertItem = (a: { level: string; message: string }) => `<li class="alert ${esc(a.level)}"><span class="lvl">${esc(t.module.alertLevel[a.level] ?? a.level)}</span><span>${esc(a.message)}</span></li>`;
+  const allAlerts = preview?.alerts ?? [];
+  const major = allAlerts.filter((a) => a.level !== "info");
+  const infos = allAlerts.filter((a) => a.level === "info");
+  const alerts = allAlerts.length
+    ? `${major.length ? `<ul class="alerts">${major.map(alertItem).join("")}</ul>` : ""}${infos.length ? `<details class="more-alerts"><summary>${esc(t.module.moreAlerts(infos.length))}</summary><ul class="alerts">${infos.map(alertItem).join("")}</ul></details>` : ""}`
+    : `<p class="small ink2">${esc(t.module.noAlert)}</p>`;
+  const qDetail = `${qs ? `${qBars(qs, t, f, "lg")}<p class="note small muted">${esc(t.q.weights)} ${esc(t.q.recomputed(f.int(preview?.n ?? 10_000)))}</p>` : ""}<h3 class="fold-h3">${esc(t.module.alerts)}</h3>${alerts}`;
+  const fold = (id: string, title: string, inner: string, extra = "") => `<details class="fold" id="${id}"><summary><h2>${esc(title)}</h2>${extra}</summary><div class="fold-body">${inner}</div></details>`;
+  const bottom = `<section class="section folds" aria-label="${esc(p.more_)}">
+${fold("versions", t.module.versions, versions, `<span class="muted small num">${card.versions.length}</span>`)}
+${changelog ? fold("history", p.history, changelog, `<span class="muted small num">${def!.changelog.length}</span>`) : ""}
+${fold("quality", p.quality, qDetail, major.length ? `<span class="muted small num">${major.length}</span>` : "")}
+${notes.length ? fold("notes", p.notes, `<p class="small muted">${esc(p.notesHint)}</p><div class="notes"${inLang}>${notes.map((n) => `<p>${esc(n)}</p>`).join("")}</div>`) : ""}
+</section>`;
 
   const body = `<nav class="crumbs" aria-label="${esc(t.breadcrumb)}"><a href="/">${esc(t.module.back)}</a><span aria-hidden="true">›</span><span aria-current="page">${esc(card.label)}</span></nav>
-<div class="module-head">
-<div${contentLang ? ` lang="${esc(contentLang)}"` : ""}>
-<h1>${esc(card.label)}</h1>
+<header class="mh">
+<h1${inLang}>${esc(card.label)}</h1>
+<p class="mh-summary"${inLang}>${esc(summary)}</p>
+<p class="badges mh-pills">${pills}</p>
 <p class="ref mono">${esc(card.ref)}@${esc(card.latest)}</p>
-<p class="lede">${esc(card.description)}</p>
-${badgeRow ? `<p class="badges" lang="${t.htmlLang}">${badgeRow}</p>` : ""}
-<p class="meta" lang="${t.htmlLang}">${card.appliesTo.map((s) => `<span class="tag">${esc(t.index.socle)} ${esc(s)} · ${esc(socleName(s, input.packs, f))}</span>`).join("")}${langs.map((l) => `<span class="tag lang" lang="${esc(l)}">${esc(endonym(l))}</span>`).join("")}<span class="tag">${esc(t.module.license)} ${esc(latest.license)}</span>${badgeRow ? "" : `<span class="tag"><span class="status ${esc(latest.status)}">${esc(t.status[latest.status] ?? latest.status)}</span></span>`}${card.tags.filter((tag) => !(badgeRow && tag === "official")).map((tag) => `<span class="tag">${esc(tag)}</span>`).join("")}<span class="tag plain">${esc(t.card.attributes(card.attributes.length))}</span></p>
-${deps}${lineage}
-</div>
-${qPanel}
-</div>
-<section class="section" aria-labelledby="s-margins"><div class="section-head"><h2 id="s-margins">${esc(t.module.margins)}</h2>${latest.preview ? `<p class="small ink2">${esc(t.module.marginsHint(latest.preview.socle))}</p>` : ""}</div>${margins}</section>
-<section class="section" aria-labelledby="s-attrs"><div class="section-head"><h2 id="s-attrs">${esc(t.module.attributes)} <span class="muted num">${card.attributes.length}</span></h2></div>${attributes}</section>
-<section class="section" aria-labelledby="s-alerts"><div class="section-head"><h2 id="s-alerts">${esc(t.module.alerts)}</h2></div>${alerts}</section>
-<section class="section" aria-labelledby="s-versions"><div class="section-head"><h2 id="s-versions">${esc(t.module.versions)}</h2></div>${versions}</section>`;
+${rankLine}${deps}${lineage}
+</header>
+${keyFigures}
+${install}
+${fullDesc}
+${purpose}
+${attrSection}
+${sourcesSection}
+${bottom}`;
   return layout(c, { title: `${card.label} · Personas Hub`, body, current: "modules", path: `/m/${card.ref}`, description: card.description });
 }
 

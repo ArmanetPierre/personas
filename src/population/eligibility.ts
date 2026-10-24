@@ -10,7 +10,8 @@
 
 export type Vars = Record<string, unknown>;
 
-type Node =
+/** Arbre d'une phrase d'éligibilité (lecture en clair : src/web/modules.ts). */
+export type EligibilityNode =
   | { kind: "or" | "and"; items: Node[] }
   | { kind: "not"; item: Node }
   | { kind: "truthy"; name: string }
@@ -20,6 +21,8 @@ type Node =
 export class EligibilityError extends Error {
   override name = "EligibilityError";
 }
+
+type Node = EligibilityNode;
 
 interface Token {
   t: "id" | "num" | "str" | "op" | "(" | ")" | "[" | "]" | ",";
@@ -52,6 +55,8 @@ export interface CompiledEligibility {
   /** Valeurs comparées par variable (==, !=, in, not in ; pas les seuils numériques), pour vérifier les codes. */
   literals: Record<string, Array<string | number | boolean>>;
   test: (vars: Vars) => boolean;
+  /** Arbre analysé (affichage en clair). */
+  ast: EligibilityNode;
 }
 
 export function compileEligibility(source: string, known?: Set<string>): CompiledEligibility {
@@ -182,5 +187,5 @@ export function compileEligibility(source: string, known?: Set<string>): Compile
     else if (n.kind === "cmp" && (n.op === "==" || n.op === "!=")) (literals[n.name] ??= []).push(n.value);
   };
   collect(ast);
-  return { source, variables: [...vars], literals, test: (v) => evalNode(ast, v) };
+  return { source, variables: [...vars], literals, test: (v) => evalNode(ast, v), ast };
 }

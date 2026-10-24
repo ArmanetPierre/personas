@@ -92,7 +92,10 @@ const HIDDEN = /[\u0000-\u0008\u000B\u000C\u000E-\u001F\u007F­​-‏‪-‮⁠
 
 // ─── Motifs ─────────────────────────────────────────────────────────────────
 
-const URL_RE = /\b(?:https?|ftp|file|data|javascript|mailto):|\bwww\.|\b[a-z0-9][a-z0-9-]*\.(?:com|net|org|io|ai|fr|sg|xyz|co|app|dev|info|biz|me|ly|gg|ru|cn|uk|de|eu|be|ch|ca|us)(?![a-z0-9-])/i;
+// Faux positifs écartés : « data: » ou « file: » suivis d'une espace (ponctuation d'une phrase, pas un schéma :
+// une URI data ou file n'a jamais d'espace après le deux-points) ; « module.attribut » (référence entre modules,
+// ex. productivite-reunions.ai_work_usage : un nom de domaine ne contient pas de « _ » après son extension).
+const URL_RE = /\b(?:https?|ftp|javascript|mailto):|\b(?:file|data):(?=\S)|\bwww\.|\b[a-z0-9][a-z0-9-]*\.(?:com|net|org|io|ai|fr|sg|xyz|co|app|dev|info|biz|me|ly|gg|ru|cn|uk|de|eu|be|ch|ca|us)(?![a-z0-9_-])/i;
 
 const MARKUP: Array<[RegExp, string]> = [
   [/<\/?[a-z][a-z0-9-]*(?:\s[^<>]*)?\/?>/i, "balise HTML"],

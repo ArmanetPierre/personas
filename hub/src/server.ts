@@ -1,7 +1,7 @@
 import { serve } from "@hono/node-server";
 import { openPostgres } from "../db/client";
 import { createHubApp } from "./app";
-import { signMissingVersions } from "./publish";
+import { refreshStalePreviews, signMissingVersions } from "./publish";
 import { loadSigner } from "./signing";
 
 /**
@@ -59,6 +59,10 @@ const app = createHubApp({
 const port = Number(process.env.PORT ?? 8080);
 const server = serve({ fetch: app.fetch, port, hostname: process.env.HOST ?? "0.0.0.0" }, (info) => {
   console.log(JSON.stringify({ at: new Date().toISOString(), msg: "hub listening", port: info.port, admin: adminToken ? "enabled" : "disabled", signing: signer ? signer.kid : "disabled" }));
+});
+// Aperçus d'un format ancien (ou absents) : recalculés en arrière-plan, une version à la fois, le serveur répond pendant ce temps
+setImmediate(() => {
+  refreshStalePreviews(db, { log: (line) => console.log(JSON.stringify(line)) }).catch((err: Error) => console.error(JSON.stringify({ at: new Date().toISOString(), msg: "preview refresh aborted", error: err.message })));
 });
 const stop = () => {
   server.close();

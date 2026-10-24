@@ -84,6 +84,10 @@ export interface StoredPreview {
   margins: Array<{ attribute: string; label: string; type: string; applicable: number; values: Array<{ code: string; label: string; share: number }> }>;
   alerts: Array<{ level: string; message: string; attribute?: string }>;
   checks: { total: number; passed: number };
+  /** Format de l'aperçu (absent : format 1, sans parts des filtres). Voir PREVIEW_FORMAT (src/module-check.ts). */
+  previewFormat?: number;
+  /** Filtres prêts à l'emploi (format 2) : nom, phrase, libellé en clair (fr), part des personas virtuelles concernées. */
+  eligibilityHelpers?: Array<{ name: string; expression: string; label: string; rate: number }>;
 }
 
 export const moduleVersions = hub.table(

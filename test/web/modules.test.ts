@@ -215,3 +215,16 @@ describe("API des modules", () => {
     }
   });
 });
+
+describe("Styles de la page module", () => {
+  it("la jauge de provenance de la liste ne s'applique pas au bloc Sources des attributs", () => {
+    // Régression : la classe .prov (jauge de 4 px, overflow hidden) écrasait le <details className="more prov">.
+    const css = readFileSync(join(import.meta.dirname, "../../web/src/styles.css"), "utf8");
+    const page = readFileSync(join(import.meta.dirname, "../../web/src/pages/Module.tsx"), "utf8");
+    const classes = [...page.matchAll(/className="([^"]+)"/g)].flatMap((m) => m[1]!.split(/\s+/));
+    for (const rule of css.matchAll(/(^|\n)([^{}\n]+)\{[^}]*\bheight:\s*4px/g)) {
+      for (const cls of rule[2]!.matchAll(/\.([\w-]+)/g)) expect(classes, `.${cls[1]} (jauge 4 px)`).not.toContain(cls[1]);
+    }
+    expect(css).toMatch(/\.prov-meter\s*\{/);
+  });
+});

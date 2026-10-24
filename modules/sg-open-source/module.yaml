@@ -1,0 +1,473 @@
+# Module "Open-source software in Singapore": main computer OS, knowingly used open-source software,
+# ICT / software workers (professional use, contributions), attitude and monthly donations.
+# Applies to every adult of the sg socle. No official survey exists on lay open-source use: nearly all
+# distributions are assumptions anchored on StatCounter, Stack Overflow, IMDA and GitHub figures.
+# No conditioning on ethnicity or religion. No budget effect. Does not depend on other modules.
+id: sg-open-source
+version: "2026.2"
+changelog:
+  - version: "2026.2"
+    date: "2026-10-22"
+    changes:
+      - "First version (sg socle): main computer OS, open-source software knowingly used on a computer, Android open-source awareness (smartphone owners), ICT / software worker flag, professional use, contributions, attitude, monthly donations."
+label: Open-source software
+short_label: Open source
+description: >-
+  Open-source software among Singapore residents aged 18-79: main personal computer OS (only for people with a
+  computer), open-source software knowingly used on a computer (only for people with a computer), awareness that
+  Android is open source (only for smartphone owners), ICT / software worker flag (drawn from the IMDA tech
+  workforce headcount), and, for tech workers, professional use and contributions. Attitude toward open source
+  versus proprietary software and monthly donations to open-source projects (mostly zero). Conditioned on SSOC
+  group, education, age, residency status, tech adoption and equipment of the socle. The computer OS is drawn here
+  on purpose: the equipment module equipement-ecosysteme (computer_os) only applies to the fr socle, so there is no
+  duplicate for sg; if an sg equipment module with a computer OS is added, reuse it through requires.
+applies_to: [sg]
+requires: []
+
+sources:
+  statcounter_sg_desktop:
+    org: "StatCounter Global Stats"
+    title: "Desktop Operating System Market Share Singapore"
+    year: 2026
+    url: "https://gs.statcounter.com/os-market-share/desktop/singapore"
+    detail: "Share of desktop page views (web traffic, not individuals), Sept 2026: Windows 70.98%, OS X 14.08%, macOS 8.92%, Linux 5.71%, Chrome OS 0.31%. Volatile series (Sept 2025 snapshot: Windows 88.56%); indicative only."
+  stackoverflow_2024:
+    org: "Stack Overflow"
+    title: "2024 Developer Survey - Technology"
+    year: 2024
+    url: "https://survey.stackoverflow.co/2024/technology"
+    detail: "Global professional developers (multi-select): Windows 47.6%, macOS 31.8%, Ubuntu 27.7%, WSL 16.8%, Debian 9.1%. No Singapore subset; not representative of the population."
+  imda_tech_workforce:
+    org: "IMDA"
+    title: "Singapore Digital Economy Report 2024 and tech workforce figures (as reported in search results)"
+    year: 2024
+    url: "https://www.imda.gov.sg/-/media/imda/files/infocomm-media-landscape/research-and-statistics/sgde-report/singapore-digital-economy-report-2024.pdf"
+    detail: "Tech professionals: 201,400 (2022), 208,300 (2023, 5.2% of employment), about 214,000 (2024, 5.3% of employment). Not verified: figures come from a search summary."
+  github_octoverse_2023:
+    org: "GitHub"
+    title: "Octoverse 2023: The state of open source and rise of AI"
+    year: 2023
+    url: "https://github.blog/news-insights/research/the-state-of-open-source-and-ai/"
+    detail: "Singapore: more than 1 million GitHub developer accounts, +39% year on year (search summary, not verified). Accounts include students and non-active or non-resident users."
+  github_octoverse_2024:
+    org: "GitHub"
+    title: "Octoverse 2024"
+    year: 2024
+    url: "https://github.blog/news-insights/octoverse/octoverse-2024/"
+    detail: "Singapore among the fastest-growing developer communities in APAC (search summary, not verified)."
+
+conditions:
+  tech: {attr: is_tech_worker, eq: true}
+  has_pc: {attr: socle.has_computer, eq: true}
+  has_phone: {attr: socle.has_smartphone, eq: true}
+  adult: {attr: socle.age, gt: 0}
+
+tables:
+  pcs_tech_rate:
+    label: "Base probability of working in an ICT / software role, by SSOC major group (employed people)"
+    values: {"1": 0.013, "2": 0.117, "3": 0.0585, "4": 0.0156, "5": 0.0026, "6": 0.0, "7": 0.0013, "8": 0.00065, "9": 0.0, "none": 0.0}
+    sources: [imda_tech_workforce]
+    assumption: true
+    justification: "About 214,000 tech professionals, 5.3% of employment in 2024 (IMDA, unverified). Concentrated in SSOC 2 (professionals) and 3 (associate professionals and technicians); rates by group are assumed so that the overall rate is about 5% of employed adults (check with the validation share). Rates raised by about 30% from the first draft, which gave 3.8%."
+  edu_tech_factor:
+    label: "Education coefficient for ICT work"
+    values: {below_secondary: 0.05, secondary: 0.15, post_secondary: 0.4, diploma: 1.0, degree: 1.3}
+    sources: [imda_tech_workforce]
+    assumption: true
+    justification: "Tech workers are mostly diploma or degree holders (assumption); coefficients tilt the PCS-based rate."
+  age_tech_factor:
+    label: "Age coefficient for ICT work"
+    bands:
+      - {from: 18, to: 21, value: 0.3}
+      - {from: 22, to: 34, value: 1.3}
+      - {from: 35, to: 49, value: 1.1}
+      - {from: 50, to: 64, value: 0.6}
+      - {from: 65, to: 79, value: 0.2}
+    sources: [imda_tech_workforce]
+    assumption: true
+    justification: "Tech workforce concentrated at ages 22-49 (assumption); the median resident tech worker is younger than the average worker."
+  residency_tech_factor:
+    label: "Residency coefficient for ICT work"
+    values: {citizen: 1.0, pr: 1.0, ep: 2.5, spass: 1.2, wp: 0.05, mdw: 0.0, dependant: 0.6, student: 0.3}
+    sources: [imda_tech_workforce]
+    assumption: true
+    justification: "Employment Pass holders are over-represented among ICT workers (about 2-3 times citizens, assumption); Work Permit holders and domestic workers almost never hold ICT roles."
+  edu_tilt:
+    label: "Education tilt for open-source awareness and OS choice"
+    values: {below_secondary: 0.4, secondary: 0.6, post_secondary: 0.8, diploma: 1.0, degree: 1.5}
+    assumption: true
+    justification: "No survey of open-source awareness in Singapore; awareness is assumed to rise with education (mean about 1 over the adult population)."
+  age_tilt:
+    label: "Age tilt for open-source awareness and OS choice"
+    bands:
+      - {from: 18, to: 29, value: 1.3}
+      - {from: 30, to: 44, value: 1.15}
+      - {from: 45, to: 59, value: 0.8}
+      - {from: 60, to: 79, value: 0.5}
+    assumption: true
+    justification: "Younger adults are more likely to know and use open-source tools (assumption, no Singapore data)."
+  adoption_tilt:
+    label: "Technology adoption tilt (Rogers profile)"
+    values: {innovator: 1.7, early_adopter: 1.35, early_majority: 1.0, late_majority: 0.7, laggard: 0.4}
+    assumption: true
+    justification: "Early adopters try alternative software more often (assumption)."
+  pro_core_pcs:
+    label: "Coefficient for open source being the core of the stack, by SSOC major group"
+    values: {"1": 0.7, "2": 1.15, "3": 0.85, "4": 0.5, "5": 0.5, "6": 0.5, "7": 0.5, "8": 0.5, "9": 0.5, "none": 0.5}
+    sources: [stackoverflow_2024]
+    assumption: true
+    justification: "Developers and engineers (mostly SSOC 2) work more with open-source stacks than technicians and managers; Ubuntu is used by 27.7% of professional developers worldwide (Stack Overflow 2024). Coefficients assumed."
+  pro_core_age:
+    label: "Age coefficient for open source being the core of the stack"
+    bands:
+      - {from: 18, to: 24, value: 0.8}
+      - {from: 25, to: 44, value: 1.1}
+      - {from: 45, to: 64, value: 0.85}
+      - {from: 65, to: 79, value: 0.6}
+    assumption: true
+    justification: "Hands-on engineers are concentrated at ages 25-44; older tech workers move to management and proprietary enterprise stacks (assumption)."
+  contrib_age:
+    label: "Age coefficient for contributing to open source (tech workers)"
+    bands:
+      - {from: 18, to: 24, value: 1.1}
+      - {from: 25, to: 34, value: 1.3}
+      - {from: 35, to: 44, value: 1.0}
+      - {from: 45, to: 54, value: 0.7}
+      - {from: 55, to: 79, value: 0.4}
+    sources: [github_octoverse_2023]
+    assumption: true
+    justification: "Singapore has more than 1 million GitHub accounts (+39% in 2023, unverified) but active contribution is rare and concentrated among younger developers; age is a proxy for seniority and student GitHub use (assumption)."
+
+attributes:
+  - key: is_tech_worker
+    label: Works in an ICT / software role
+    type: boolean
+    when: {attr: socle.activity_status, in: [employed]}
+    rate:
+      mul:
+        - {lookup: pcs_tech_rate, by: socle.pcs}
+        - {lookup: edu_tech_factor, by: socle.education}
+        - {lookup: age_tech_factor, by: socle.age}
+        - {lookup: residency_tech_factor, by: socle.residency_status}
+    labels: {yes: works in an ICT / software role, no: does not work in an ICT / software role}
+    sources: [imda_tech_workforce]
+    assumption: true
+    justification: "About 214,000 tech professionals, 5.3% of employment in 2024 (IMDA, unverified summary). Multiplicative model SSOC group x education x age x residency status (EP holders over-represented), calibrated on about 5% of employed adults. The socle only gives the SSOC major group, so the ICT flag is a sourced rate, not a derivation."
+
+  - key: main_computer_os
+    label: Main personal computer OS
+    type: enum
+    when: has_pc
+    values:
+      - {code: windows, label: Windows}
+      - {code: macos, label: macOS}
+      - {code: linux, label: Linux}
+      - {code: chromeos, label: ChromeOS}
+    distribution:
+      weights:
+        windows: 78
+        macos:
+          mul:
+            - 14
+            - {lookup: edu_tilt, by: socle.education}
+            - {lookup: age_tilt, by: socle.age}
+            - {lookup: adoption_tilt, by: socle.tech_adoption}
+            - {if: {attr: socle.living_standard_ratio, gt: 1.5}, then: 1.3, else: 1}
+            - {if: {attr: is_tech_worker, eq: true}, then: 1.8, else: 1}
+        linux:
+          mul:
+            - 1.5
+            - {lookup: edu_tilt, by: socle.education}
+            - {lookup: adoption_tilt, by: socle.tech_adoption}
+            - {lookup: adoption_tilt, by: socle.tech_adoption}
+            - {if: {attr: is_tech_worker, eq: true}, then: 5, else: 1}
+        chromeos:
+          mul:
+            - 1.2
+            - {if: {attr: socle.activity_status, eq: student}, then: 3, else: 1}
+    display: {template: "{value}", empty: "no personal computer (phone or tablet only)"}
+    sources: [statcounter_sg_desktop, stackoverflow_2024]
+    assumption: true
+    justification: "StatCounter (web traffic, volatile): Windows 71%, Apple about 23%, Linux 5.7%, Chrome OS 0.3%; shrunk to about 15-18% Apple, 2-3% Linux among computer owners because traffic over-represents Apple and bots. Stack Overflow 2024 (global developers): Windows 47.6%, macOS 31.8%: tech workers, high living standard, degree holders, young people and early adopters are tilted towards macOS and Linux. People without a computer have no value (rendered as phone or tablet only)."
+
+  - key: oss_awareness_use
+    label: Open-source software knowingly used on a computer
+    type: set
+    when: has_pc
+    rate_cap: 0.9
+    items:
+      - code: vlc
+        label: VLC media player
+        card_label: VLC
+        rate:
+          mul:
+            - 0.35
+            - {lookup: edu_tilt, by: socle.education}
+            - {lookup: age_tilt, by: socle.age}
+            - {lookup: adoption_tilt, by: socle.tech_adoption}
+            - {if: {attr: is_tech_worker, eq: true}, then: 1.6, else: 1}
+      - code: firefox
+        label: Firefox
+        card_label: Firefox
+        rate:
+          mul:
+            - 0.2
+            - {lookup: edu_tilt, by: socle.education}
+            - {lookup: age_tilt, by: socle.age}
+            - {lookup: adoption_tilt, by: socle.tech_adoption}
+            - {if: {attr: is_tech_worker, eq: true}, then: 1.8, else: 1}
+      - code: libreoffice
+        label: LibreOffice
+        card_label: LibreOffice
+        rate:
+          mul:
+            - 0.1
+            - {lookup: edu_tilt, by: socle.education}
+            - {lookup: age_tilt, by: socle.age}
+            - {lookup: adoption_tilt, by: socle.tech_adoption}
+            - {if: {attr: is_tech_worker, eq: true}, then: 1.8, else: 1}
+      - code: linux_distribution
+        label: A Linux distribution
+        card_label: a Linux distribution
+        rate:
+          cases:
+            - when: {attr: main_computer_os, eq: linux}
+              value: 0.95
+            - else:
+                mul:
+                  - 0.02
+                  - {lookup: adoption_tilt, by: socle.tech_adoption}
+                  - {if: {attr: is_tech_worker, eq: true}, then: 4, else: 1}
+      - code: gimp_blender
+        label: GIMP or Blender
+        card_label: GIMP or Blender
+        rate:
+          mul:
+            - 0.07
+            - {lookup: edu_tilt, by: socle.education}
+            - {lookup: age_tilt, by: socle.age}
+            - {lookup: adoption_tilt, by: socle.tech_adoption}
+            - {if: {attr: is_tech_worker, eq: true}, then: 1.8, else: 1}
+      - code: self_hosted_tools
+        label: Self-hosted tools (Nextcloud, Home Assistant, Pi-hole…)
+        card_label: self-hosted tools
+        rate:
+          mul:
+            - 0.03
+            - {lookup: edu_tilt, by: socle.education}
+            - {lookup: adoption_tilt, by: socle.tech_adoption}
+            - {lookup: adoption_tilt, by: socle.tech_adoption}
+            - {if: {attr: is_tech_worker, eq: true}, then: 5, else: 1}
+    display: {template: "{value}", empty: "none"}
+    sources: [stackoverflow_2024]
+    assumption: true
+    justification: "No Singapore survey of conscious open-source use. Rates assumed among computer owners (VLC about 35%, Firefox 20%, LibreOffice 10%, GIMP/Blender 7%, Linux 2-4%, self-hosted 3%, about 40% none), tilted by education, age and tech adoption; tech workers much higher. Only drawn for people with a computer. An empty set means none or unaware. Linux distribution is nearly certain for Linux main-OS users, and also covers dual boot, WSL and servers for tech workers."
+
+  - key: oss_mobile_awareness
+    label: Open-source awareness on a smartphone
+    type: set
+    when: has_phone
+    rate_cap: 0.9
+    items:
+      - code: android_open_source_aware
+        label: Android known to be open source
+        card_label: aware that Android is open source
+        rate:
+          mul:
+            - 0.15
+            - {lookup: edu_tilt, by: socle.education}
+            - {lookup: age_tilt, by: socle.age}
+            - {lookup: adoption_tilt, by: socle.tech_adoption}
+            - {if: {attr: is_tech_worker, eq: true}, then: 2.5, else: 1}
+    display: {template: "{value}", empty: "not aware that Android is open source"}
+    sources: [stackoverflow_2024]
+    assumption: true
+    justification: "No Singapore survey. About 15% of smartphone owners are assumed to know that Android is built on open source, tilted by education, age and tech adoption; tech workers much higher. Only drawn for smartphone owners."
+
+  - key: pro_open_source_use
+    label: Professional use of open source
+    type: enum
+    when: tech
+    values:
+      - {code: none, label: none}
+      - {code: occasional, label: occasional}
+      - {code: core_of_stack, label: core of the stack}
+    distribution:
+      weights:
+        none: 8
+        occasional: 37
+        core_of_stack:
+          mul:
+            - 55
+            - {lookup: pro_core_pcs, by: socle.pcs}
+            - {lookup: pro_core_age, by: socle.age}
+    display: {template: "{value}", empty: "not applicable"}
+    sources: [stackoverflow_2024]
+    assumption: true
+    justification: "About 8% none, 37% occasional, 55% core of the stack among tech workers (assumption); Ubuntu is used by 27.7% of professional developers worldwide (Stack Overflow 2024), which suggests widespread open source in developer stacks. Core use is higher for SSOC 2 and ages 25-44."
+
+  - key: oss_contribution
+    label: Open-source contributions
+    type: set
+    when: tech
+    rate_cap: 0.6
+    items:
+      - code: code
+        label: Code
+        card_label: code
+        rate:
+          mul:
+            - 0.15
+            - {lookup: contrib_age, by: socle.age}
+            - {pick: pro_open_source_use, values: {none: 0.2, occasional: 0.7, core_of_stack: 1.3}, default: 1}
+      - code: documentation
+        label: Documentation
+        card_label: documentation
+        rate:
+          mul:
+            - 0.06
+            - {lookup: contrib_age, by: socle.age}
+            - {pick: pro_open_source_use, values: {none: 0.2, occasional: 0.7, core_of_stack: 1.3}, default: 1}
+      - code: issues_bug_reports
+        label: Issues and bug reports
+        card_label: issues and bug reports
+        rate:
+          mul:
+            - 0.18
+            - {lookup: contrib_age, by: socle.age}
+            - {pick: pro_open_source_use, values: {none: 0.2, occasional: 0.7, core_of_stack: 1.3}, default: 1}
+      - code: donations_sponsorship
+        label: Donations or sponsorship
+        card_label: donations or sponsorship
+        rate:
+          mul:
+            - 0.04
+            - {pick: pro_open_source_use, values: {none: 0.2, occasional: 0.7, core_of_stack: 1.3}, default: 1}
+    display: {template: "{value}", empty: "none"}
+    sources: [github_octoverse_2023]
+    assumption: true
+    justification: "Assumed among tech workers: no contribution about 65%, issues and bug reports about 18%, code about 15%, documentation about 6%, donations about 4%. Singapore has more than 1 million GitHub accounts (Octoverse 2023, unverified), but active contribution is rare; age is a proxy for seniority. An empty set means no contribution. Donations here can be one-off, so they are not tied to the monthly amount below."
+
+  - key: oss_attitude
+    label: Attitude toward open source vs proprietary software
+    type: enum
+    values:
+      - {code: prefers_proprietary, label: prefers proprietary software}
+      - {code: indifferent, label: indifferent}
+      - {code: prefers_open_source, label: prefers open source}
+      - {code: advocate, label: open-source advocate}
+    distribution:
+      weights:
+        prefers_proprietary:
+          cases:
+            - when: {attr: pro_open_source_use, eq: core_of_stack}
+              value: 8
+            - when: {attr: pro_open_source_use, eq: occasional}
+              value: 10
+            - when: {attr: pro_open_source_use, eq: none}
+              value: 25
+            - else: 12
+        indifferent:
+          cases:
+            - when: {attr: pro_open_source_use, eq: core_of_stack}
+              value: 35
+            - when: {attr: pro_open_source_use, eq: occasional}
+              value: 55
+            - when: {attr: pro_open_source_use, eq: none}
+              value: 60
+            - else: 75
+        prefers_open_source:
+          cases:
+            - when: {attr: pro_open_source_use, eq: core_of_stack}
+              value: 45
+            - when: {attr: pro_open_source_use, eq: occasional}
+              value: 30
+            - when: {attr: pro_open_source_use, eq: none}
+              value: 13
+            - else:
+                mul:
+                  - 11
+                  - {lookup: adoption_tilt, by: socle.tech_adoption}
+                  - {lookup: edu_tilt, by: socle.education}
+        advocate:
+          cases:
+            - when: {attr: pro_open_source_use, eq: core_of_stack}
+              value: 12
+            - when: {attr: pro_open_source_use, eq: occasional}
+              value: 5
+            - when: {attr: pro_open_source_use, eq: none}
+              value: 2
+            - else:
+                mul:
+                  - 2
+                  - {lookup: adoption_tilt, by: socle.tech_adoption}
+    display: {template: "{value}"}
+    assumption: true
+    justification: "No Singapore data. Assumed for the general population: indifferent about 75%, prefers proprietary 12%, prefers open source 11%, advocate 2% (tilted by tech adoption and education). Tech workers with open source at the core of their stack: prefers open source about 45%, advocate about 12%; tech workers with no professional use lean proprietary."
+
+  - key: oss_monthly_giving_sgd
+    label: Monthly donations to open-source software (SGD)
+    type: number
+    unit: S$/month
+    value:
+      mul:
+        - {bernoulli: {min: [0.6, {mul: [0.01, {pick: oss_attitude, values: {advocate: 4, prefers_open_source: 2.2, indifferent: 0.1, prefers_proprietary: 0.02}, default: 1}, {if: {attr: is_tech_worker, eq: true}, then: 2.5, else: 1}, {if: {attr: socle.monthly_income, gt: 8000}, then: 1.5, else: 1}]}]}}
+        - {round: {min: [50, {max: [1, {lognormal: {median: {pick: oss_attitude, values: {advocate: 9, prefers_open_source: 6}, default: 4}, sigma: 0.8}}]}]}}
+    display: {template: "about {value} Singapore dollars per month", empty: "none"}
+    assumption: true
+    justification: "Assumed: regular monthly donations to open-source projects are very rare, so about 99.5% of the general population pays nothing (target well under 1%), with payers mostly tech workers and open-source advocates or fans. Among payers the median is about 5 Singapore dollars per month with a tail up to 50, higher for advocates, tech workers and people with a net monthly income above 8,000. No Singapore data on giving to open-source projects."
+
+card:
+  - when: has_pc
+    template: "Computer OS: {main_computer_os}"
+  - when: has_pc
+    template: "Open-source software they know they use on a computer: {oss_awareness_use}"
+  - when: has_phone
+    template: "Smartphone: {oss_mobile_awareness}"
+  - when: tech
+    template: "Works in ICT / software; open source at work: {pro_open_source_use}; contributions: {oss_contribution}"
+  - when: adult
+    template: "Attitude to open source: {oss_attitude}"
+  - when: adult
+    template: "Pays or donates for open source: {oss_monthly_giving_sgd}"
+
+segments:
+  - {id: ossComputerOs, attribute: main_computer_os, label: Main computer OS}
+  - {id: ossProUse, attribute: pro_open_source_use, label: Professional use of open source}
+  - {id: ossAttitude, attribute: oss_attitude, label: Attitude toward open source}
+
+eligibility_helpers:
+  tech_worker: "sg-open-source.is_tech_worker"
+  young_tech_worker: "sg-open-source.is_tech_worker and age >= 22 and age <= 34"
+  linux_user: "sg-open-source.main_computer_os == linux"
+  mac_user: "sg-open-source.main_computer_os == macos"
+  windows_user: "sg-open-source.main_computer_os == windows"
+  phone_only: "not has_computer"
+  core_open_source_pro: "sg-open-source.pro_open_source_use == core_of_stack"
+  open_source_fan: "sg-open-source.oss_attitude in [prefers_open_source, advocate]"
+  open_source_advocate: "sg-open-source.oss_attitude == advocate"
+  open_source_giver: "sg-open-source.oss_monthly_giving_sgd > 0"
+  early_adopter_pc_owner: "has_computer and tech_adoption in [innovator, early_adopter]"
+
+validation:
+  margins:
+    - {attribute: main_computer_os, title: "Main computer OS (expected from the socle and tech workers)"}
+    - {attribute: pro_open_source_use, title: "Professional use of open source (tech workers)"}
+    - {attribute: oss_attitude, title: "Attitude toward open source"}
+  shares:
+    - label: "ICT / software workers among employed people (IMDA: about 5.3% of employment in 2024)"
+      among: {attr: socle.activity_status, eq: employed}
+      share_of: tech
+      range: [0.035, 0.065]
+    - label: "Windows among computer owners (StatCounter: 71% of desktop page views, assumed 75-85% of people)"
+      among: has_pc
+      share_of: {attr: main_computer_os, eq: windows}
+      range: [0.68, 0.88]
+    - label: "Linux among computer owners (StatCounter: 5.7% of page views, shrunk to 1-6%)"
+      among: has_pc
+      share_of: {attr: main_computer_os, eq: linux}
+      range: [0.01, 0.06]
+    - label: "Open source at the core of the stack among tech workers (assumption: 55%)"
+      among: tech
+      share_of: {attr: pro_open_source_use, eq: core_of_stack}
+      range: [0.45, 0.62]

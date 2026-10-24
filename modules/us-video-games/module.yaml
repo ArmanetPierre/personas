@@ -1,0 +1,476 @@
+# Module "Video games": do US adults play video games, how often, on which platforms, which genres, how and how much they spend.
+# Generic and reusable by any game, app or SaaS project. Applies to every adult of the us socle.
+# Format: docs/modules.md. Declaration order = draw order (own random stream for the module).
+id: us-video-games
+version: "2026.2"
+changelog:
+  - version: "2026.2"
+    date: "2026-10-22"
+    changes:
+      - "First version for the US socle: play frequency, weekly play time, mobile and gaming PC use (conditioned on device ownership), consoles and cloud gaming, genres, play mode, monthly spend band, in-app purchase habit (mobile players) and purchase channels."
+      - "Added gaming_communities (set: Twitch, Discord, YouTube gaming) for gamers only, declared last so earlier draws are unchanged; new conditions competitive_mode and casual_social_mode, card line and eligibility helper. No segment, because segments require an enum attribute."
+label: Video gaming
+short_label: Gaming
+description: >-
+  Video gaming among US adults: whether they play and how often (non-gamer, occasional, weekly, daily),
+  weekly play time, platforms used (mobile, gaming PC, PlayStation, Xbox, Nintendo, cloud gaming), preferred genres,
+  play mode (solo, casual with friends or family, competitive online), monthly spending band on games and in-game
+  content in US dollars, in-app purchase habit of mobile players, and main purchase channels. Conditioned on age, sex,
+  activity status, education, children under 12, living standard, device ownership, internet access, tech adoption
+  and urbanicity. Console subscriptions (Xbox Game Pass, PlayStation Plus) are already in the socle and are not redrawn.
+applies_to: [us]
+requires: []
+
+sources:
+  esa_2025:
+    org: "Entertainment Software Association"
+    title: "2025 Essential Facts About the U.S. Video Game Industry"
+    year: 2025
+    url: "https://www.theesa.com/resources/essential-facts-about-the-us-video-game-industry/2025-data/"
+    detail: "Industry survey, ages 5-90. 205 million+ players; 89% of players 8+ have played online, 55% play weekly with others; 82% of parents who play do so with their children"
+  esa_2025_press:
+    org: "CEPRO / ESA search summary"
+    title: "ESA Essential Facts Report Finds 60% of Adults Play Video Games as Entertainment"
+    year: 2025
+    url: "https://www.cepro.com/news/esa-essential-facts-about-u-s-video-game-industry-report-finds-60-of-adults-are-gamers/618975/"
+    detail: "Not verified (search summary). 60% of adults 18+ play weekly (industry survey, likely an upper bound); nearly half of Boomers play weekly"
+  esa_2026:
+    org: "Entertainment Software Association"
+    title: "2026 Essential Facts About the U.S. Video Game Industry"
+    year: 2026
+    url: "https://www.theesa.com/resources/essential-facts-about-the-us-video-game-industry/2026-data/"
+    detail: "Industry survey. 212.3 million players (ages 5-90); 67% play 1+ hour per week; 70% of players 8+ play with others; 81% of parents who play do so with their children"
+  esa_2026_search:
+    org: "ESA via Variety / PR Newswire (search summary)"
+    title: "Two-Thirds of Americans Play Video Games Every Week (ESA 2026)"
+    year: 2026
+    url: "https://variety.com/2026/gaming/news/americans-play-video-games-hour-per-week-1236765544/"
+    detail: "Not verified (search summary). About 12 hours of play per week on average; among players 8+: 80% mobile, 52% PC, 44% console; nearly a third mobile only; puzzle is the top mobile and PC genre"
+  esa_spending_2025:
+    org: "ESA / Circana / Sensor Tower"
+    title: "2025 U.S. Consumer Spending on Video Games Nears Pandemic-Level Peak at $60.7 Billion"
+    year: 2026
+    url: "https://www.theesa.com/2025-u-s-consumer-spending-on-video-games-nears-pandemic-level-peak-at-60-7-billion-second-highest-on-record/"
+    detail: "2025 US spending $60.7B: content $52.3B (mobile $26.7B), hardware $5.4B, accessories $2.95B; 82% of players 8+ use mobile devices"
+  pew_2017:
+    org: "Pew Research Center"
+    title: "Who plays video games? Younger men, but many others too"
+    year: 2017
+    url: "https://www.pewresearch.org/short-reads/2017/09/11/younger-men-play-video-games-but-so-do-a-diverse-group-of-other-americans/"
+    detail: "Adults 18+, 2017: 43% play often or sometimes; 60% at 18-29, 53% at 30-49, about 28% at 50+; men 18-29 72% vs women 49%; high school or less 42%, some college 50%, college graduates 36%"
+  pew_2018:
+    org: "Pew Research Center"
+    title: "5 facts about Americans and video games"
+    year: 2018
+    url: "https://www.pewresearch.org/short-reads/2018/09/17/5-facts-about-americans-and-video-games/"
+    detail: "Not verified. 39% of US adults own a dedicated game console (2018)"
+  circana_buy_freq:
+    org: "Circana (Future of Video Games survey, Q3 2025), via Video Games Chronicle"
+    title: "More than 60% of US game players only buy two games or fewer per year"
+    year: 2025
+    url: "https://www.videogameschronicle.com/news/more-than-60-of-us-game-players-only-buy-two-games-or-fewer-per-year-survey-finds/"
+    detail: "Not verified. 33% of players buy a game less than once a year, 63% two or fewer a year, 14% monthly or more; Comscore (secondary): 82% made an in-game purchase in 12 months"
+  pew_online_community_2026:
+    org: "Pew Research Center"
+    title: "Online Community and Connection in America"
+    year: 2026
+    url: "https://www.pewresearch.org/internet/2026/10/14/online-community-and-connection-in-america/"
+    detail: "US adults, published 2026-10-14: 27% of under-30s, 16% of 30-49s and 4% of those 50+ belong to an online community about video games. No separate figure for Discord or Twitch in the text consulted."
+  pew_social_media_2026:
+    org: "Pew Research Center"
+    title: "Americans' Use of Social Media in 2026 (fact sheet)"
+    year: 2026
+    url: "https://www.pewresearch.org/internet/fact-sheet/social-media/"
+    detail: "US adults, survey Jan-Jun 2026: 84% use YouTube (95% at 18-29, 91% at 30-49, 85% at 50-64, 65% at 65+; men 85%, women 83%). Discord and Twitch are not covered."
+  twitch_third_party:
+    org: "Third-party statistics sites (Social Shepherd, DemandSage, etc.)"
+    title: "Twitch statistics 2025-2026"
+    year: 2025
+    url: "https://thesocialshepherd.com/blog/twitch-statistics"
+    detail: "Not verified, secondary source. US Twitch users about 63% men; 35% aged 20-29 and 34% aged 30-39. Used only as a rough landmark."
+
+conditions:
+  young: {attr: socle.age, lt: 30}
+  midage: {all: [{attr: socle.age, gt: 29}, {attr: socle.age, lt: 50}]}
+  older: {all: [{attr: socle.age, gt: 49}, {attr: socle.age, lt: 65}]}
+  senior: {attr: socle.age, gt: 64}
+  under50: {attr: socle.age, lt: 50}
+  is_male: {attr: socle.sex, eq: M}
+  is_female: {attr: socle.sex, eq: F}
+  under50_male: {all: [{attr: socle.sex, eq: M}, {attr: socle.age, lt: 50}]}
+  under50_female: {all: [{attr: socle.sex, eq: F}, {attr: socle.age, lt: 50}]}
+  student: {attr: socle.activity_status, eq: student}
+  no_phone: {attr: socle.has_smartphone, eq: false}
+  no_internet: {attr: socle.has_internet, eq: false}
+  early_tech: {attr: socle.tech_adoption, in: [innovator, early_adopter]}
+  late_tech: {attr: socle.tech_adoption, in: [late_majority, laggard]}
+  degree: {attr: socle.education, in: [bachelor, graduate]}
+  no_social: {attr: socle.social_media, eq: none}
+  has_kids: {attr: socle.children_under_12, gt: 0}
+  low_income: {attr: socle.living_standard_ratio, lt: 0.6}
+  high_income: {attr: socle.living_standard_ratio, gt: 1.5}
+  rural: {attr: socle.urbanicity, eq: rural}
+  gamer: {attr: gamer_frequency, in: [occasional, weekly, daily]}
+  daily_gamer: {attr: gamer_frequency, eq: daily}
+  occasional_gamer: {attr: gamer_frequency, eq: occasional}
+  gamer_with_computer: {all: [{attr: gamer_frequency, in: [occasional, weekly, daily]}, {attr: socle.has_computer, eq: true}]}
+  gamer_with_phone: {all: [{attr: gamer_frequency, in: [occasional, weekly, daily]}, {attr: socle.has_smartphone, eq: true}]}
+  on_pc: {attr: plays_on_pc, eq: true}
+  on_console: {attr: platforms, in: [playstation, xbox, nintendo]}
+  on_mobile: {attr: plays_on_mobile, eq: true}
+  not_on_pc: {not: {attr: plays_on_pc, eq: true}}
+  not_on_console: {not: {attr: platforms, in: [playstation, xbox, nintendo]}}
+  not_on_mobile: {not: {attr: plays_on_mobile, eq: true}}
+  spends_none: {attr: monthly_game_spend, eq: none}
+  mobile_gamer: {attr: plays_on_mobile, eq: true}
+  competitive_mode: {attr: play_mode, eq: competitive_online}
+  casual_social_mode: {attr: play_mode, eq: casual_with_friends_family}
+
+attributes:
+  - key: gamer_frequency
+    label: Video game play frequency
+    type: enum
+    values:
+      - {code: non_gamer, label: does not play video games}
+      - {code: occasional, label: plays video games occasionally (less than weekly)}
+      - {code: weekly, label: plays video games weekly}
+      - {code: daily, label: plays video games almost every day}
+    distribution:
+      sampler: quasi
+      weights:
+        non_gamer:
+          mul:
+            - 0.31
+            - {cases: [{when: young, value: 0.45}, {when: midage, value: 0.8}, {when: older, value: 1.4}, {else: 2.15}]}
+            - {cases: [{when: under50_male, value: 0.8}, {when: under50_female, value: 1.2}, {else: 1}]}
+            - {if: student, then: 0.6, else: 1}
+            - {if: no_phone, then: 1.8, else: 1}
+            - {if: late_tech, then: 1.4, else: {if: early_tech, then: 0.7, else: 1}}
+            - {if: degree, then: 1.12, else: 1}
+            - {if: no_social, then: 1.3, else: 1}
+        occasional:
+          mul:
+            - 0.17
+            - {cases: [{when: young, value: 0.9}, {when: midage, value: 1}, {when: older, value: 1.1}, {else: 1.2}]}
+        weekly:
+          mul:
+            - 0.28
+            - {cases: [{when: young, value: 1.1}, {when: midage, value: 1.05}, {when: older, value: 0.9}, {else: 0.8}]}
+        daily:
+          mul:
+            - 0.22
+            - {cases: [{when: young, value: 1.5}, {when: midage, value: 1}, {when: older, value: 0.8}, {else: 0.7}]}
+            - {if: is_male, then: 1.1, else: 0.9}
+            - {if: student, then: 1.3, else: 1}
+    sources: [pew_2017, esa_2025_press]
+    assumption: true
+    justification: "The overall gamer share is calibrated between Pew 2017 (43% play often or sometimes) and ESA 2025 (60% of adults play weekly, industry survey, likely an upper bound): about one third non-gamers. Age and sex gradients follow Pew 2017 (60% at 18-29, about 28% at 50+, men ahead of women under 50, women slightly ahead at 50+); ESA reports nearly half of Boomers playing weekly, an industry figure taken as an upper bound, so the 50+ gamer share is set at about 42%, a compromise between Pew (about 28%) and ESA. The split between occasional, weekly and daily is an assumption."
+
+  - key: weekly_play_hours
+    label: Weekly play time
+    type: number
+    unit: h/week
+    when: gamer
+    value:
+      round:
+        min:
+          - 60
+          - max:
+              - 1
+              - mul:
+                  - pick: gamer_frequency
+                    values: {occasional: 2, weekly: 6, daily: 14}
+                    default: 6
+                  - {cases: [{when: young, value: 1.25}, {when: midage, value: 1}, {when: older, value: 0.9}, {else: 0.8}]}
+                  - {if: student, then: 1.2, else: 1}
+                  - {exp: {mul: [0.5, {normal: {}}]}}
+    display: {template: "about {value} h per week"}
+    sources: [esa_2026_search]
+    assumption: true
+    justification: "ESA 2026 reports about 12 hours per week on average for players aged 5-90 (not verified); adults are probably lower, so the medians are set at 2 h (occasional), 6 h (weekly) and 14 h (daily) with a right-skewed spread, giving a mean around 9 h among adult gamers. Higher for young adults and students."
+
+  - key: plays_on_mobile
+    label: Plays mobile games
+    type: boolean
+    when: gamer_with_phone
+    rate:
+      min:
+        - 0.95
+        - mul:
+            - 0.82
+            - {if: is_female, then: 1.07, else: {if: is_male, then: 0.95, else: 1}}
+            - {if: senior, then: 0.95, else: 1}
+    labels: {yes: plays mobile games, no: does not play mobile games}
+    sources: [esa_2026_search, esa_spending_2025]
+    assumption: true
+    justification: "Drawn only for gamers who own a smartphone (socle). ESA 2026 (not verified): 80% of players 8+ play on mobile, 82% in the spending report; about 82% among adult gamers with a smartphone, slightly higher for women and lower at 65+."
+
+  - key: plays_on_pc
+    label: Plays on a gaming PC
+    type: boolean
+    when: gamer_with_computer
+    rate:
+      min:
+        - 0.95
+        - mul:
+            - 0.5
+            - {if: is_male, then: 1.25, else: {if: is_female, then: 0.8, else: 1}}
+            - {if: young, then: 1.1, else: {if: senior, then: 0.6, else: 1}}
+            - {if: early_tech, then: 1.3, else: {if: late_tech, then: 0.7, else: 1}}
+            - {if: high_income, then: 1.1, else: 1}
+    labels: {yes: plays on a gaming PC, no: does not play on a PC}
+    sources: [esa_2026_search]
+    assumption: true
+    justification: "Drawn only for gamers who own a computer (socle). ESA 2026 (not verified): 52% of players 8+ play on PC. Tilts towards men, young adults, early adopters and higher incomes are assumptions."
+
+  - key: platforms
+    label: Consoles and cloud gaming used
+    type: set
+    when: gamer
+    rate_cap: 0.95
+    items:
+      - {code: playstation, label: PlayStation, card_label: PlayStation, rate: {base: 0.22, factors: {is_male: 1.3, is_female: 0.75, young: 1.3, older: 0.65, senior: 0.35, high_income: 1.15, low_income: 0.8}}}
+      - {code: xbox, label: Xbox Series, card_label: "Xbox Series", rate: {base: 0.14, factors: {is_male: 1.35, is_female: 0.7, young: 1.25, older: 0.6, senior: 0.3, low_income: 0.85}}}
+      - {code: nintendo, label: Nintendo Switch / Switch 2, card_label: "Nintendo Switch / Switch 2", rate: {base: 0.2, factors: {has_kids: 1.6, is_female: 1.1, young: 1.2, older: 0.6, senior: 0.4}}}
+      - {code: cloud_gaming, label: cloud gaming, card_label: "cloud gaming", rate: {base: 0.07, factors: {no_internet: 0, early_tech: 1.8, late_tech: 0.4, young: 1.4, senior: 0.5}}}
+    display: {template: "{value}", empty: no console or cloud gaming}
+    sources: [esa_2026_search, pew_2018]
+    assumption: true
+    justification: "Drawn only for gamers. ESA 2026 (not verified): 44% of players 8+ use a console; Pew 2018: 39% of adults own a console. Cloud gaming requires home internet (socle). The split between PlayStation, Xbox and Nintendo and the cloud share are assumptions. Mobile and PC use are separate attributes conditioned on device ownership. Console subscriptions are drawn in the socle and not repeated here."
+
+  - key: preferred_genres
+    label: Preferred game genres
+    type: set
+    when: gamer
+    min_items: 1
+    max_items: 3
+    rate_cap: 0.85
+    items:
+      - {code: casual_puzzle, label: casual and puzzle, card_label: "casual and puzzle", rate: {base: 0.42, factors: {older: 1.3, senior: 1.5, is_female: 1.4, is_male: 0.8, young: 0.8}}}
+      - {code: action_adventure, label: action-adventure, card_label: "action-adventure", rate: {base: 0.3, factors: {is_male: 1.2, is_female: 0.85, young: 1.2, senior: 0.6}}}
+      - {code: shooter, label: shooter, card_label: shooter, rate: {base: 0.2, factors: {is_male: 1.6, is_female: 0.6, young: 1.4, older: 0.7, senior: 0.4}}}
+      - {code: rpg, label: role-playing (RPG), card_label: RPG, rate: {base: 0.18, factors: {young: 1.3, senior: 0.5, is_male: 1.1}}}
+      - {code: simulation, label: simulation, card_label: simulation, rate: {base: 0.16, factors: {is_female: 1.3, is_male: 0.85, senior: 0.9}}}
+      - {code: sports, label: sports, card_label: sports, rate: {base: 0.14, factors: {is_male: 1.7, is_female: 0.5, young: 1.2, senior: 0.6}}}
+      - {code: strategy, label: strategy, card_label: strategy, rate: {base: 0.11, factors: {is_male: 1.3, is_female: 0.7, older: 1.1, young: 0.9}}}
+      - {code: family_party, label: family and party, card_label: "family and party", rate: {base: 0.1, factors: {has_kids: 3, is_female: 1.2, young: 1.2, senior: 0.6}}}
+      - {code: battle_royale, label: battle royale, card_label: "battle royale", rate: {base: 0.08, factors: {young: 2.2, older: 0.4, senior: 0.1, is_male: 1.4, is_female: 0.6}}}
+      - {code: mmo, label: massively multiplayer online (MMO), card_label: MMO, rate: {base: 0.06, factors: {young: 1.5, senior: 0.4, is_male: 1.3, is_female: 0.7}}}
+    display: {template: "{value}", empty: no preferred genre}
+    sources: [esa_2026_search]
+    assumption: true
+    justification: "ESA 2026 (not verified): puzzle is the top genre on mobile (66%) and PC (60%); action, shooter and arcade lead on console. Per-genre shares and the age and sex tilts are assumptions: casual and puzzle towards older and female players; shooter, battle royale and sports towards men under 35; family and party towards households with children under 12. One to three genres per gamer."
+
+  - key: play_mode
+    label: Main play mode
+    type: enum
+    when: gamer
+    values:
+      - {code: mostly_solo, label: mostly plays solo}
+      - {code: casual_with_friends_family, label: mostly plays casually with friends or family}
+      - {code: competitive_online, label: mostly plays competitive online games}
+    distribution:
+      weights:
+        mostly_solo:
+          mul:
+            - 40
+            - {if: senior, then: 1.4, else: {if: older, then: 1.2, else: 1}}
+            - {if: occasional_gamer, then: 1.3, else: 1}
+            - {if: has_kids, then: 0.8, else: 1}
+        casual_with_friends_family:
+          mul:
+            - 40
+            - {if: has_kids, then: 1.5, else: 1}
+            - {if: is_female, then: 1.2, else: 1}
+        competitive_online:
+          mul:
+            - 20
+            - {if: under50_male, then: 1.8, else: {if: is_female, then: 0.5, else: 1}}
+            - {if: senior, then: 0.2, else: {if: older, then: 0.5, else: 1}}
+            - {if: daily_gamer, then: 1.4, else: {if: occasional_gamer, then: 0.4, else: 1}}
+            - {if: has_kids, then: 0.8, else: 1}
+    sources: [esa_2026, esa_2025]
+    assumption: true
+    justification: "ESA 2026: 70% of players 8+ play with others; 81% of parents who play do so with their children. The solo share, the competitive share (about 20%) and the tilts are assumptions: more family play with young children, more competitive play among men under 50 and daily players."
+
+  - key: monthly_game_spend
+    label: Monthly spend on games and in-game content
+    type: enum
+    when: gamer
+    values:
+      - {code: none, label: "spends nothing on games or in-game content"}
+      - {code: under_10, label: "spends under $10 a month on games and in-game content"}
+      - {code: spend_10_24, label: "spends $10 to $24 a month on games and in-game content"}
+      - {code: spend_25_59, label: "spends $25 to $59 a month on games and in-game content"}
+      - {code: spend_60_plus, label: "spends $60 or more a month on games and in-game content"}
+    distribution:
+      weights:
+        none:
+          mul:
+            - 25
+            - {if: senior, then: 1.5, else: {if: older, then: 1.2, else: 1}}
+            - {if: low_income, then: 1.4, else: {if: high_income, then: 0.8, else: 1}}
+            - {pick: gamer_frequency, values: {occasional: 1.6, weekly: 1, daily: 0.5}, default: 1}
+        under_10:
+          mul:
+            - 30
+            - {if: low_income, then: 1.1, else: 1}
+            - {pick: gamer_frequency, values: {occasional: 1.3, weekly: 1, daily: 0.7}, default: 1}
+        spend_10_24:
+          mul:
+            - 20
+            - {if: high_income, then: 1.2, else: 1}
+            - {pick: gamer_frequency, values: {occasional: 0.6, weekly: 1, daily: 1.2}, default: 1}
+        spend_25_59:
+          mul:
+            - 15
+            - {if: senior, then: 0.5, else: {if: older, then: 0.9, else: 1.2}}
+            - {if: high_income, then: 1.4, else: {if: low_income, then: 0.6, else: 1}}
+            - {pick: gamer_frequency, values: {occasional: 0.3, weekly: 1, daily: 1.4}, default: 1}
+        spend_60_plus:
+          mul:
+            - 10
+            - {if: senior, then: 0.4, else: {if: older, then: 0.8, else: {if: midage, then: 1.2, else: 1}}}
+            - {if: high_income, then: 1.6, else: {if: low_income, then: 0.5, else: 1}}
+            - {pick: gamer_frequency, values: {occasional: 0.15, weekly: 1, daily: 1.8}, default: 1}
+            - {if: under50_male, then: 1.2, else: 1}
+    sources: [esa_spending_2025, circana_buy_freq]
+    assumption: true
+    justification: "Only aggregate totals are published: 2025 content spending of $52.3B, about $20 per player per month across 212 million players including children, and Circana (not verified): 63% of players buy two games or fewer a year. Spending is strongly skewed; among adult gamers about 25% spend nothing, 30% under $10, 20% $10-24, 15% $25-59 and 10% $60+ (assumption). Excludes console subscriptions (drawn in the socle) and hardware; a Nintendo Switch Online fee may be counted. Higher with living standard, for daily players and under 50; lower for 65+."
+
+  - key: mobile_iap_habit
+    label: In-app purchase habit (mobile players)
+    type: enum
+    when: mobile_gamer
+    values:
+      - {code: never, label: never makes in-app purchases}
+      - {code: occasional, label: occasionally makes in-app purchases}
+      - {code: regular, label: regularly makes in-app purchases}
+    distribution:
+      given: monthly_game_spend
+      table:
+        none: {never: 85, occasional: 14, regular: 1}
+        under_10: {never: 38, occasional: 55, regular: 7}
+        spend_10_24: {never: 12, occasional: 58, regular: 30}
+        spend_25_59: {never: 4, occasional: 36, regular: 60}
+        spend_60_plus: {never: 2, occasional: 20, regular: 78}
+    sources: [esa_spending_2025, circana_buy_freq]
+    assumption: true
+    justification: "Mobile content was $26.7B in 2025, about half of US content spending. Comscore (secondary, not verified) says 82% of players made an in-game purchase in 12 months, a loose definition covering all platforms; for mobile players the target is about 35% never, 40% occasional, 25% regular, tied to the spending band so that both attributes stay consistent."
+
+  - key: purchase_channels
+    label: Main game purchase channels
+    type: set
+    when: gamer
+    items:
+      - {code: steam, label: Steam, card_label: Steam, rate: {base: 0.6, factors: {not_on_pc: 0, spends_none: 0, young: 1.1}}}
+      - {code: epic, label: Epic Games Store, card_label: "Epic Games Store", rate: {base: 0.3, factors: {not_on_pc: 0, spends_none: 0, young: 1.3, senior: 0.4}}}
+      - {code: console_digital_store, label: console digital store, card_label: "console digital store", rate: {base: 0.75, factors: {not_on_console: 0, spends_none: 0, senior: 0.7, no_internet: 0.4}}}
+      - {code: mobile_app_store, label: mobile app store, card_label: "mobile app store", rate: {base: 0.75, factors: {not_on_mobile: 0, spends_none: 0}}}
+      - {code: physical_retail, label: physical retail, card_label: "physical retail", rate: {base: 0.24, factors: {not_on_console: 0, spends_none: 0, older: 1.5, senior: 1.8, rural: 1.4, no_internet: 2.5}}}
+    display: {template: "{value}", empty: no game purchases}
+    sources: [circana_buy_freq]
+    assumption: true
+    justification: "No public source gives the channel mix of US adults. Channels follow the platforms used (Steam and Epic for PC, digital store and physical retail for console, app store for mobile); physical retail is higher for older, rural and offline-at-home personas. Gamers who spend nothing get an empty set."
+
+  - key: gaming_communities
+    label: Gaming communities and streaming used
+    type: set
+    when: gamer
+    rate_cap: 0.85
+    items:
+      - {code: twitch, label: Twitch, card_label: Twitch, rate: {base: 0.07, factors: {young: 1.7, older: 0.35, senior: 0.15, is_male: 1.5, is_female: 0.6, no_social: 0.4, daily_gamer: 1.5, competitive_mode: 1.7}}}
+      - {code: discord, label: Discord, card_label: Discord, rate: {base: 0.10, factors: {young: 1.5, older: 0.35, senior: 0.15, is_male: 1.3, is_female: 0.75, no_social: 0.4, daily_gamer: 1.5, competitive_mode: 1.8, casual_social_mode: 1.2}}}
+      - {code: youtube_gaming, label: YouTube gaming videos or streams, card_label: "YouTube gaming", rate: {base: 0.35, factors: {young: 1.3, senior: 0.5, is_male: 1.2, is_female: 0.85, no_social: 0.5, daily_gamer: 1.3, competitive_mode: 1.3}}}
+    display: {template: "{value}", empty: no gaming community or streaming}
+    sources: [pew_online_community_2026, pew_social_media_2026, twitch_third_party]
+    assumption: true
+    justification: "No public source gives the share of US adults or gamers using Discord or Twitch (Pew social media reports 2024-2026 do not cover them; no company-reported US figure found). Anchors: Pew 2026 (verified) 27% of under-30s, 16% of 30-49s and 4% of those 50+ belong to an online gaming community, a steep age gradient; Pew 2026: 84% of adults use YouTube (95% at 18-29, 65% at 65+), with gaming content assumed far less common. Twitch third-party figures (about 63% men, mostly aged 20-39) are not verified and only guide the sex tilt. Base rates among gamers are assumptions (about 25% Discord and 17% Twitch among gamers under 30, under 5% at 50+), higher for daily and competitive players and for personas active on social media. Empty set allowed, no minimum."
+
+card:
+  - "Video games: {gamer_frequency}"
+  - when: gamer
+    template: "Play time: {weekly_play_hours} ; favorite genres: {preferred_genres}"
+  - when: on_mobile
+    template: "Plays mobile games"
+  - when: on_pc
+    template: "Plays on a gaming PC"
+  - when: gamer
+    template: "Consoles and cloud: {platforms}"
+  - when: gamer
+    template: "Play mode: {play_mode} ; {monthly_game_spend}"
+  - when: mobile_gamer
+    template: "Mobile games: {mobile_iap_habit}"
+  - when: gamer
+    template: "Buys games through: {purchase_channels}"
+  - when: gamer
+    template: "Gaming communities and streaming: {gaming_communities}"
+
+segments:
+  - {id: videoGamesFrequency, attribute: gamer_frequency, label: Video game play frequency, compare: 5}
+  - {id: videoGamesPlayMode, attribute: play_mode, label: Main play mode}
+  - {id: videoGamesSpend, attribute: monthly_game_spend, label: Monthly spend on games}
+  - {id: videoGamesIapHabit, attribute: mobile_iap_habit, label: In-app purchase habit}
+
+eligibility_helpers:
+  gamer: "us-video-games.gamer_frequency != non_gamer"
+  non_gamer: "us-video-games.gamer_frequency == non_gamer"
+  regular_gamer: "us-video-games.gamer_frequency in [weekly, daily]"
+  daily_gamer: "us-video-games.gamer_frequency == daily"
+  console_gamer: "us-video-games.platforms in [playstation, xbox, nintendo]"
+  pc_gamer: "us-video-games.plays_on_pc"
+  mobile_gamer: "us-video-games.plays_on_mobile"
+  spends_on_games: "us-video-games.monthly_game_spend in [under_10, spend_10_24, spend_25_59, spend_60_plus]"
+  big_spender: "us-video-games.monthly_game_spend in [spend_25_59, spend_60_plus]"
+  mobile_spender: "us-video-games.mobile_iap_habit in [occasional, regular]"
+  competitive_gamer: "us-video-games.play_mode == competitive_online"
+  family_gamer: "children > 0 and us-video-games.gamer_frequency != non_gamer"
+  gaming_community_member: "us-video-games.gaming_communities in [twitch, discord, youtube_gaming]"
+
+validation:
+  margins:
+    - {attribute: gamer_frequency, title: "Video game play frequency (expected given age, sex, activity and device ownership)"}
+    - {attribute: play_mode, title: "Main play mode (expected given age, sex, children and frequency)"}
+    - {attribute: monthly_game_spend, title: "Monthly spend band (expected given income, age and frequency)"}
+    - {attribute: mobile_iap_habit, title: "In-app purchase habit (expected given spend band)"}
+  shares:
+    - label: "Adults who play video games at least occasionally (between Pew 2017: 43% often or sometimes and ESA 2025: 60% weekly)"
+      among: {attr: socle.age, gt: 17}
+      share_of: gamer
+      range: [0.58, 0.76]
+    - label: "Adults who play weekly or more (ESA 2025: 60%, industry survey, upper bound; Pew 2017: 43%)"
+      among: {attr: socle.age, gt: 17}
+      share_of: {attr: gamer_frequency, in: [weekly, daily]}
+      range: [0.42, 0.62]
+    - label: "Adults who play almost every day (assumption, no direct public figure)"
+      among: {attr: socle.age, gt: 17}
+      share_of: daily_gamer
+      range: [0.14, 0.30]
+    - label: "Adults aged 18-29 who play (Pew 2017: 60%; ESA higher)"
+      among: young
+      share_of: gamer
+      range: [0.65, 0.92]
+    - label: "Adults aged 50+ who play (compromise between Pew 2017: about 28% play often or sometimes, and ESA: nearly half of Boomers weekly, an industry upper bound)"
+      among: {attr: socle.age, gt: 49}
+      share_of: gamer
+      range: [0.35, 0.50]
+    - label: "Gamers who use mobile (ESA 2026: 80% of players 8+)"
+      among: gamer
+      share_of: on_mobile
+      range: [0.70, 0.90]
+    - label: "Gamers who use a gaming PC (ESA 2026: 52% of players 8+)"
+      among: gamer
+      share_of: on_pc
+      range: [0.40, 0.62]
+    - label: "Gamers who use a console (ESA 2026: 44% of players 8+)"
+      among: gamer
+      share_of: on_console
+      range: [0.34, 0.54]
+    - label: "Adults who use a console for gaming (Pew 2018: 39% own a console)"
+      among: {attr: socle.age, gt: 17}
+      share_of: on_console
+      range: [0.26, 0.45]
+    - label: "Gamers who play with others (ESA 2026: 70% of players 8+)"
+      among: gamer
+      share_of: {attr: play_mode, in: [casual_with_friends_family, competitive_online]}
+      range: [0.52, 0.74]

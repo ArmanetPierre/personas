@@ -13,6 +13,7 @@ import { drawPersonas } from "../../src/personas/sampler";
 import { computeMargins, plausibilityChecks } from "../../src/personas/validate";
 import { resolveSoclePack } from "../../src/population/target";
 import type { StoredPreview } from "../db/schema";
+import { eligibilityText } from "./module-view";
 import { computeQuality } from "./quality";
 
 /**
@@ -23,6 +24,11 @@ import { computeQuality } from "./quality";
 
 export const PREVIEW_N = 10_000;
 export const PREVIEW_SEED = 42;
+/**
+ * Format de l'aperçu stocké : 2 = parts des filtres prêts à l'emploi (`eligibilityHelpers`). Les versions
+ * d'un format plus ancien sont recalculées au démarrage du Hub (refreshStalePreviews, src/publish.ts).
+ */
+export const PREVIEW_FORMAT = 2;
 
 /** Erreur HTTP au format du contrat (`{ error: { code, message } }`), traduite par `app.onError`. */
 export class PublishError extends Error {
@@ -208,6 +214,8 @@ export async function checkModuleForPublication(yaml: string, resolve: DepResolv
       margins: preview.margins.map((mg) => ({ ...mg, values: mg.values.map((x) => ({ ...x, share: Math.round(x.share * 10_000) / 10_000 })) })),
       alerts: preview.alerts,
       checks,
+      previewFormat: PREVIEW_FORMAT,
+      eligibilityHelpers: (preview.eligibilityHelpers ?? []).map((h) => ({ name: h.name, expression: h.expression, label: eligibilityText(h.expression, m.def, "fr"), rate: Math.round(h.rate * 10_000) / 10_000 })),
     };
     return { def: m.def, module: m, requires: direct, quality, preview: stored, legacy };
   });

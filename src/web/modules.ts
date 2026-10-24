@@ -3,6 +3,7 @@ import { existsSync, mkdirSync, readdirSync, readFileSync, statSync, writeFileSy
 import { join } from "node:path";
 import { parse as parseYaml } from "yaml";
 import { checkModule, moduleLibrary, ModuleError, modulesRoot } from "../modules/registry";
+import { compileEligibility, type EligibilityNode } from "../population/eligibility";
 import { moduleSchema, type ModuleDef } from "../modules/schema";
 import { DEFAULT_LANG, L, overlay, type Lang } from "./i18n";
 import { overlayNested, SOCLE_LABELS_EN, SOCLE_VALUE_LABELS_EN } from "./i18n-labels";
@@ -319,6 +320,10 @@ function valueLabelOf(def: Def, ref: string, code: unknown, lang: Lang = DEFAULT
     const v = a.values.find((x) => x.code === String(code));
     if (v) return typeof v.label === "string" ? v.label : v.label.F === v.label.M ? v.label.M : `${v.label.M} / ${v.label.F}`;
   }
+  if (a?.type === "set") {
+    const i = a.items.find((x) => x.code === String(code));
+    if (i) return i.label;
+  }
   return String(code);
 }
 
@@ -351,6 +356,55 @@ function conditionInner(c: unknown, def: Def, depth: number, lang: Lang): string
   if ("gt" in o) return `${l} > ${String(o.gt)}`;
   if ("present" in o) return o.present ? `${l} ${L(lang, "renseigné", "provided")}` : `${l} ${L(lang, "absent", "missing")}`;
   return JSON.stringify(c);
+}
+
+/**
+ * Filtre d'éligibilité en clair (« Fréquence de jeu : régulier hebdomadaire ou quotidien »). Les variables du module
+ * s'écrivent `<id>.<attribut>`, celles du socle sans préfixe (age, pcs, children…). Phrase illisible : null.
+ */
+export function eligibilityText(expression: string, def: Def, lang: Lang = DEFAULT_LANG): string | null {
+  let ast: EligibilityNode;
+  try {
+    ast = compileEligibility(expression).ast;
+  } catch {
+    return null;
+  }
+  const prefix = `${def.id}.`;
+  const refOf = (name: string) => (name.startsWith(prefix) ? name.slice(prefix.length) : name.includes(".") ? name : `socle.${name}`);
+  const lab = (name: string) => refLabel(refOf(name), def, lang);
+  const val = (name: string, v: unknown) => valueLabelOf(def, refOf(name), v, lang);
+  const or = L(lang, " ou ", " or ");
+  const walk = (n: EligibilityNode, depth: number): string => {
+    switch (n.kind) {
+      case "truthy":
+        return lab(n.name);
+      case "not":
+        return `${L(lang, "non", "not")} (${walk(n.item, depth + 1)})`;
+      case "and":
+        return n.items.map((x) => walk(x, depth + 1)).join(L(lang, " et ", " and "));
+      case "or": {
+        const t = n.items.map((x) => walk(x, depth + 1)).join(or);
+        return depth > 0 ? `(${t})` : t;
+      }
+      case "in": {
+        const vs = n.values.map((v) => val(n.name, v));
+        const list = vs.length > 1 ? `${vs.slice(0, -1).join(", ")}${or}${vs[vs.length - 1]}` : (vs[0] ?? "");
+        return n.negate ? `${lab(n.name)}${L(lang, " : ni ", ": neither ")}${vs.join(L(lang, " ni ", " nor "))}` : `${lab(n.name)}${L(lang, " : ", ": ")}${list}`;
+      }
+      case "cmp": {
+        const sym = { "==": "=", "!=": "≠", "<": "<", "<=": "≤", ">": ">", ">=": "≥" }[n.op];
+        if (typeof n.value === "boolean") return n.value === (n.op === "==") ? lab(n.name) : `${L(lang, "non", "not")} (${lab(n.name)})`;
+        return `${lab(n.name)} ${sym} ${typeof n.value === "number" ? n.value : val(n.name, n.value)}`;
+      }
+    }
+  };
+  return cap(walk(ast, 0));
+}
+
+/** « Joueurs parmi les adultes (SELL : 76 %) » → libellé et note de source (la dernière parenthèse). */
+export function splitShareLabel(l: string): { title: string; note: string | null } {
+  const m = /^(.*\S)\s*\(([^()]*(?:\([^()]*\)[^()]*)*)\)\s*$/s.exec(l);
+  return m ? { title: m[1]!, note: m[2]! } : { title: l, note: null };
 }
 
 const label = (l: string | { M: string; F: string }) => (typeof l === "string" ? l : l.M === l.F ? l.M : `${l.M} / ${l.F}`);
@@ -427,6 +481,15 @@ export function moduleView(def: Def, lang: Lang = DEFAULT_LANG) {
     attributes,
     card: def.card.map((l) => (typeof l === "string" ? { when: null, template: l } : { when: (l as { when?: unknown }).when !== undefined ? cond((l as { when: unknown }).when) : null, template: (l as { template: string }).template })),
     segments: def.segments.map((s) => ({ id: s.id, label: s.label, attribute: s.attribute, attributeLabel: ref(s.attribute) })),
+    /** Filtres prêts à l'emploi : nom, phrase du langage de ciblage et sa lecture en clair. */
+    eligibilityHelpers: Object.entries(def.eligibility_helpers).map(([name, expression]) => ({ name, expression, text: eligibilityText(expression, def, lang) })),
+    /** Parts sourcées déclarées (validation.shares) : fourchette attendue, libellé et note de source séparés. */
+    validationShares: def.validation.shares.map((sh) => ({ label: sh.label, ...splitShareLabel(sh.label), range: sh.range })),
+    sourcedCount: attributes.filter((a) => a.sources.length > 0).length,
+    assumptionCount: attributes.filter((a) => a.assumption).length,
+    /** Libellés des attributs déclarés sensibles (RGPD art. 9). */
+    sensitive: def.attributes.filter((a) => a.sensitive).map((a) => a.label),
+    changelog: def.changelog,
     overridesSocle: Boolean(def.socle_overrides),
     unsourced: [...attributes.filter((a) => !a.sources.length && !a.assumption).map((a) => a.label), ...tables.filter((t) => !t.sources.length && !t.assumption).map((t) => t.label)],
   };

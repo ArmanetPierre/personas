@@ -1,0 +1,423 @@
+# Module "Payments and fintech" (Singapore): how a persona pays, which wallets / cards / digital banks they use,
+# how non-resident workers send money home, and how comfortable they are with online banking.
+# Generic module, reusable by any app or SaaS project. No investment or crypto attribute.
+# No socle_overrides and no affects_budget: it never changes the socle's income or budget.
+# Not conditioned on ethnicity, religion or home_language.
+id: sg-payments-fintech
+version: "2026.2"
+changelog:
+  - version: "2026.2"
+    date: "2026-10-22"
+    changes:
+      - "First version (sg-2026.2 socle): digital payment ease index, PayNow use, main in-store method, e-wallets, credit cards, BNPL, digital banks, remittance channel (non-residents), online banking comfort."
+      - "PayNow recalibrated on MAS registrations (80% of residents and businesses in 2020, over 90% of Singaporeans in 2025): 'never' about 15-25% among residents, higher at 70+, Work Permit and domestic workers; validation.shares replaced."
+      - "PayNow 'never' weight lowered (8 + 6/ease becomes 4.8 + 3.6/ease) so that the resident share of users reaches its sourced range; gradients unchanged."
+      - "Card lines no longer repeat the prefixes of the attribute templates; sourced figures added to the attributes' sources."
+label: Payments and fintech
+short_label: Payments
+description: >-
+  How adults in Singapore pay and manage money digitally: PayNow use, main in-store payment method,
+  e-wallets and multi-currency apps, credit card ownership, buy now pay later use over the last 12 months,
+  digital bank accounts, the channel used by non-resident workers to send money home, and comfort with online
+  banking. Conditioned on age, income, residency status, education, device access, tech adoption and social
+  media use of the socle. Residents are modelled from sourced national surveys; non-residents (Work Permit,
+  domestic workers, S Pass, Employment Pass) with lower device and card access, without individual stereotypes.
+applies_to: [sg]
+requires: []
+
+sources:
+  xero_2024:
+    org: "Xero / Lonergan Research"
+    title: "Digital payment trends exploding in Singapore with Gen Z leading shift"
+    year: 2024
+    url: "https://www.xero.com/us/media-releases/digital-payment-trends-singapore-gen-z-leading-shift/"
+    detail: "1,000 adults 18+, online survey 15-28 May 2024, weighted to SingStat; multiple answers: cards 76%, PayNow 55%, bank transfers 55%, GrabPay 22%, cash 79%; 30% carry only their phone; Gen Z: PayNow preferred by 68%, GrabPay 29%. Self-reported use, probably below registration counts. The BNPL 21% figure was not found on the page opened (unverified)."
+  mas_cos_2021:
+    org: "MAS"
+    title: "Reply at Committee of Supply 2021 (PayNow registrations)"
+    year: 2021
+    url: "https://www.mas.gov.sg/news/parliamentary-replies/2021/reply-to-cos-cuts-at-cos-2021"
+    detail: "Verified. End 2020: 4.9M PayNow registrations (2.7M linked to a mobile number, 1.9M to NRIC/FIN); '80% of residents and businesses are now on PayNow'. Registrations, not active users."
+  mas_pq_2019:
+    org: "MAS"
+    title: "Reply to PQ on the adoption rate of e-payments in Singapore"
+    year: 2019
+    url: "https://www.mas.gov.sg/news/parliamentary-replies/2019/reply-to-parliamentary-question-on-the-adoption-rate-of-e-payments-in-singapore"
+    detail: "Verified. September 2019: 2.8M individual PayNow registrations; MAS estimate of over 65% of Singaporeans aged 20 to 75 already registered."
+  mas_pq_2022:
+    org: "MAS"
+    title: "Reply to PQ on prevalence of cashless payment platforms and scan-and-pay scams"
+    year: 2022
+    url: "https://www.mas.gov.sg/news/parliamentary-replies/2022/reply-to-parliamentary-question-on-prevalence-use-of-cashless-payment-platforms-and-number-of-scam-cases-involving-scan-and-pay-transactions"
+    detail: "Verified. October 2022: nearly 5.5M bank accounts registered for PayNow (3M mobile, 2M NRIC, 0.5M FIN); PayNow transactions S$46bn in 2021. No age breakdown."
+  mas_paynow_gen2_2026:
+    org: "MAS / ABS"
+    title: "PayNow Generation 2 Phase 1 Report"
+    year: 2026
+    url: "https://www.mas.gov.sg/-/media/PNG2-Phase-1-Collaterals_PDDC/PayNow-Gen2-Phase-1-Report_25-June-2026.pdf"
+    detail: "Not verified (PDF unreadable; search snippet): about 11M proxies at end 2025 (6.3M mobile, 4.5M NRIC/FIN, 0.5M UEN), over 9 in 10 Singaporeans registered; proxies are not unique individuals."
+  imda_dsr_2023:
+    org: "IMDA"
+    title: "Singapore Digital Society Report 2023"
+    year: 2023
+    url: "https://www.imda.gov.sg/-/media/imda/files/infocomm-media-landscape/research-and-statistics/singapore-digital-society-report/singapore-digital-society-report-2023.pdf"
+    detail: "Not verified (PDF unreadable; search snippet): seniors 60+ using online payments 78% in 2022 (38% in 2018); mobile payments in store 66% (17% in 2018)"
+  spf_ascb_2025:
+    org: "Singapore Police Force"
+    title: "Scams and cybercrime fell by almost a quarter in 2025"
+    year: 2026
+    url: "https://www.police.gov.sg/media-hub/police-life/2026/02/scams-and-cybercrime-fell-by-almost-a-quarter-in-2025"
+    detail: "Verified. 41,974 cases in 2025 (-24.8%), losses S$913.1M (S$1.1bn in 2024); 30-49 are 36.1% of victims; 65+ have the highest average loss (S$37,053 per victim). Victimisation is not a measure of caution."
+  mas_bnpl_pq_2025:
+    org: "MAS"
+    title: "Written reply to PQ on BNPL Code of Conduct and data on BNPL customers"
+    year: 2025
+    url: "https://www.mas.gov.sg/news/parliamentary-replies/2025/written-reply-to-parliamentary-question-on-reports-of-non-compliance-with-bnpl-code-of-conduct"
+    detail: "Verified. MAS does not collect or publish the number or profile of BNPL users; four providers accredited to the code of conduct since May 2024."
+  yougov_bnpl:
+    org: "YouGov"
+    title: "Two in five Singaporeans sceptical of BNPL services"
+    year: 2021
+    url: "https://yougov.com/articles/35611-two-five-singaporeans-sceptical-bnpl-services"
+    detail: "Not verified (search snippet, date unverified): 13% of Singaporeans have ever used BNPL; 19% of 35-44 year olds."
+  visa_remit:
+    org: "Visa"
+    title: "App-based remittances win on convenience, security and speed in Asia Pacific"
+    year: 2023
+    url: "https://www.prnewswire.com/apac/news-releases/app-based-remittances-win-on-convenience-security-and-speed-in-asia-pacific-visa-301784105.html"
+    detail: "General population of Singapore, not migrant workers: 61% use digital-only means to send money abroad; 73% prefer app-based solutions"
+  visa_remit_2026:
+    org: "Visa Money Travels"
+    title: "Digital Remittances Report (Singapore)"
+    year: 2026
+    url: "https://www.prnewswire.com/apac/news-releases/visa-money-travels-digital-remittances-report-close-to-nine-in-10-singapore-residents-send-remittances-at-least-once-a-year-302193195.html"
+    detail: "Not verified (search snippet): 60% of senders use online banking apps, 22% mobile wallets; general population"
+  fintechnews_digibank:
+    org: "Fintech News Singapore"
+    title: "2026 Singapore Digital Banking Report"
+    year: 2026
+    url: "https://fintechnews.sg/135623/digital-banking-news-singapore/singapore-digital-banking-report-2026-profitability/"
+    detail: "Verified: Trust Bank passed 1 million customers (4th largest retail bank by customers), over 70% of new customers by referral, about 170,000 use it as main bank. GXS (about 200,000 users, over 80% already Grab or Singtel customers) comes from a search snippet and is not verified; no MariBank figure."
+  mas_card_stats:
+    org: "MAS"
+    title: "Monthly Statistical Bulletin I.17A Credit and Charge Card Statistics"
+    year: 2025
+    url: "https://eservices.mas.gov.sg/statistics/msb-xml/Report.aspx?tableSetID=I&tableID=I.17A"
+    detail: "Not verified (page returned 404; search snippet): principal cardholders (one per person) about 6.14M in 2025, 6.27M in 2024, 6.06M in 2023, 5.72M in 2022. Includes non-residents and several issuers: do not divide by resident adults."
+
+conditions:
+  has_phone: {attr: socle.has_smartphone, eq: true}
+  nonresident_worker: {attr: socle.residency_status, in: [wp, mdw, spass, ep]}
+
+tables:
+  age_affinity:
+    label: "Digital payment ease by age band"
+    bands:
+      - {from: 18, to: 29, value: 1.3}
+      - {from: 30, to: 44, value: 1.15}
+      - {from: 45, to: 59, value: 0.9}
+      - {from: 60, to: 69, value: 0.6}
+      - {from: 70, to: 79, value: 0.4}
+    sources: [xero_2024, imda_dsr_2023]
+    assumption: true
+    justification: "Gen Z leads digital payment use (Xero 2024); IMDA 2023 shows seniors catching up fast but still behind (online payments 78%, mobile app payments 66% in 2022, unverified). Gradient values are assumptions."
+  residency_affinity:
+    label: "Digital payment ease by residency status"
+    values: {citizen: 1.0, pr: 1.0, ep: 1.15, spass: 0.95, wp: 0.6, mdw: 0.5, dependant: 0.9, student: 1.1}
+    assumption: true
+    justification: "PayNow and local cards need a Singapore bank account or a local number; Work Permit holders and domestic workers have lower device and account access on average. No survey of these groups was found; values are assumptions."
+  tech_affinity:
+    label: "Digital payment ease by tech adoption profile"
+    values: {innovator: 1.5, early_adopter: 1.3, early_majority: 1.0, late_majority: 0.75, laggard: 0.45}
+    assumption: true
+    justification: "Rogers profile of the socle as a monotone gradient; magnitudes are assumptions."
+  education_affinity:
+    label: "Digital payment ease by education"
+    values: {below_secondary: 0.8, secondary: 0.9, post_secondary: 0.95, diploma: 1.0, degree: 1.1}
+    assumption: true
+    justification: "Mild gradient: higher qualifications are associated with more digital financial services use; assumption."
+  social_gradient:
+    label: "Social media use multiplier for wallets and BNPL"
+    values: {none: 0.4, occasional: 0.8, daily: 1.15, heavy: 1.4}
+    assumption: true
+    justification: "Heavier social media users are younger and more exposed to app-based offers (Xero: Gen Z leads GrabPay and BNPL). Magnitudes are assumptions."
+  bnpl_age:
+    label: "Additional age multiplier for BNPL (on top of the ease index)"
+    bands:
+      - {from: 18, to: 34, value: 1.4}
+      - {from: 35, to: 44, value: 1.0}
+      - {from: 45, to: 59, value: 0.8}
+      - {from: 60, to: 79, value: 0.5}
+    sources: [xero_2024, yougov_bnpl]
+    assumption: true
+    justification: "BNPL use is concentrated among younger adults; YouGov (unverified snippet) puts the peak at 35-44 (19%) rather than under 35, so the 18-34 peak is an assumption to revisit. Only overall shares are sourced (Xero 2024 21%, unverified on the page; YouGov 13% ever)."
+
+attributes:
+  - key: payment_digital_ease
+    label: Digital payment ease index
+    type: number
+    unit: index (1 = typical)
+    value:
+      max:
+        - 0.05
+        - mul:
+            - {lookup: age_affinity, by: socle.age}
+            - {lookup: residency_affinity, by: socle.residency_status}
+            - {lookup: tech_affinity, by: socle.tech_adoption}
+            - {lookup: education_affinity, by: socle.education}
+            - {if: has_phone, then: 1, else: 0.05}
+            - {exp: {mul: [0.25, {normal: {}}]}}
+    sources: [xero_2024, imda_dsr_2023]
+    assumption: true
+    justification: "Latent index combining age, residency, tech adoption, education, smartphone access and individual noise; reused by the attributes below so that they stay coherent. Not shown on the card."
+
+  - key: paynow_use
+    label: PayNow use
+    type: enum
+    values:
+      - {code: never, label: never}
+      - {code: rarely, label: rarely}
+      - {code: monthly, label: about monthly}
+      - {code: weekly, label: about weekly}
+      - {code: daily, label: daily or almost daily}
+    distribution:
+      weights:
+        never:
+          mul:
+            - add: [4.8, {div: [3.6, {max: [0.3, {attr: payment_digital_ease}]}]}]
+            - {pick: socle.residency_status, values: {wp: 1.6, mdw: 2.0}, default: 1}
+        rarely: {mul: [18, {attr: payment_digital_ease}]}
+        monthly: {mul: [20, {attr: payment_digital_ease}]}
+        weekly: {mul: [20, {attr: payment_digital_ease}]}
+        daily: {mul: [8, {attr: payment_digital_ease}]}
+    display: {template: "PayNow: {value}"}
+    sources: [mas_cos_2021, mas_pq_2019, mas_pq_2022, mas_paynow_gen2_2026, xero_2024, imda_dsr_2023]
+    assumption: true
+    justification: "PayNow registrations cover about 80% of residents and businesses at end 2020 (MAS, verified) and over 9 in 10 Singaporeans at end 2025 (MAS Gen2 report, unverified snippet; proxies are not unique people); 55% of adults declare using it (Xero 2024, lower because self-reported and not limited to residents). 'Never' is therefore calibrated at about 15-25% among residents (higher at 70+, for Work Permit and for domestic workers, the last two being assumptions: no survey found). The weight of 'never' falls as the ease index rises, which already includes smartphone access, so personas without a phone are mostly 'never'. Frequency bands are assumptions; the share of users is checked in validation.shares. Because attributes are drawn in order, coherence with the in-store method and bank app goes through the shared ease index, not through those attributes."
+
+  - key: instore_payment_main
+    label: Main in-store payment method
+    type: enum
+    values:
+      - {code: contactless_card, label: contactless card}
+      - {code: mobile_wallet_nfc, label: "phone wallet (Apple Pay, Google Pay, Samsung Pay)"}
+      - {code: qr_paynow_sgqr, label: "QR code (SGQR, PayNow, app QR)"}
+      - {code: cash_nets, label: "cash or NETS"}
+    distribution:
+      weights:
+        contactless_card: {if: {attr: socle.monthly_income, lt: 1500}, then: 28, else: 38}
+        mobile_wallet_nfc: {if: has_phone, then: {mul: [20, {attr: payment_digital_ease}]}, else: 0}
+        qr_paynow_sgqr: {if: has_phone, then: {mul: [12, {attr: payment_digital_ease}]}, else: 0}
+        cash_nets:
+          mul:
+            - {div: [16, {max: [0.3, {attr: payment_digital_ease}]}]}
+            - {pick: socle.residency_status, values: {wp: 1.4, mdw: 1.4}, default: 1}
+    display: {template: "Main in-store method: {value}"}
+    sources: [xero_2024]
+    assumption: true
+    justification: "The main method is not published. Xero 2024 (multi-answer: cash 79%, cards 76%, 30% carry only their phone) is consistent with a still large cash/NETS share. No wallet or QR without a smartphone; older, lower-income and non-resident personas lean to cash/NETS."
+
+  - key: ewallets_used
+    label: E-wallets and multi-currency apps used
+    type: set
+    items:
+      - {code: grabpay, label: GrabPay, card_label: GrabPay, rate: {mul: [0.27, {attr: payment_digital_ease}, {lookup: social_gradient, by: socle.social_media}]}}
+      - {code: shopeepay, label: ShopeePay, card_label: ShopeePay, rate: {mul: [0.12, {attr: payment_digital_ease}, {lookup: social_gradient, by: socle.social_media}]}}
+      - code: multi_currency_app
+        label: "Multi-currency app (YouTrip, Revolut, Wise)"
+        card_label: "a multi-currency app (YouTrip, Revolut, Wise)"
+        rate:
+          mul:
+            - 0.10
+            - {pick: socle.residency_status, values: {ep: 3.0, spass: 1.2, wp: 0.4, mdw: 0.3, student: 1.5, pr: 1.3}, default: 1}
+            - {pick: socle.education, values: {degree: 1.5, diploma: 1.0}, default: 0.7}
+            - {pick: socle.tech_adoption, values: {innovator: 1.5, early_adopter: 1.3, late_majority: 0.6, laggard: 0.3}, default: 1}
+            - {if: has_phone, then: 1, else: 0.05}
+      - {code: singtel_dash, label: Singtel Dash, card_label: Singtel Dash, rate: {mul: [0.04, {attr: payment_digital_ease}]}}
+      - {code: favepay, label: FavePay, card_label: FavePay, rate: {mul: [0.02, {attr: payment_digital_ease}]}}
+    rate_cap: 0.85
+    display: {template: "E-wallets and apps: {value}", empty: "No main e-wallet"}
+    sources: [xero_2024]
+    assumption: true
+    justification: "Only GrabPay is sourced (22% of adults, 29% of Gen Z, Xero 2024). Other rates are assumptions. Multi-currency apps are more likely for Employment Pass holders and degree holders. Wallets are nearly absent without a smartphone."
+
+  - key: credit_card_ownership
+    label: Credit cards held
+    type: enum
+    values:
+      - {code: none, label: none}
+      - {code: one, label: one}
+      - {code: two_or_more, label: two or more}
+    distribution:
+      weights:
+        none:
+          mul:
+            - cases:
+                - {when: {attr: socle.monthly_income, lt: 1200}, value: 80}
+                - {when: {attr: socle.monthly_income, lt: 2000}, value: 50}
+                - {when: {attr: socle.monthly_income, lt: 4000}, value: 18}
+                - {else: 6}
+            - {pick: socle.residency_status, values: {wp: 3, mdw: 4, spass: 1.3, student: 1.5, dependant: 1.5}, default: 1}
+            - {if: {attr: socle.age, lt: 21}, then: 6, else: 1}
+        one:
+          cases:
+            - {when: {attr: socle.monthly_income, lt: 1200}, value: 15}
+            - {when: {attr: socle.monthly_income, lt: 2000}, value: 36}
+            - {when: {attr: socle.monthly_income, lt: 4000}, value: 42}
+            - {else: 30}
+        two_or_more:
+          mul:
+            - cases:
+                - {when: {attr: socle.monthly_income, lt: 1200}, value: 5}
+                - {when: {attr: socle.monthly_income, lt: 2000}, value: 14}
+                - {when: {attr: socle.monthly_income, lt: 4000}, value: 40}
+                - {else: 64}
+            - {pick: socle.residency_status, values: {wp: 0.3, mdw: 0.1, spass: 0.8}, default: 1}
+            - {if: {attr: socle.age, lt: 21}, then: 0.2, else: 1}
+    display: {template: "Credit cards: {value}"}
+    sources: [mas_card_stats, xero_2024]
+    assumption: true
+    justification: "Sourced anchors: most credit cards require an annual income of at least S$30k (roughly S$2,000 net a month), which drives the income steps; minimum age 21; Xero 2024: 76% of adults use credit or debit cards; MAS principal cardholders about 6.1M (unverified, includes non-residents and several issuers, so not a per-adult ratio). Ownership shares by income, residency and age are assumptions."
+
+  - key: bnpl_use_12m
+    label: Buy now pay later use in the last 12 months
+    type: enum
+    values:
+      - {code: none, label: none}
+      - {code: once_or_twice, label: once or twice}
+      - {code: several_times, label: several times}
+      - {code: monthly_or_more, label: monthly or more}
+    distribution:
+      weights:
+        none: 70
+        once_or_twice: {mul: [14, {attr: payment_digital_ease}, {lookup: bnpl_age, by: socle.age}, {lookup: social_gradient, by: socle.social_media}]}
+        several_times: {mul: [8, {attr: payment_digital_ease}, {lookup: bnpl_age, by: socle.age}, {lookup: social_gradient, by: socle.social_media}]}
+        monthly_or_more: {mul: [3.5, {attr: payment_digital_ease}, {lookup: bnpl_age, by: socle.age}, {lookup: social_gradient, by: socle.social_media}]}
+    display: {template: "Buy now pay later (12 months): {value}"}
+    sources: [xero_2024, yougov_bnpl, mas_bnpl_pq_2025]
+    assumption: true
+    justification: "About 21% of adults use BNPL (Xero 2024, not found on the page opened; shares checked in validation.shares); 13% have ever used it, 19% of 35-44 (YouGov, unverified). MAS publishes no BNPL user counts. Frequency bands and the age, social media and device gradients are assumptions; per-provider use (Atome, Grab PayLater, ShopBack, Pace) was not found."
+
+  - key: digital_bank_account
+    label: Bank app profile
+    type: enum
+    values:
+      - {code: no_bank_app, label: "no bank app"}
+      - {code: incumbent_app_only, label: "incumbent bank app only (DBS digibank, OCBC, UOB)"}
+      - {code: gxs, label: GXS}
+      - {code: trust, label: Trust Bank}
+      - {code: maribank, label: MariBank}
+      - {code: several_digital, label: "several digital banks"}
+    distribution:
+      weights:
+        no_bank_app: {div: [6, {max: [0.2, {attr: payment_digital_ease}]}]}
+        incumbent_app_only: 50
+        gxs: {mul: [3, {attr: payment_digital_ease}]}
+        trust: {mul: [9, {attr: payment_digital_ease}]}
+        maribank: {mul: [3, {attr: payment_digital_ease}]}
+        several_digital: {mul: [3, {attr: payment_digital_ease}]}
+    display: {template: "Bank app: {value}"}
+    sources: [fintechnews_digibank]
+    assumption: true
+    justification: "Customer counts (Trust over 1M, about 170,000 main-bank users, verified; GXS about 200k, mostly Grab or Singtel customers, unverified; none for MariBank) are not shares of adults. Shares are approximate and follow the ease index (younger, tech-adopting residents)."
+
+  - key: remittance_channel
+    label: Remittance channel
+    type: enum
+    when: nonresident_worker
+    values:
+      - {code: remittance_app, label: "remittance app (Wise, Instarem, SingX, wallet)"}
+      - {code: bank_transfer, label: "bank transfer"}
+      - {code: remittance_counter, label: "remittance counter or agent"}
+      - {code: mixed, label: "a mix of app, bank and counter"}
+    distribution:
+      weights:
+        remittance_app:
+          mul:
+            - {pick: socle.residency_status, values: {ep: 55, spass: 40, wp: 28, mdw: 22}, default: 30}
+            - {if: has_phone, then: 1, else: 0.1}
+        bank_transfer:
+          pick: socle.residency_status
+          values: {ep: 30, spass: 25, wp: 15, mdw: 12}
+          default: 20
+        remittance_counter:
+          mul:
+            - {pick: socle.residency_status, values: {ep: 3, spass: 12, wp: 25, mdw: 32}, default: 15}
+            - {if: has_phone, then: 1, else: 2}
+        mixed: {pick: socle.residency_status, values: {ep: 12, spass: 23, wp: 32, mdw: 34}, default: 20}
+    display: {template: "Money sent home via {value}", empty: "No remittance channel (resident)"}
+    sources: [visa_remit, visa_remit_2026]
+    assumption: true
+    justification: "No survey of Work Permit, domestic worker or dormitory residents was found. Visa figures (61% digital-only; 60% banking apps, 22% wallets) cover the general population and overstate digital use for them, so counters and mixed channels weigh more for WP and MDW, apps for EP and S Pass. The socle already draws the amount; only the channel is modelled."
+
+  - key: online_banking_comfort
+    label: Online banking comfort and scam caution
+    type: enum
+    values:
+      - {code: avoids_online_banking, label: "avoids online banking"}
+      - {code: uses_with_hesitation, label: "uses online banking with hesitation"}
+      - {code: comfortable_cautious, label: "comfortable and cautious about scams"}
+      - {code: comfortable_relaxed, label: "comfortable and relaxed about scams"}
+    distribution:
+      weights:
+        avoids_online_banking: {div: [4, {max: [0.15, {attr: payment_digital_ease}]}]}
+        uses_with_hesitation: {div: [18, {max: [0.5, {attr: payment_digital_ease}]}]}
+        comfortable_cautious: 45
+        comfortable_relaxed: {mul: [12, {attr: payment_digital_ease}]}
+    display: {template: "Online banking: {value}"}
+    sources: [spf_ascb_2025, imda_dsr_2023]
+    assumption: true
+    justification: "SPF 2025 statistics (41,974 cases, S$913.1M lost, 30-49 are 36.1% of victims, 65+ highest average loss) describe victims, not caution, and are not rates by profile; IMDA shows rapid growth of seniors' online payments (unverified). Categories follow the ease index (age, device, tech adoption, education). No claim about who falls for scams."
+
+card:
+  - "{paynow_use}; {instore_payment_main}"
+  - "{credit_card_ownership}; {digital_bank_account}"
+  - "{ewallets_used}; {bnpl_use_12m}"
+  - "{online_banking_comfort}"
+  - when: nonresident_worker
+    template: "{remittance_channel}"
+
+segments:
+  - {id: paymentsPaynowUse, attribute: paynow_use, label: PayNow use, compare: 5}
+  - {id: paymentsInstoreMethod, attribute: instore_payment_main, label: Main in-store payment method}
+  - {id: paymentsCreditCards, attribute: credit_card_ownership, label: Credit cards held}
+  - {id: paymentsBnplUse, attribute: bnpl_use_12m, label: Buy now pay later use}
+  - {id: paymentsBankApp, attribute: digital_bank_account, label: Bank app profile}
+  - {id: paymentsRemittanceChannel, attribute: remittance_channel, label: Remittance channel (non-residents)}
+  - {id: paymentsOnlineBankingComfort, attribute: online_banking_comfort, label: Online banking comfort}
+
+eligibility_helpers:
+  digital_payments_user: "sg-payments-fintech.paynow_use in [monthly, weekly, daily]"
+  paynow_non_user: "sg-payments-fintech.paynow_use == never"
+  wallet_or_qr_first: "sg-payments-fintech.instore_payment_main in [mobile_wallet_nfc, qr_paynow_sgqr]"
+  cash_leaning: "sg-payments-fintech.instore_payment_main == cash_nets"
+  has_credit_card: "sg-payments-fintech.credit_card_ownership != none"
+  bnpl_user: "sg-payments-fintech.bnpl_use_12m != none"
+  digital_bank_user: "sg-payments-fintech.digital_bank_account in [gxs, trust, maribank, several_digital]"
+  nonresident_remitter: "sg-payments-fintech.remittance_channel in [remittance_app, bank_transfer, remittance_counter, mixed]"
+  remittance_counter_user: "sg-payments-fintech.remittance_channel in [remittance_counter, mixed]"
+  comfortable_with_online_banking: "sg-payments-fintech.online_banking_comfort in [comfortable_cautious, comfortable_relaxed]"
+  young_digital_payer: "age <= 35 and sg-payments-fintech.paynow_use in [weekly, daily]"
+
+validation:
+  margins:
+    - {attribute: paynow_use, title: "PayNow use (expected given the ease index and residency)"}
+    - {attribute: instore_payment_main, title: "Main in-store payment method"}
+    - {attribute: credit_card_ownership, title: "Credit cards held (expected by income and residency)"}
+    - {attribute: bnpl_use_12m, title: "Buy now pay later use"}
+    - {attribute: digital_bank_account, title: "Bank app profile"}
+    - {attribute: remittance_channel, title: "Remittance channel (non-residents)"}
+    - {attribute: online_banking_comfort, title: "Online banking comfort"}
+  shares:
+    - label: "Resident adults using PayNow at least rarely (MAS: 80% of residents and businesses registered in 2020, over 90% in 2025; registrations, not active use)"
+      among: {all: [{attr: socle.age, gt: 17}, {attr: socle.residency_status, in: [citizen, pr]}]}
+      share_of: {attr: paynow_use, in: [rarely, monthly, weekly, daily]}
+      range: [0.72, 0.88]
+    - label: "All adults using PayNow at least rarely (Xero 2024: 55% self-reported, lower bound; non-residents pull the share down)"
+      among: {attr: socle.age, gt: 17}
+      share_of: {attr: paynow_use, in: [rarely, monthly, weekly, daily]}
+      range: [0.65, 0.85]
+    - label: "Adults who used buy now pay later in the last 12 months (Xero 2024: 21%)"
+      among: {attr: socle.age, gt: 17}
+      share_of: {attr: bnpl_use_12m, in: [once_or_twice, several_times, monthly_or_more]}
+      range: [0.15, 0.28]

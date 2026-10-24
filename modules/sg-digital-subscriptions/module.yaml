@@ -1,0 +1,327 @@
+# Generic module "Digital subscriptions": attitudes and behaviours around paid apps and software (Singapore).
+# Does NOT redraw the socle's concrete subscriptions (mobile, fibre, streaming, iCloud, Grab, gym, news).
+# No socle_overrides, no affects_budget: the socle's income and budget are untouched.
+id: sg-digital-subscriptions
+version: "2026.2"
+changelog:
+  - version: "2026.2"
+    date: "2026-10-22"
+    changes:
+      - "First version: extra paid apps, churn band, free-trial behaviour, billing preference, monthly budget ceiling, payment method, sharing."
+      - "Sourcing: YouGov Singapore 2022 attitude to account sharing added (source + validation share on 18-44 residents). No Singapore figure found for churn or free-trial conversion; those attributes stay assumptions."
+      - "Card lines only join the placeholders; the labels come from the display templates (no more repeated words)."
+      - "Fix: the holds_apps condition used `present: true` on a set, which is always true (an empty set is still present), so the 'no other paid app' branches of cancelled_last_12m and subscription_payment_method never applied. It is now true only when at least one extra paid app was drawn."
+label: Digital subscriptions and online spending habits
+short_label: Subscriptions
+description: >-
+  Generic module for any consumer app or SaaS sold as a subscription in Singapore. Models attitudes and habits
+  around paid apps beyond the subscriptions already drawn by the socle: other paid apps for personal use,
+  subscriptions cancelled in the last 12 months, approach to free trials, preferred billing, a monthly budget
+  ceiling for one new app, main payment method and sharing arrangements. Conditioned on age, income, education,
+  residency status, dwelling, device access and tech adoption. Non-residents (Work Permit, domestic workers,
+  dormitory residents) have lower device access and budgets, and different app mixes.
+applies_to: [sg]
+requires: []
+
+sources:
+  reuters_dnr_2025_sg:
+    org: "Reuters Institute"
+    title: "Digital News Report 2025 – Singapore"
+    year: 2025
+    url: "https://reutersinstitute.politics.ox.ac.uk/digital-news-report/2025/singapore"
+    detail: "16% of Singaporeans pay for online news; most do not pay (news is already a socle subscription)."
+  xero_payments_2024:
+    org: "Xero (Lonergan survey)"
+    title: "Digital payment trends exploding in Singapore with Gen Z leading shift"
+    year: 2024
+    url: "https://www.xero.com/us/media-releases/digital-payment-trends-singapore-gen-z-leading-shift/"
+    detail: "1,000 adults, May 2024: 68% of Gen Z prefer PayNow; cards 76% and PayNow/bank transfer 55% (snippet only)."
+  statista_rakuten_2022:
+    org: "Statista / Rakuten Insight"
+    title: "Singapore: leading payment methods for online purchases 2022"
+    year: 2022
+    url: "https://www.statista.com/statistics/1332650/singapore-leading-payment-methods-for-online-purchases/"
+    detail: "June 2022 (snippet, not verified): 89% of online shoppers paid with credit or debit cards."
+  medium_yougov_2022:
+    org: "Medium (secondary, citing YouGov Singapore)"
+    title: "Subscription Fatigue Is Real — Here's What the Data Shows"
+    year: 2022
+    url: "https://medium.com/@subscriptioninsider/subscription-fatigue-is-real-heres-what-the-data-shows-9fa40d32087e"
+    detail: "Secondary, unverified claim: 4-6 paid digital services per adult, highest among 18-34. Low reliability."
+  imda_dsr_2023:
+    org: "IMDA"
+    title: "Singapore Digital Society Report 2023"
+    year: 2023
+    url: "https://www.imda.gov.sg/-/media/imda/files/infocomm-media-landscape/research-and-statistics/singapore-digital-society-report/singapore-digital-society-report-2023.pdf"
+    detail: "Context on digital payments and device use; no subscription figure checked."
+  wahliao_ai_prices:
+    org: "Wah Liao"
+    title: "AI Prices in Singapore 2026: ChatGPT, Claude, Gemini, Copilot"
+    year: 2026
+    url: "https://wahliao.com/super-intelligence/ai-subscription-prices-singapore/"
+    detail: "Premium AI assistant plans cost about S$25-30 a month incl. GST (snippet, not verified)."
+  yougov_sg_sharing_2022:
+    org: "YouGov (Global Profiles)"
+    title: "Sharing streaming account log-ins: how do consumer views across APAC differ?"
+    year: 2022
+    url: "https://yougov.com/articles/42469-sharing-streaming-account-logins-APAC-survey-poll"
+    detail: "Singapore adults 18+, online panel, April 2022 (page opened): 22% find it acceptable to share streaming log-ins, 47% not acceptable (about 30% neutral, own calculation), 57% want more group subscriptions; about 29-30% of 18-44 accept it, under 20% of 55+. Measures an attitude, not actual sharing."
+
+conditions:
+  resident: {attr: socle.residency_status, in: [citizen, pr]}
+  non_resident_low: {attr: socle.residency_status, in: [wp, mdw]}
+  dormitory: {attr: socle.dwelling, eq: dormitory}
+  young: {attr: socle.age, lt: 35}
+  under_25: {attr: socle.age, lt: 25}
+  senior: {attr: socle.age, gt: 64}
+  low_income: {attr: socle.monthly_income, lt: 1500}
+  high_income: {attr: socle.monthly_income, gt: 6000}
+  degree: {attr: socle.education, eq: degree}
+  professional: {attr: socle.pcs, in: ["1", "2"]}
+  early_tech: {attr: socle.tech_adoption, in: [innovator, early_adopter]}
+  late_tech: {attr: socle.tech_adoption, in: [late_majority, laggard]}
+  student: {attr: socle.activity_status, eq: student}
+  retired: {attr: socle.activity_status, eq: retired}
+  no_phone: {attr: socle.has_smartphone, eq: false}
+  no_computer: {attr: socle.has_computer, eq: false}
+  family_household: {attr: socle.household_type, in: [couple_with_children, single_parent, with_parents]}
+  lives_alone: {attr: socle.household_type, eq: alone}
+  # `in` on a set is true when at least one listed code was drawn (an empty set is still "present", hence not `present: true`)
+  holds_apps: {attr: extra_paid_apps, in: [fitness_health, ai_assistant, productivity_creative, vpn, gaming_pass, cloud_storage_other, language_learning, dating]}
+  avoids_subs: {attr: billing_preference, eq: avoids_subscriptions}
+
+tables: {}
+
+attributes:
+  - key: extra_paid_apps
+    label: Other paid apps and software for personal use
+    type: set
+    sensitive: true
+    sensitive_justification: "The fitness_health option only records whether a persona pays for a generic fitness or wellness app, as a consumer-habit signal. No diagnosis, condition or health data is modelled. Use only for subscription-behaviour research, never to target or infer the health of individuals (GDPR art. 9 caution)."
+    items:
+      - {code: fitness_health, label: Fitness or health app, card_label: fitness or health app, rate: {base: 0.18, factors: {non_resident_low: 0.3, low_income: 0.6, high_income: 1.3, young: 1.2, senior: 0.5, early_tech: 1.3, late_tech: 0.5, no_phone: 0.3}}}
+      - {code: ai_assistant, label: AI assistant plan, card_label: AI assistant plan, rate: {base: 0.14, factors: {non_resident_low: 0.15, low_income: 0.4, high_income: 1.6, degree: 1.4, professional: 1.4, young: 1.3, senior: 0.4, early_tech: 1.7, late_tech: 0.3, no_computer: 0.5, no_phone: 0.3}}}
+      - {code: productivity_creative, label: Productivity or creative software, card_label: productivity or creative software, rate: {base: 0.12, factors: {non_resident_low: 0.2, low_income: 0.5, high_income: 1.4, degree: 1.3, professional: 1.3, senior: 0.5, early_tech: 1.3, late_tech: 0.5, no_computer: 0.3}}}
+      - {code: vpn, label: VPN, card_label: VPN, rate: {base: 0.10, factors: {non_resident_low: 0.7, low_income: 0.8, young: 1.2, senior: 0.5, early_tech: 1.3, late_tech: 0.5, no_phone: 0.3}}}
+      - {code: gaming_pass, label: Gaming pass, card_label: gaming pass, rate: {base: 0.10, factors: {non_resident_low: 0.6, young: 1.8, senior: 0.2, student: 1.3, early_tech: 1.2, late_tech: 0.5, no_phone: 0.3}}}
+      - {code: cloud_storage_other, label: Other cloud storage, card_label: other cloud storage, rate: {base: 0.08, factors: {non_resident_low: 0.3, low_income: 0.6, high_income: 1.4, degree: 1.2, senior: 0.6, early_tech: 1.3, late_tech: 0.5, no_phone: 0.3}}}
+      - {code: language_learning, label: Language-learning app, card_label: language-learning app, rate: {base: 0.06, factors: {non_resident_low: 1.0, low_income: 0.8, young: 1.3, senior: 0.5, late_tech: 0.5, no_phone: 0.3}}}
+      - {code: dating, label: Dating app, card_label: dating app, rate: {base: 0.04, factors: {non_resident_low: 0.5, young: 1.8, senior: 0.4, student: 0.7, late_tech: 0.4, no_phone: 0.2}}}
+    rate_cap: 0.6
+    display: {template: "other paid apps: {value}", empty: no other paid apps for personal use}
+    sources: [medium_yougov_2022, wahliao_ai_prices]
+    assumption: true
+    justification: "No Singapore source gives per-category rates. Working resident rates give about 40% with none (the 4-6 services claim from YouGov 2022 is secondary and includes streaming, so it is used only as an upper bound). Rates rise with income, degree education, early tech adoption and age under 35; AI assistant and productivity also rise with managerial/professional SSOC and computer access (plans cost about S$25-30 a month). Work Permit and domestic-worker residents are mostly phone-only: lower rates overall, language and VPN kept closer to the resident level."
+
+  - key: cancelled_last_12m
+    label: Paid subscriptions cancelled in the last 12 months
+    type: enum
+    values:
+      - {code: none, label: none}
+      - {code: one, label: one}
+      - {code: two_to_three, label: two or three}
+      - {code: four_or_more, label: four or more}
+    distribution:
+      weights:
+        none: {mul: [45, {if: holds_apps, then: 0.8, else: 2.2}, {if: non_resident_low, then: 1.6, else: 1}, {if: young, then: 0.8, else: 1}, {if: early_tech, then: 0.8, else: 1}, {if: senior, then: 1.3, else: 1}]}
+        one: {mul: [22, {if: low_income, then: 1.0, else: 1}, {if: holds_apps, then: 1.1, else: 0.7}]}
+        two_to_three: {mul: [24, {if: holds_apps, then: 1.2, else: 0.35}, {if: non_resident_low, then: 0.4, else: 1}, {if: young, then: 1.3, else: 1}, {if: early_tech, then: 1.3, else: 1}, {if: senior, then: 0.5, else: 1}]}
+        four_or_more: {mul: [9, {if: holds_apps, then: 1.4, else: 0.1}, {if: non_resident_low, then: 0.2, else: 1}, {if: young, then: 1.4, else: 1}, {if: early_tech, then: 1.6, else: 1}, {if: senior, then: 0.3, else: 1}, {if: high_income, then: 1.2, else: 1}]}
+    display: {template: "cancelled in the last 12 months: {value}"}
+    assumption: true
+    justification: "No Singapore figure found (Rakuten Insight's Singapore SvoD cancellation-intention page hides the percentage behind a paywall; Deloitte Digital Media Trends figures are US/Belgium only). Global surveys report roughly 40-47% of consumers cancelling at least one subscription in a recent period (not Singapore data, upper reference only). Working resident split about none 45%, one 22%, two or three 24%, four or more 9%; churn higher for 18-34, early adopters and holders of more apps; low for non-residents and persons with no extra paid apps (now effective since holds_apps is fixed)."
+
+  - key: free_trial_behaviour
+    label: Approach to free trials
+    type: enum
+    values:
+      - {code: rarely_uses_trials, label: rarely uses free trials}
+      - {code: cancels_before_paying, label: usually cancels before the first payment}
+      - {code: sometimes_converts, label: sometimes continues after the trial}
+      - {code: usually_keeps_after_trial, label: usually keeps the app after the trial}
+    distribution:
+      weights:
+        rarely_uses_trials: {mul: [28, {if: young, then: 0.7, else: 1}, {if: degree, then: 0.8, else: 1}, {if: late_tech, then: 2, else: 1}, {if: senior, then: 1.5, else: 1}, {if: no_phone, then: 3, else: 1}, {if: non_resident_low, then: 1.4, else: 1}]}
+        cancels_before_paying: {mul: [30, {if: young, then: 1.2, else: 1}, {if: degree, then: 1.2, else: 1}, {if: early_tech, then: 1.2, else: 1}, {if: late_tech, then: 0.6, else: 1}, {if: no_phone, then: 0.3, else: 1}]}
+        sometimes_converts: {mul: [32, {if: young, then: 1.1, else: 1}, {if: early_tech, then: 1.2, else: 1}, {if: late_tech, then: 0.6, else: 1}, {if: no_phone, then: 0.3, else: 1}]}
+        usually_keeps_after_trial: {mul: [10, {if: high_income, then: 1.3, else: 1}, {if: late_tech, then: 0.7, else: 1}, {if: no_phone, then: 0.3, else: 1}]}
+    display: {template: "free trials: {value}"}
+    assumption: true
+    justification: "No Singapore figure found on free-trial conversion (searches on Milieu Insight, YouGov, Rakuten, Deloitte, MPA and Kantar returned nothing for Singapore); the commonly quoted US finding that about two-thirds of consumers forgot to cancel a trial at least once is not applied. Working split about 28/30/32/10. Younger, better-educated and early-adopter personas use trials more; late majority, laggards and persons without a smartphone rarely do."
+
+  - key: billing_preference
+    label: Preferred billing for a new app
+    type: enum
+    values:
+      - {code: monthly, label: monthly billing}
+      - {code: annual_if_discounted, label: annual billing if discounted}
+      - {code: one_off_purchase, label: one-off purchase}
+      - {code: avoids_subscriptions, label: prefers to avoid subscriptions}
+    distribution:
+      weights:
+        monthly: {mul: [32, {if: student, then: 1.4, else: 1}, {if: low_income, then: 1.3, else: 1}, {if: high_income, then: 0.8, else: 1}]}
+        annual_if_discounted: {mul: [20, {if: high_income, then: 1.5, else: 1}, {if: degree, then: 1.3, else: 1}, {if: {attr: socle.residency_status, in: [ep, pr]}, then: 1.3, else: 1}, {if: low_income, then: 0.6, else: 1}, {if: non_resident_low, then: 0.4, else: 1}, {if: senior, then: 0.7, else: 1}]}
+        one_off_purchase: {mul: [24, {if: late_tech, then: 1.2, else: 1}, {if: non_resident_low, then: 1.2, else: 1}]}
+        avoids_subscriptions: {mul: [24, {if: senior, then: 1.6, else: 1}, {if: retired, then: 1.3, else: 1}, {if: late_tech, then: 1.6, else: 1}, {if: non_resident_low, then: 1.8, else: 1}, {if: early_tech, then: 0.5, else: 1}, {if: young, then: 0.8, else: 1}, {if: high_income, then: 0.8, else: 1}]}
+    display: {template: "billing preference for a new app: {value}"}
+    sources: [reuters_dnr_2025_sg]
+    assumption: true
+    justification: "Only indirect anchor: 16% of Singaporeans pay for online news (Reuters DNR 2025), so most adults do not pay for at least one common content category. Working resident split monthly 32%, annual if discounted 20%, one-off 24%, avoids subscriptions 24%; annual rises with income, degree and EP/PR status, monthly with students and lower incomes, avoidance with age, late adoption and low-income non-residents."
+
+  - key: monthly_ceiling_new_app
+    label: Monthly budget ceiling for one new app subscription (S$)
+    type: enum
+    values:
+      - {code: under_5, label: under S$5}
+      - {code: between_5_10, label: S$5 to 10}
+      - {code: between_10_20, label: S$10 to 20}
+      - {code: between_20_40, label: S$20 to 40}
+      - {code: over_40, label: over S$40}
+    distribution:
+      weights:
+        under_5:
+          mul:
+            - cases:
+                - {when: {attr: socle.monthly_income, lt: 1500}, value: 45}
+                - {when: {attr: socle.monthly_income, lt: 4000}, value: 15}
+                - {when: {attr: socle.monthly_income, lt: 6000}, value: 6}
+                - {else: 3}
+            - {if: senior, then: 1.5, else: 1}
+            - {if: avoids_subs, then: 1.5, else: 1}
+        between_5_10:
+          mul:
+            - cases:
+                - {when: {attr: socle.monthly_income, lt: 1500}, value: 40}
+                - {when: {attr: socle.monthly_income, lt: 4000}, value: 40}
+                - {when: {attr: socle.monthly_income, lt: 6000}, value: 25}
+                - {else: 15}
+            - {if: avoids_subs, then: 1.2, else: 1}
+        between_10_20:
+          mul:
+            - cases:
+                - {when: {attr: socle.monthly_income, lt: 1500}, value: 12}
+                - {when: {attr: socle.monthly_income, lt: 4000}, value: 32}
+                - {when: {attr: socle.monthly_income, lt: 6000}, value: 38}
+                - {else: 35}
+            - {if: student, then: 0.8, else: 1}
+        between_20_40:
+          mul:
+            - cases:
+                - {when: {attr: socle.monthly_income, lt: 1500}, value: 3}
+                - {when: {attr: socle.monthly_income, lt: 4000}, value: 11}
+                - {when: {attr: socle.monthly_income, lt: 6000}, value: 25}
+                - {else: 32}
+            - {if: senior, then: 0.6, else: 1}
+            - {if: professional, then: 1.2, else: 1}
+            - {if: avoids_subs, then: 0.6, else: 1}
+        over_40:
+          mul:
+            - cases:
+                - {when: {attr: socle.monthly_income, lt: 1500}, value: 0.5}
+                - {when: {attr: socle.monthly_income, lt: 4000}, value: 2}
+                - {when: {attr: socle.monthly_income, lt: 6000}, value: 6}
+                - {else: 15}
+            - {if: senior, then: 0.5, else: 1}
+            - {if: professional, then: 1.3, else: 1}
+            - {if: avoids_subs, then: 0.4, else: 1}
+    display: {template: "budget ceiling for one new app: {value} a month"}
+    sources: [wahliao_ai_prices]
+    assumption: true
+    justification: "A personal budget band for one new app, not a measure of spend, and personal use only (not work tools). Anchor of about 1-1.5% of net monthly income, with a floor for low earners; the S$25-30 AI assistant plan price gives the 20 to 40 band reference. Under S$1,500 income mostly under S$10 (Work Permit holders, domestic workers and students); above S$6,000 about 30% in S$20 to 40 and about 12-15% above S$40. Ages 65+ shifted down."
+
+  - key: subscription_payment_method
+    label: Main payment method for app subscriptions
+    type: enum
+    values:
+      - {code: credit_card, label: credit card}
+      - {code: debit_card, label: debit card}
+      - {code: app_store_billing, label: app-store billing}
+      - {code: paynow_ewallet, label: PayNow or e-wallet}
+      - {code: carrier_billing, label: mobile carrier billing}
+      - {code: none_pays_nothing, label: does not pay for app subscriptions}
+    distribution:
+      weights:
+        credit_card: {mul: [50, {if: high_income, then: 1.4, else: 1}, {if: low_income, then: 0.5, else: 1}, {if: non_resident_low, then: 0.25, else: 1}, {if: degree, then: 1.2, else: 1}, {if: under_25, then: 0.6, else: 1}, {if: student, then: 0.6, else: 1}, {if: no_phone, then: 0.6, else: 1}]}
+        debit_card: {mul: [20, {if: student, then: 1.8, else: 1}, {if: under_25, then: 1.3, else: 1}, {if: non_resident_low, then: 2.2, else: 1}, {if: dormitory, then: 1.3, else: 1}, {if: low_income, then: 1.4, else: 1}]}
+        app_store_billing: {mul: [20, {if: young, then: 1.2, else: 1}, {if: early_tech, then: 1.2, else: 1}, {if: no_phone, then: 0.05, else: 1}, {if: non_resident_low, then: 0.6, else: 1}]}
+        paynow_ewallet: {mul: [6, {if: under_25, then: 1.6, else: 1}, {if: non_resident_low, then: 1.8, else: 1}, {if: high_income, then: 0.6, else: 1}]}
+        carrier_billing: {mul: [4, {if: non_resident_low, then: 3, else: 1}, {if: dormitory, then: 1.5, else: 1}, {if: senior, then: 1.5, else: 1}, {if: late_tech, then: 1.5, else: 1}, {if: high_income, then: 0.4, else: 1}]}
+        none_pays_nothing: {if: holds_apps, then: 1, else: {if: avoids_subs, then: 70, else: 8}}
+    display: {template: "main payment method for app subscriptions: {value}"}
+    sources: [statista_rakuten_2022, xero_payments_2024]
+    assumption: true
+    justification: "Anchors: 89% of Singapore online shoppers pay by credit or debit card (Rakuten Insight 2022, snippet), 76% of adults use cards and 55% PayNow or bank transfer (Xero 2024, snippet); PayNow is a general preference and rarely supports recurring billing, so it stays small here. Split among payers: credit card 50%, debit 20%, app-store 20%, PayNow or e-wallet 6%, carrier 4%. Persons with no extra paid apps and an aversion to subscriptions mostly pay nothing; since holds_apps is fixed, persons with no extra paid app now get this option with weight 8 (70 if they avoid subscriptions). Sources not fully verified, so assumption."
+
+  - key: subscription_sharing
+    label: Subscription sharing arrangement
+    type: enum
+    values:
+      - {code: own_account_only, label: uses own accounts only}
+      - {code: family_plan_member, label: member of a family plan}
+      - {code: shared_account_with_others, label: shares an account with others}
+      - {code: pays_for_others, label: pays for a plan used by others}
+    distribution:
+      weights:
+        own_account_only: {mul: [45, {if: lives_alone, then: 2, else: 1}, {if: dormitory, then: 2, else: 1}, {if: non_resident_low, then: 1.3, else: 1}]}
+        family_plan_member: {mul: [22, {if: family_household, then: 2, else: 1}, {if: lives_alone, then: 0.2, else: 1}, {if: dormitory, then: 0.1, else: 1}, {if: young, then: 1.2, else: 1}]}
+        shared_account_with_others: {mul: [18, {if: student, then: 1.8, else: 1}, {if: under_25, then: 1.5, else: 1}, {if: lives_alone, then: 0.6, else: 1}, {if: senior, then: 0.4, else: 1}]}
+        pays_for_others: {mul: [15, {if: {attr: socle.children_under_12, gt: 0}, then: 2, else: 1}, {if: high_income, then: 1.5, else: 1}, {if: lives_alone, then: 0.3, else: 1}, {if: dormitory, then: 0.3, else: 1}, {if: young, then: 0.5, else: 1}, {if: low_income, then: 0.6, else: 1}]}
+    display: {template: "sharing: {value}"}
+    sources: [yougov_sg_sharing_2022]
+    assumption: true
+    justification: "Only an attitude anchor: YouGov Singapore (April 2022) finds 22% of adults accept sharing streaming log-ins, 47% do not, about 29-30% of 18-44 accept it and under 20% of 55+, with 57% wanting more group subscriptions. This is not the share of people who actually share, so the distribution stays an assumption. Working split own 45%, family plan 22%, shared account 18% (consistent with the 22% acceptance), pays for others 15%. Family plans follow households with children or parents, shared accounts follow students and young adults at home, paying for others follows parents and higher earners; people living alone and dormitory residents mostly use their own accounts."
+
+card:
+  - "{extra_paid_apps}; {cancelled_last_12m}"
+  - "{monthly_ceiling_new_app}; {billing_preference}; {free_trial_behaviour}"
+  - "{subscription_payment_method}; {subscription_sharing}"
+
+segments:
+  - {id: subsBilling, attribute: billing_preference, label: Preferred billing, compare: 4}
+  - {id: subsCeiling, attribute: monthly_ceiling_new_app, label: Monthly budget ceiling for a new app}
+  - {id: subsPayment, attribute: subscription_payment_method, label: Subscription payment method}
+  - {id: subsChurn, attribute: cancelled_last_12m, label: Subscriptions cancelled in 12 months}
+  - {id: subsTrial, attribute: free_trial_behaviour, label: Free-trial behaviour}
+  - {id: subsSharing, attribute: subscription_sharing, label: Subscription sharing}
+
+validation:
+  margins:
+    - {attribute: cancelled_last_12m, title: "Subscriptions cancelled in 12 months (expected given socle and extra apps)"}
+    - {attribute: free_trial_behaviour, title: "Free-trial behaviour (expected given socle)"}
+    - {attribute: billing_preference, title: "Preferred billing (expected given socle)"}
+    - {attribute: monthly_ceiling_new_app, title: "Monthly budget ceiling (expected given income)"}
+    - {attribute: subscription_payment_method, title: "Payment method (expected given socle)"}
+    - {attribute: subscription_sharing, title: "Sharing (expected given household)"}
+  shares:
+    - label: "Card payers (credit or debit) among residents who pay for app subscriptions (Rakuten 2022: 89% of online buyers use cards; lower here because app-store billing and PayNow are separate)"
+      among: {all: [resident, {attr: subscription_payment_method, in: [credit_card, debit_card, app_store_billing, paynow_ewallet, carrier_billing]}]}
+      share_of: {attr: subscription_payment_method, in: [credit_card, debit_card]}
+      range: [0.60, 0.82]
+    - label: "Residents with no other paid app (working assumption about 40%; YouGov 4-6 services claim is an upper bound)"
+      among: resident
+      share_of: {not: holds_apps}
+      range: [0.28, 0.52]
+    - label: "Non-resident Work Permit and domestic-worker personas with no other paid app (assumption 75-85%)"
+      among: non_resident_low
+      share_of: {not: holds_apps}
+      range: [0.62, 0.90]
+    - label: "Residents who avoid subscriptions (working assumption about 24%; only 16% pay for news, Reuters 2025)"
+      among: resident
+      share_of: avoids_subs
+      range: [0.15, 0.32]
+    - label: "Residents aged 18-44 who share an account with others (attitude anchor only: YouGov Singapore 2022, 22% of adults and about 29-30% of 18-44 find sharing acceptable; actual practice not measured)"
+      among: {all: [resident, {attr: socle.age, gt: 17}, {attr: socle.age, lt: 45}]}
+      share_of: {attr: subscription_sharing, eq: shared_account_with_others}
+      range: [0.10, 0.30]
+
+eligibility_helpers:
+  holds_other_paid_apps: "sg-digital-subscriptions.extra_paid_apps"
+  budget_at_least_20: "sg-digital-subscriptions.monthly_ceiling_new_app in [between_20_40, over_40]"
+  budget_under_10: "sg-digital-subscriptions.monthly_ceiling_new_app in [under_5, between_5_10]"
+  accepts_monthly_billing: "sg-digital-subscriptions.billing_preference == monthly"
+  accepts_annual_billing: "sg-digital-subscriptions.billing_preference == annual_if_discounted"
+  avoids_subscriptions: "sg-digital-subscriptions.billing_preference == avoids_subscriptions"
+  card_payer: "sg-digital-subscriptions.subscription_payment_method in [credit_card, debit_card]"
+  trial_friendly: "sg-digital-subscriptions.free_trial_behaviour in [sometimes_converts, usually_keeps_after_trial]"
+  frequent_churner: "sg-digital-subscriptions.cancelled_last_12m in [two_to_three, four_or_more]"
+  smartphone_card_payer_young: "has_smartphone and age < 35 and sg-digital-subscriptions.subscription_payment_method in [credit_card, debit_card, app_store_billing]"

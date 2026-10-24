@@ -481,6 +481,10 @@ export interface ModuleResponse {
   view: ModuleView | null;
   draftId: string | null;
   job: JobInfo | null;
+  /** Socles du module : pays, langue des personas, libellé court (absent des anciennes réponses). */
+  socles?: Array<{ id: string; pack: string; country: string | null; locale: string | null; label: string }>;
+  /** Module validé : brouillon d'origine (demande à l'assistant, historique, notes). */
+  origin?: DraftMeta | null;
 }
 
 export interface DraftStatus {

@@ -164,7 +164,7 @@ function ProvenanceMeter({ m }: { m: ModuleSummary }) {
   const n = Math.max(1, m.attributeCount);
   return (
     <div style={{ minWidth: 120 }}>
-      <div className="prov" aria-hidden="true">
+      <div className="prov-meter" aria-hidden="true">
         <i style={{ width: `${(m.sourcedCount / n) * 100}%` }} />
       </div>
       <span className="ink2">

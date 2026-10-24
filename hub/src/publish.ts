@@ -1,9 +1,9 @@
-import { and, eq, isNull } from "drizzle-orm";
+import { and, asc, eq, isNull, ne } from "drizzle-orm";
 import { OFFICIAL_NAMESPACE, type QualityScore, type VersionSignature } from "../../src/hub/contract";
 import type { HubDb } from "../db/client";
 import { moduleDeps, modules, moduleVersions, packs, packVersions, type VersionStatus } from "../db/schema";
 import { lintForPublication, type LintIssue } from "./lint";
-import { checkModuleForPublication, PublishError, readModuleHeader, searchTexts, sha256, type PublishedDep } from "./module-check";
+import { checkModuleForPublication, PREVIEW_FORMAT, PublishError, readModuleHeader, searchTexts, sha256, type DepResolver } from "./module-check";
 import { checkPack } from "./pack-check";
 import { ensureNamespace, findModule, findModuleVersion, findPack, findPackVersionByRef } from "./repo";
 import type { Signer } from "./signing";
@@ -46,15 +46,20 @@ async function resolveForkOrigin(db: HubDb, spec: string): Promise<{ versionId: 
   return { versionId: found.version.id, ref: `${m[1]}/${m[2]}`, version: found.version.version };
 }
 
-export async function publishModuleVersion(d: PublishDeps, input: { namespace: string; yaml: string; publishedBy: string | null }): Promise<PublishedModule> {
-  const { db } = d;
-  const { namespace, yaml } = input;
-  const resolveDep = async (ref: string, version: string | null): Promise<PublishedDep | null> => {
+/** Dépendance publiée (non retirée) : `version` nulle → dernière version listée. */
+const depResolver =
+  (db: HubDb): DepResolver =>
+  async (ref, version) => {
     const [ns, slug] = ref.split("/") as [string, string];
     const found = await findModuleVersion(db, ns, slug ?? "", version);
     if (!found || found.version.status === "removed") return null;
     return { ref, version: found.version.version, yaml: found.version.yaml, requires: found.version.requires };
   };
+
+export async function publishModuleVersion(d: PublishDeps, input: { namespace: string; yaml: string; publishedBy: string | null }): Promise<PublishedModule> {
+  const { db } = d;
+  const { namespace, yaml } = input;
+  const resolveDep = depResolver(db);
   return d.serialized(async () => {
     const head = readModuleHeader(yaml);
     const ref = `${namespace}/${head.id}`;
@@ -231,4 +236,63 @@ export async function signMissingVersions(db: HubDb, signer: Signer): Promise<nu
     n++;
   }
   return n;
+}
+
+export interface PreviewRefreshResult {
+  /** Versions dont l'aperçu a été recalculé. */
+  refreshed: number;
+  /** Versions en échec (journalisées, laissées telles quelles). */
+  failed: number;
+  /** Versions à recalculer trouvées au départ. */
+  stale: number;
+  ms: number;
+}
+
+/**
+ * Recalcule l'aperçu des versions publiées dont l'aperçu est absent ou d'un format antérieur à
+ * PREVIEW_FORMAT (au démarrage du serveur, en arrière-plan). Même moteur, même graine, même taille
+ * qu'à la publication ; dépendances : les versions épinglées en base à la publication.
+ *
+ * Seule la colonne `preview` change (et `quality` si elle était absente) : le contenu publié (YAML,
+ * sha256, signature) n'est jamais touché, ce que le déclencheur d'immutabilité garantit de toute façon.
+ * Une qualité existante n'est pas recalculée : le classement ne bouge pas en silence.
+ * Une version à la fois, en rendant la main entre deux (le serveur continue de répondre) ; un échec
+ * est journalisé et n'arrête pas les suivantes. Idempotent : une fois au format courant, plus rien à faire.
+ */
+export async function refreshStalePreviews(db: HubDb, opts: { log?: (line: Record<string, unknown>) => void } = {}): Promise<PreviewRefreshResult> {
+  const log = opts.log ?? (() => {});
+  const t0 = Date.now();
+  const rows = await db
+    .select({ id: moduleVersions.id, version: moduleVersions.version, yaml: moduleVersions.yaml, requires: moduleVersions.requires, preview: moduleVersions.preview, quality: moduleVersions.quality, tags: moduleVersions.tags, ns: modules.namespace, slug: modules.slug })
+    .from(moduleVersions)
+    .innerJoin(modules, eq(modules.id, moduleVersions.moduleId))
+    .where(ne(moduleVersions.status, "removed"))
+    .orderBy(asc(moduleVersions.publishedAt));
+  // Archivé (legacy) sans aperçu : l'aperçu a déjà échoué à la publication sur le socle courant, on ne réessaie pas à chaque démarrage
+  const stale = rows.filter((r) => (r.preview ? (r.preview.previewFormat ?? 1) < PREVIEW_FORMAT : !r.tags.includes("legacy")));
+  const base = depResolver(db);
+  let refreshed = 0;
+  let failed = 0;
+  for (const r of stale) {
+    await new Promise((res) => setImmediate(res));
+    const ref = `${r.ns}/${r.slug}`;
+    // Dépendances épinglées à la publication (forme courte `numerique` → la version retenue alors, pas la dernière)
+    const pinned = new Map(r.requires.map((d) => [d.ref, d.version]));
+    const resolve: DepResolver = (depRef, version) => base(depRef, version ?? pinned.get(depRef) ?? null);
+    try {
+      const checked = await checkModuleForPublication(r.yaml, resolve);
+      if (!checked.preview) throw new Error("aperçu impossible sur le socle courant");
+      await db
+        .update(moduleVersions)
+        .set({ preview: checked.preview, ...(r.quality ? {} : { quality: checked.quality }) })
+        .where(eq(moduleVersions.id, r.id));
+      refreshed++;
+    } catch (err) {
+      failed++;
+      log({ at: new Date().toISOString(), msg: "preview refresh failed", ref, version: r.version, error: (err as Error).message.split("\n")[0] });
+    }
+  }
+  const ms = Date.now() - t0;
+  if (stale.length) log({ at: new Date().toISOString(), msg: "previews refreshed", refreshed, failed, stale: stale.length, ms });
+  return { refreshed, failed, stale: stale.length, ms };
 }

@@ -315,7 +315,8 @@ describe("filtre de langue de l'API (ajout additif au contrat)", () => {
   it("GET /v1/search?lang= filtre par langue du contenu, combinable avec q et socle", async () => {
     const en = searchResponse.parse((await getJson("/v1/search?lang=en&limit=100")).json);
     expect(en.results.length).toBeGreaterThanOrEqual(3);
-    expect(en.results.every((r) => r.locale === "en" && r.appliesTo.includes("sg"))).toBe(true);
+    expect(en.results.every((r) => r.locale === "en")).toBe(true);
+    expect(en.results.map((r) => r.ref)).toContain("personas/barbecue-reception");
     const fr = searchResponse.parse((await getJson("/v1/search?lang=fr&limit=100")).json);
     expect(fr.results.map((r) => r.ref)).toContain("personas/numerique");
     expect(fr.results.every((r) => r.locale === "fr")).toBe(true);
@@ -329,9 +330,10 @@ describe("filtre de langue de l'API (ajout additif au contrat)", () => {
 });
 
 describe("mise en avant de la langue (prefer=, ajout additif)", () => {
-  const isEn = (r: { appliesTo: string[] }) => r.appliesTo.includes("sg");
+  // Langue du contenu, dérivée du manifeste du socle (sg, us : anglais) : indépendant de la liste de modules
+  const isEn = (r: { locale?: string }) => r.locale === "en";
   /** Vrai si tous les modules de la langue voulue précèdent les autres. */
-  const grouped = (rs: Array<{ appliesTo: string[] }>, first: (r: { appliesTo: string[] }) => boolean) => {
+  const grouped = (rs: Array<{ locale?: string }>, first: (r: { locale?: string }) => boolean) => {
     const i = rs.findIndex((r) => !first(r));
     return i === -1 || rs.slice(i).every((r) => !first(r));
   };
@@ -342,7 +344,7 @@ describe("mise en avant de la langue (prefer=, ajout additif)", () => {
       expect(base.prefer).toBeUndefined();
       expect(grouped(base.results, isEn)).toBe(false); // l'ordre par défaut mélange les langues
       for (const prefer of ["en", "fr"] as const) {
-        const want = prefer === "en" ? isEn : (r: { appliesTo: string[] }) => !isEn(r);
+        const want = prefer === "en" ? isEn : (r: { locale?: string }) => !isEn(r);
         const p = rankedSearchResponse.parse((await getJson(`/v1/search?limit=100&sort=${sort}&prefer=${prefer}`)).json);
         expect(p.prefer).toBe(prefer);
         expect(p.results.map((r) => r.ref).sort()).toEqual(base.results.map((r) => r.ref).sort());
