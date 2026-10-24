@@ -1,6 +1,0 @@
-{
- "_comment": "Socle courant de chaque pays : la cible d'un projet (target.socle: fr, sg, us) se résout vers ce pack. Les versions anciennes restent chargeables par leur nom de dossier (fr = fr-2026.1, sg = sg-2026.1 ; us = us-2026.1).",
- "fr": "fr-2026.2",
- "sg": "sg-2026.2",
- "us": "us-2026.1"
-}
